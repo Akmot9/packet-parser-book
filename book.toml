@@ -1,6 +1,9 @@
 [book]
-authors = ["akmot9"]
+authors = ["Cyprien Avico"]
 language = "en"
 multilingual = false
 src = "src"
-title = "Packet-parser-book"
+title = "Packet parser book"
+
+[output.html]
+git-repository-url = "https://github.com/Akmot9/Packet-parser"
