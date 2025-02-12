@@ -7,3 +7,4 @@ title = "Packet parser book"
 
 [output.html]
 git-repository-url = "https://github.com/Akmot9/Packet-parser"
+additional-css = ["custom.css"]

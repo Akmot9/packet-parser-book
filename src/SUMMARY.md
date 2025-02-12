@@ -9,6 +9,6 @@
 - [Data validation procedure](./data_validation.md)
 
     - [Data link](./data_link.md)
-    - [Network](./data_link.md)
-    - [Transport](./data_link.md)
-    - [Application](./data_link.md)
+    - [Network](./network.md)
+    - [Transport](./transport.md)
+    - [Application](./application.md)
