@@ -4,7 +4,7 @@
 
 [Introduction](./introduction.md)
 
-- [Packet struct](./packet.md)
+- [ParsedPacket struct](./packet.md)
 
 - [Data validation procedure](./data_validation.md)
 

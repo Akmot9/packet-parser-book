@@ -1,0 +1,72 @@
+You want to illustrate how your **Packet Parser** works by visually explaining the different stages of packet parsing. Here’s how you can structure your **Cargo Book** with images and clear explanations:
+
+---
+
+## 📦 1. A Raw Packet  
+### **Explanation:**  
+A network packet is a sequence of bytes transmitted over a network. Here’s an example of a raw packet in hexadecimal format:
+
+📷 **Image**: A list of raw hex values without annotations (e.g., a Wireshark capture or hex-formatted text)
+
+---
+
+## 🎨 2. Identifying Protocols in the Packet  
+### **Explanation:**  
+Each protocol occupies a specific part of the packet. By analyzing the bytes, we can identify different layers.
+
+📷 **Image**: The same list of hex values but **color-coded** for each network layer:
+- **Data Link Layer** (e.g., Ethernet) in blue  
+- **Network Layer** (e.g., IPv4/IPv6) in green  
+- **Transport Layer** (e.g., TCP/UDP) in red  
+- **Application Layer** (e.g., HTTP/DNS) in yellow  
+
+---
+
+## 🪆 3. Protocols are Nested (Like Russian Dolls)  
+### **Explanation:**  
+A network packet is structured as a series of encapsulated layers: each layer contains a protocol that encapsulates the next.
+
+📷 **Image**: A visual representation showing how each protocol is wrapped inside another (Ethernet → IP → TCP → HTTP)
+
+---
+
+## 🏗️ 4. Structure of a Parsed Packet  
+### **Explanation:**  
+Once parsing is completed, a **ParsedPacket** structure is generated, containing all identified layers and their values.
+
+📷 **Image**: A **Rust struct** representation of `ParsedPacket` showing:
+- `data_link_protocol`
+- `network_protocol`
+- `transport_protocol`
+- `application_protocol`
+
+---
+
+## 🔗 5. How Layers Interact with Addresses and Entry/Exit Points  
+### **Explanation:**  
+Each layer contains specific information to identify **source and destination addresses**.
+
+📷 **Image**: A struct detailing different **source/destination addresses**:
+- MAC source/destination address  
+- IP source/destination address  
+- Source/destination port  
+
+---
+
+## 🧐 6. Detailed Breakdown of Parsed Structures  
+### **Explanation:**  
+Each protocol has its own structure with unique fields.
+
+📷 **Image**: A detailed struct showing `ParsedPacket` expanded, with each protocol’s specific data (e.g., Ethernet header, IP header, TCP header)
+
+---
+
+## 📡 7. Parsing Strategy Based on Payloads  
+### **Explanation:**  
+Parsing is determined by the payloads extracted at each stage.
+
+📷 **Image**: A diagram showing the **data path** within a packet, illustrating how it is extracted based on detected protocols.
+
+---
+
+Does this structure align with your vision for your **Cargo Book**? 😊
