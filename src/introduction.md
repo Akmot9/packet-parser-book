@@ -3,33 +3,59 @@
 
 <p align="center"><img src="images/packet_parser.png" alt="The crate Logo" /></p>
 
-**Packet Parser** is a Rust library designed for parsing network frames.  
+**Packet Parser** is a Rust library designed for parsing network frames.
 This book explains how I developed it, its internal architecture, so you can contribute.
 
 ## Key Features
 
-- **Multi-layer support**: Supports parsing of data link, network, transport, and application layers.
-- **Data validation**: Built-in mechanisms to ensure packet integrity.
-- **Precise error management**: Each layer has its own dedicated error types for better debugging.
-- **Optimized performance**: Integrated benchmarking using Criterion.
-- **Extensibility**: Modular architecture that allows easy addition of new protocols.
+- **Multi-layer support**: link, internet, transport and application layers.
+- **Zero-copy**: `PacketFlow` borrows the input buffer — no payload is copied
+  for L2/L3/L4. Some application parsers (DNS, HTTP, SNMP…) and tunnel
+  recursion do allocate.
+- **Fail-closed on the link layer**: the LINKTYPE is supplied by the caller,
+  never guessed from the bytes. An unsupported one is an error, not a lie.
+- **Fail-soft above it**: an unsupported or malformed upper layer leaves that
+  layer `None` instead of failing the whole parse — and says which one broke.
+- **Precise error management**: each layer has its own dedicated error types,
+  built with [`thiserror`](https://crates.io/crates/thiserror).
+- **Tunnels**: one wire packet can yield several flow levels (`inner`).
+- **Optimized performance**: benchmarked per version, with an optional
+  per-layer timing feature.
+- **Extensibility**: modular architecture that allows easy addition of new
+  protocols — see [Adding a protocol](./adding_a_protocol.md).
 
 ## Purpose of this crate
 
-The goal of this crate is to provide a function that transforms a Packet or a list of bytes to be more precice into any type of packet structure or an error if you are just getting fooled and reciev uncohrent bytes.   
+The goal of this crate is to provide a function that transforms a packet — a
+list of bytes, to be precise — into a structured representation of that packet,
+or into an error if you are just getting fooled and received incoherent bytes.
 
-- It is **not restricted to a specific layer**: You can pass a TCP payload, and it will return an HTTP, TLS, NTP, or other applicable protocol structure.  
-- You can provide a **full network packet**, and it will return a structured representation containing **data link, network, transport, and application layers**.
+- It is **not restricted to a specific layer**: you can pass a TCP payload, and
+  it will tell you it is HTTP, TLS, NTP, or another applicable protocol.
+- You can provide a **full network packet**, and it will return a structured
+  representation containing **data link, internet, transport and application
+  layers**.
 
-To explain how i made this crate les dive into packet parsing my passion.
+## What changed since the first version of this book
 
-have to know what do i call a packet because thats what we are stating from.
+The book originally described a `ParsedPacket` structure that either parsed the
+whole packet or failed. Real captures killed that design. Two things replaced it:
 
-then we'll se how i parse this packet:
+- `ParsedPacket` became [`PacketFlow`](./packet_flow.md), which is *partial by
+  construction*: only the link layer is mandatory, and the others are `Option`s.
+- The link layer stopped being "Ethernet, obviously". The caller now passes the
+  capture's [LINKTYPE](./link_types.md) to `parse`, because a capture on the
+  Linux `any` interface is not Ethernet and silently pretending otherwise
+  produces MAC addresses that never existed on the wire.
 
-Parsing procedure
+## Roadmap of this book
 
-now that we know how to parse packet. let's see how we retrieve the **network layer structure** as an example, so you can understand the **data validation procedure** I use for every struct in this crate: `TryFrom::`.  
+To explain how I made this crate, let's dive into packet parsing — my passion.
 
+First, [what do I call a packet](./packet.md), because that is what we start
+from. Then, [what a parse returns](./packet_flow.md) and
+[how the link type is chosen](./link_types.md).
 
-
+Then we look at how we retrieve each layer's structure, so you can understand
+the **data validation procedure** I use for every struct in this crate:
+`TryFrom`.
