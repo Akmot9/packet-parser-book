@@ -101,9 +101,17 @@ pub enum IpType {
 ```
 
 This is cheap at parse time and expensive to redo later, which is why it is done
-here rather than left to callers. It is also what lets you separate
-"machine talking to the internet" from "machine talking to its own subnet"
-without a second pass.
+here rather than left to callers: a routable public address, an RFC 1918 one and
+a multicast group get told apart in one pass instead of by a second walk over
+every flow.
+
+⚠️ **This is address-category classification, not topology.** `IpType` looks at
+the address alone and never compares it with the capture interface's address and
+prefix, so it cannot answer "is this endpoint on my subnet?". A `Private`
+destination may sit on another routed subnet, and a `Public` one may be directly
+attached. Subnet membership requires the interface address and prefix, which are
+properties of the capture machine — not of the packet — and are therefore
+outside what this crate can see.
 
 ## Fragmentation: the deliberate `None`
 
