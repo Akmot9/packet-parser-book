@@ -1,94 +1,161 @@
-# Chapter 1
+# Parsing the data link layer
 
-### **Parsing the Data Link Layer from a Raw Packet**
-Understanding how to parse the **Data Link Layer** from raw packets is a crucial step in network packet analysis. The Data Link Layer provides essential information such as **MAC addresses, Ethertype, and payload extraction**. This section explains the approach I took to implement the `DataLink` structure parsing.
+This chapter follows `packet_parser` 10.5.0 at revision
+[85728b6](https://github.com/Akmot9/Packet-parser/tree/85728b6424c478366607f6c8ce703fe650e82004).
 
----
+The capture format determines how packet bytes begin. Ethernet starts with MAC
+addresses, Linux cooked captures start with a capture header, and RAW IP starts
+directly with an IP header. Pass that format explicitly to
+`parse(link_type, bytes)`. The result's `data_link` field is a `LinkLayer<'a>`:
+a common interface with a format-specific view and a borrowed network payload.
 
-## **🧩 Understanding the Data Link Structure**
-The Data Link Layer is responsible for **frame-level communication** between devices on the same network segment. In an **Ethernet frame**, the structure is as follows:
+## Selecting the link format
 
+`LinkType(pub u32)` stores a canonical `LINKTYPE_*` identifier. It preserves unknown
+numeric values, so callers can report unsupported formats without losing the
+original identifier. Obtain the value from the capture metadata and pass only the
+packet bytes, excluding PCAP or PCAPNG record headers. If a live capture uses
+platform-specific `DLT_*` values, the caller must map them to canonical `LINKTYPE_*`
+values first.
 
-![Packet Parser Overview](images/datalink/packet_parser.png)
-The main components are:
-1. **Destination MAC Address** (6 bytes) - The unique physical identifier of the receiving network hardware.
-2. **Source MAC Address** (6 bytes)
-3. **Ethertype** (2 bytes) – Determines the protocol encapsulated in the payload.
-4. **Payload** (Variable length) – Contains the encapsulated network-layer packet (ipv4, arp, etc ...).
+The top-level dispatcher supports the following formats in this revision:
 
----
+| `LinkType` constant | Value | Decoding behavior |
+| --- | ---: | --- |
+| `ETHERNET` | 1 | Ethernet header, including stacked VLAN tags. |
+| `RAW` | 101 | Headerless IPv4 or IPv6, selected by the first version nibble. |
+| `LINUX_SLL` | 113 | A 16-byte Linux cooked capture v1 header. |
+| `IPV4` | 228 | Headerless IP; the version nibble must be 4. |
+| `IPV6` | 229 | Headerless IP; the version nibble must be 6. |
+| `IEEE802_3BR` | 274 | Complete express mPackets; removes preamble, SMD and trailing mCRC before decoding Ethernet. |
+| `LINUX_SLL2` | 276 | A 20-byte Linux cooked capture v2 header. |
 
-### **Breaking Down the MAC Address Structure**
-To parse MAC addresses correctly, we need to ensure that:
-- They are always **6 bytes long**.
-- They are formatted properly for readability.
-- We extract **Organizationally Unique Identifiers (OUI)** to identify the manufacturer.
+Call `is_supported(link_type)` to check decoder availability. This does not validate
+the packet bytes or promise support for every frame within that format. In
+particular, IEEE 802.3br preemptible fragments need reassembly and are rejected;
+the express-frame decoder removes the mCRC without verifying it.
 
-**MAC Address Structure:**
-![Mac Struct Overview](images/datalink/mac_struct.png)
+The existence of a constant or a result variant does not imply top-level support.
+`IEEE802_11` and `BLUETOOTH_HCI_H4_WITH_PHDR` have constants but no top-level decoder
+in this revision. An `Ieee80211` view can still appear inside a decoded CAPWAP
+tunnel. The authoritative list is the
+[link decoder dispatcher](https://github.com/Akmot9/Packet-parser/blob/85728b6424c478366607f6c8ce703fe650e82004/src/parse/link/mod.rs).
 
+## Reading the common and specific views
 
----
+Use the common accessors when the capture may contain different link formats:
 
-### **Breaking Down the Ethertype Field**
-The **Ethertype** is a 2-byte field that defines the **type of payload** carried by the frame.
+| Accessor | Information returned |
+| --- | --- |
+| `link_type()` | The declared canonical format, retained even when several formats share a decoder. |
+| `network_protocol()` | `Ipv4`, `Ipv6`, `Arp`, `Profinet`, or `Other(u16)`. |
+| `network_payload()` | The borrowed bytes passed to the network-layer parser. |
+| `kind()` | A reference to the format-specific `LinkLayerKind` variant. |
 
-📌 **Key Considerations:**
-- Extract the 2-byte **big-endian** value.
-- Map **well-known Ethertypes** (IPv4, IPv6, ARP, etc.).
-- Allow handling of **unknown protocols** without failure.
+`as_ethernet()`, `as_raw_ip()`, `as_linux_sll()`, `as_linux_sll2()` and
+`as_ieee80211()` return `Some(&details)` for the corresponding view and `None`
+otherwise. `as_ethernet()` also succeeds for an express mPacket, whose declared
+`link_type()` remains `IEEE802_3BR`.
 
-📌 **Example of Well-Known Ethertypes (IEEE Standard Correspondence Table):**
+`DataLink<'a>` is the Ethernet-specific view. It exposes `destination_mac`,
+`source_mac`, `vlan`, `vlan_stack`, `ethertype` and `payload`. RAW IP has an
+`ip_version` and payload, with no MAC addresses or EtherType. Linux cooked views
+expose packet direction, hardware type, declared address length, available source
+address bytes and protocol; SLL2 also exposes the interface index and reserved
+field. These capture addresses are not necessarily Ethernet MAC addresses.
 
-| Ethertype (Hex) | Protocol |
-|----------------|----------|
-| `0x0800` | IPv4 |
-| `0x86DD` | IPv6 |
-| `0x0806` | ARP |
-| `0x8100` | VLAN Tagging |
+For SLL and SLL2, an address length greater than the eight-byte wire slot is
+preserved, with `address_is_truncated()` reporting the discrepancy. SLL2 preserves
+a nonzero reserved field and exposes `reserved_is_zero()` for inspection. These
+metadata conditions do not themselves cause a parsing error.
 
----
+## Ethernet fields and validation
 
-## **📌 Steps Taken to Parse the Data Link Layer**
-To correctly extract this information, I followed these key steps:
+An untagged Ethernet header is laid out as follows. Byte offsets start at zero:
 
-![validation](images/datalink/validations.png)
+| Bytes | Field |
+| --- | --- |
+| 0–5 | Destination MAC address |
+| 6–11 | Source MAC address |
+| 12–13 | EtherType, read in big-endian order |
+| 14 onward | Payload |
 
-### **Validations**
-While parsing, I implemented **validations** to ensure the raw packet is coherent.
+The Ethernet parser checks for at least 14 bytes before reading those fields.
+`MacAddress::try_from` requires **exactly six bytes**. It stores the address as
+`[u8; 6]`; display formatting and optional OUI lookup are separate from parsing.
+An unknown OUI does not invalidate an address.
 
-📌 **Validations Performed:**
+When the EtherType field is a VLAN TPID (`0x8100`, `0x88A8` or `0x9100`), the
+parser consumes the tag's two-byte TCI and the next two-byte type field. It repeats
+this for stacked tags, checking for `14 + 4 × tag_count` bytes at each step.
+`vlan_stack` exposes all tags from outermost to innermost; `vlan` contains the
+innermost tag. After the tags, `ethertype` and `payload` describe the encapsulated
+protocol and its bytes.
 
-✅ **Packet Minimum Length Check** – Ensure the packet is at least **14 bytes** (`MAC_DST + MAC_SRC + Ethertype`).  
-✅ **Macaddress Minimum Length Check** – at least **6 bytes**.  
-✅ **etherthype ceherence** – if ethertype is ipv4 or ipv6 the payload can't be empty.  
+These are header and bounds checks. `DataLink::try_from` does not establish that
+arbitrary input is Ethernet, verify a frame checksum, or require a nonempty IPv4
+or IPv6 payload. Prefer the top-level `parse` API for captured packets: it selects
+the decoder from `LinkType` and validates recognized higher layers separately.
+For example, a complete Ethernet header announcing IPv4 with an empty payload
+preserves the link layer and records an Internet-layer corruption in `PacketFlow`.
 
+In IEEE 802.3 frames the type/length field may instead carry a length. This
+revision has a specific STP path: it checks the bridge group destination,
+the length-delimited LLC `42 42 03` header and a valid BPDU. It does not generally
+decode Ethernet LLC/SNAP payloads into IP. LLC/SNAP handling for encapsulated
+IEEE 802.11 frames belongs to the CAPWAP tunnel path.
 
+## Unknown protocols and errors
 
+An unknown EtherType is retained as its numeric value and mapped to
+`NetworkProtocol::Other(value)`. A successfully decoded link layer with an
+unsupported network protocol remains available: `internet` is `None` and the
+unsupported protocol alone does not set `corrupted`. STP classification is a
+separate link-layer case, so an absent Internet layer does not always mean an
+absent application label.
 
-### **Structuring the Parsed Packet**
-After extracting all components, I structured the parsed frame in a clear format. This makes it easier to **analyze, debug, and process packets** dynamically.
+```rust
+# extern crate packet_parser;
+use packet_parser::{is_supported, parse, LinkLayerError, LinkType, NetworkProtocol, ParseError};
 
-📌 **Why Structure Matters?**
-- Improves **readability** of parsed data.
-- Makes it **easier to extract key information**.
-- Supports **future protocol extensions**.
+// A complete Ethernet header carrying an unknown EtherType.
+let bytes = [
+    0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+    0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+    0xab, 0xcd,
+];
+assert!(is_supported(LinkType::ETHERNET));
+let flow = parse(LinkType::ETHERNET, &bytes).unwrap();
+assert_eq!(flow.data_link.network_protocol(), NetworkProtocol::Other(0xabcd));
+assert_eq!(flow.data_link.as_ethernet().unwrap().ethertype.0, 0xabcd);
+assert!(flow.internet.is_none());
+assert!(flow.corrupted.is_none());
 
-![Tram Struct Overview](images/datalink/tram_struct.png)
+assert!(matches!(
+    parse(LinkType::ETHERNET, &bytes[..13]),
+    Err(ParseError::InvalidLinkLayer(LinkLayerError::Truncated {
+        link_type: LinkType::ETHERNET, required: 14, actual: 13,
+    }))
+));
 
----
+let unsupported = LinkType(0xdead);
+assert!(!is_supported(unsupported));
+assert!(matches!(
+    parse(unsupported, &bytes),
+    Err(ParseError::UnsupportedLinkType(value)) if value == unsupported
+));
+```
 
-## **🚀 Conclusion**
-Parsing the **Data Link Layer** requires **careful validation** and **structured extraction**. By following a modular approach:
-- **MAC addresses** are extracted safely.
-- **Ethertype** is correctly mapped.
-- **Payload validation** prevents out-of-bounds errors.
-- The structure is **extensible** for future protocols.
+At the top level, unsupported capture formats produce
+`ParseError::UnsupportedLinkType`. Link decoding failures produce
+`ParseError::InvalidLinkLayer`, including Ethernet failures. Its `LinkLayerError`
+distinguishes `Truncated { link_type, required, actual }`, `InvalidIpVersion`,
+`InvalidPreamble`, `InvalidSmd` and `PreemptibleFragment`. RAW requires a first byte
+with a valid version nibble; full IP-header validation happens in the Internet
+layer. For mPackets, truncation lengths account for the whole packet, including
+the framing bytes.
 
-This foundational parsing is crucial for **higher-layer analysis**, such as decoding **IP, TCP, UDP, and application-level protocols**.
-
-🚀 **Next Steps:** Exploring **network-layer parsing (IPv4/IPv6)**!
-
-
-
-
+The low-level `DataLink::try_from` API instead returns `DataLinkError`, such as
+`DataLinkTooShort`; it has no capture `LinkType` context. Both error contracts are
+distinct from the recoverable higher-layer failures described in
+[the PacketFlow chapter](packet.md).

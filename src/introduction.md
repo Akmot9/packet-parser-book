@@ -4,32 +4,31 @@
 <p align="center"><img src="images/packet_parser.png" alt="The crate Logo" /></p>
 
 **Packet Parser** is a Rust library designed for parsing network frames.  
-This book explains how I developed it, its internal architecture, so you can contribute.
+This book explains how I developed it and its internal architecture, so you can contribute.
 
 ## Key Features
 
-- **Multi-layer support**: Supports parsing of data link, network, transport, and application layers.
-- **Data validation**: Built-in mechanisms to ensure packet integrity.
-- **Precise error management**: Each layer has its own dedicated error types for better debugging.
-- **Optimized performance**: Integrated benchmarking using Criterion.
-- **Extensibility**: Modular architecture that allows easy addition of new protocols.
+- **Multi-layer support**: parses the data link, internet, transport and application layers.
+- **Zero-copy**: the result, `PacketFlow`, borrows the input buffer. No payload is copied.
+- **Fail-closed on the link layer**: the LINKTYPE is given by the caller, never guessed from the bytes. An unsupported LINKTYPE is an error.
+- **Fail-soft above it**: an unknown or malformed upper layer does not fail the whole parse. The layer stays `None`, and a recognized-but-invalid layer is reported in `corrupted`.
+- **Data validation**: every protocol struct is built through `TryFrom`, with its checks in a dedicated module.
+- **Precise error management**: each layer and each protocol has its own error type, built with `thiserror`.
+- **No panic on hostile bytes**: `unwrap`, `expect` and `panic!` are denied by lints in production code, and the parsers are fuzzed.
+- **Tunnels**: CAPWAP, GRE, IP-in-IP, VXLAN and Geneve are peeled, and the inner packet is parsed recursively.
+- **Extensibility**: a modular architecture that makes adding a protocol a mechanical job.
 
 ## Purpose of this crate
 
-The goal of this crate is to provide a function that transforms a Packet or a list of bytes to be more precice into any type of packet structure or an error if you are just getting fooled and reciev uncohrent bytes.   
+The goal of this crate is to provide a function that transforms a packet, or a list of bytes to be more precise, into a typed structure, or into an error if you are getting fooled and receive incoherent bytes.
 
-- It is **not restricted to a specific layer**: You can pass a TCP payload, and it will return an HTTP, TLS, NTP, or other applicable protocol structure.  
-- You can provide a **full network packet**, and it will return a structured representation containing **data link, network, transport, and application layers**.
+- You can provide a **full network packet** with its LINKTYPE, and `parse` returns a `PacketFlow`: a structured representation containing the **data link, internet, transport and application layers**.
+- It is **not restricted to a specific layer**: every protocol struct implements `TryFrom<&[u8]>`. You can pass a TCP payload to `TlsPacket::try_from`, `DnsPacket::try_from`, `NtpPacket::try_from`... and get the detailed structure of that protocol.
 
-To explain how i made this crate les dive into packet parsing my passion.
+To explain how I made this crate, let's dive into packet parsing, my passion.
 
-have to know what do i call a packet because thats what we are stating from.
-
-then we'll se how i parse this packet:
-
-Parsing procedure
-
-now that we know how to parse packet. let's see how we retrieve the **network layer structure** as an example, so you can understand the **data validation procedure** I use for every struct in this crate: `TryFrom::`.  
-
-
-
+1. First we [get started](./getting_started.md) with the public API.
+2. Then we have to know what I call a packet, because that is what we are starting from, and what the [`PacketFlow` struct](./packet.md) looks like once the packet is parsed.
+3. Then we'll see the [data validation procedure](./data_validation.md) I use for every struct in this crate: `TryFrom`.
+4. Then we go down layer by layer: [data link](./data_link.md), [internet](./network.md), [transport](./transport.md), [application](./application.md) and [tunnels](./tunnels.md).
+5. And finally, how to [add a new protocol](./adding_a_protocol.md).
