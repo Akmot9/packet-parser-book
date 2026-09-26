@@ -15,5 +15,6 @@
     - [Transport](./transport.md)
     - [Application](./application.md)
     - [Tunnels](./tunnels.md)
+    - [Focus: GIOP](./giop.md)
 
 - [Adding a new protocol](./adding_a_protocol.md)
