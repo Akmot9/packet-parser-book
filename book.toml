@@ -4,7 +4,9 @@ language = "en"
 multilingual = false
 src = "src"
 title = "Packet parser book"
+description = "How the packet_parser Rust crate is designed: PacketFlow, TryFrom validation, per-layer decoders, the L7 dispatch table, tunnels."
 
 [output.html]
-git-repository-url = "https://github.com/Akmot9/Packet-parser"
+git-repository-url = "https://github.com/Akmot9/packet-parser-book"
+edit-url-template = "https://github.com/Akmot9/packet-parser-book/edit/main/{path}"
 additional-css = ["custom.css"]

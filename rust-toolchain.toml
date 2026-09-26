@@ -1,0 +1,5 @@
+# The toolchain the examples are compiled with, locally and in CI. The
+# crate's MSRV is 1.88; a stable release at or above it is fine.
+[toolchain]
+channel = "1.96.0"
+profile = "minimal"

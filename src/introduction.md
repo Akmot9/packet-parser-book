@@ -14,9 +14,13 @@ This book explains how I developed it and its internal architecture, so you can 
 - **Fail-soft above it**: an unknown or malformed upper layer does not fail the whole parse. The layer stays `None`, and a recognized-but-invalid layer is reported in `corrupted`.
 - **Data validation**: every protocol struct is built through `TryFrom`, with its checks in a dedicated module.
 - **Precise error management**: each layer and each protocol has its own error type, built with `thiserror`.
-- **No panic on hostile bytes**: `unwrap`, `expect` and `panic!` are denied by lints in production code, and the parsers are fuzzed.
-- **Tunnels**: CAPWAP, GRE, IP-in-IP, VXLAN and Geneve are peeled, and the inner packet is parsed recursively.
+- **Designed not to panic on hostile bytes**: every index follows an explicit length check, `unwrap`/`expect`/`panic!` are flagged by clippy lints that the CI turns into errors, and the parsers are fuzzed continuously. This is a discipline backed by tooling, not a proof: see the [validation chapter](./data_validation.md#no-panic-on-hostile-bytes) for what is and is not guaranteed.
+- **Tunnels**: CAPWAP, GRE, IP-in-IP, VXLAN, Geneve and GTP-U are peeled, and the inner packet is parsed recursively.
 - **Extensibility**: a modular architecture that makes adding a protocol a mechanical job.
+
+## Reference version
+
+This book describes **`packet_parser` 11.2.0** ([crates.io](https://crates.io/crates/packet_parser/11.2.0), tag `v11.2.0` in the [repository](https://github.com/Akmot9/Packet-parser)). Code excerpts of the crate's internals are quoted from that revision; the user-facing snippets marked *tested* are compiled and run against it by the book's `examples/` crate. When the crate moves, the book is updated with it and this line changes.
 
 ## Purpose of this crate
 

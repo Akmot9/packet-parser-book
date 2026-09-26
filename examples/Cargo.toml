@@ -1,0 +1,17 @@
+# Runnable examples for the Packet Parser book. Every snippet a chapter
+# shows with `{{#include}}` comes from src/lib.rs, so what the reader sees
+# is what `cargo test` compiles and runs.
+[package]
+name = "packet-parser-book-examples"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# The version of the crate this book documents. Bump it together with the
+# text of the chapters.
+packet_parser = "=11.2.0"
+hex = "0.4"
+serde_json = "1"
+
+[workspace]

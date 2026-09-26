@@ -2,13 +2,13 @@
 
 This chapter is the "how do I use it" part. The rest of the book is the "how is it built" part.
 
-> This book follows the `main` branch of the crate (11.x). Older versions differ: see `MIGRATION-11.md` in the repository.
+> **Reference version: `packet_parser` 11.2.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "11.1.0"
+packet_parser = "11.2.0"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 
@@ -65,6 +65,12 @@ L4: Tcp Some(443) -> Some(49416)
 
 No `L7` line: this segment is a pure ACK with an empty payload, so there is nothing to classify and `application` stays `None`.
 
+The same frame, as the book's example crate checks it (*tested*):
+
+```rust
+{{#include ../examples/src/lib.rs:parse_valid_frame}}
+```
+
 ## Never guess the LINKTYPE
 
 `parse` is **fail-closed on the link layer**: the LINKTYPE comes from the caller and is never guessed from the bytes. Check it up front to reject a whole capture before reading a single packet:
@@ -81,6 +87,7 @@ let flow = parse(link_type, packet_bytes)?;
 
 | LINKTYPE | Value | Decoder status |
 | --- | ---: | --- |
+| BSD loopback (NULL) | 0 | Supported: four address-family bytes, then the IP packet (11.2.0) |
 | Ethernet | 1 | Supported (802.1Q and 802.1ad/QinQ tags included) |
 | RAW IP | 101 | Supported for IPv4 and IPv6 |
 | Native IEEE 802.11 | 105 | Modelled for CAPWAP inner flows; top-level decoder not yet supported |
@@ -105,20 +112,26 @@ Only the link layer can fail the parse. Above it, three outcomes are distinct an
 | `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why. |
 | `Some(..)` | `Some(..)` | Semantic anomaly: the header is readable but no conforming stack emits it (TCP SYN+FIN, reserved bits set). The layer is **kept** so its ports remain available for flow correlation; nothing is parsed above it. |
 
+A recognized layer with invalid bytes (*tested*):
+
 ```rust
-let truncated = parse(LinkType::ETHERNET, &raw[..20])?; // cut inside the IP header
-assert!(truncated.internet.is_none());
-assert_eq!(truncated.corrupted.unwrap().layer, CorruptedLayerKind::Internet);
-// error: "IPv4 error: Invalid IPv4 packet length: expected at least 20 bytes, got 6 bytes"
+{{#include ../examples/src/lib.rs:corrupted_upper_layer}}
 ```
 
-And the two link-layer errors:
+An unsupported protocol above the link layer, which is not corruption (*tested*):
 
-```text
-parse(LinkType::ETHERNET, &raw[..10])
-  -> Err: Invalid link layer: LINKTYPE 1 packet is truncated: required bytes 14, actual bytes 10
-parse(LinkType(9999), &raw)
-  -> Err: Unsupported link type: 9999
+```rust
+{{#include ../examples/src/lib.rs:unsupported_upper_layer}}
+```
+
+And the two link-layer failures, the only ones that return `Err` (*tested*):
+
+```rust
+{{#include ../examples/src/lib.rs:unsupported_linktype}}
+```
+
+```rust
+{{#include ../examples/src/lib.rs:truncated_link_layer}}
 ```
 
 ## Main API
@@ -178,6 +191,12 @@ let flow = parse_with(LinkType::ETHERNET, &raw, &config)?;
 }
 ```
 
+The owned form is what you keep once the capture buffer is gone (*tested*):
+
+```rust
+{{#include ../examples/src/lib.rs:owned_and_json}}
+```
+
 ## Timing (benchmarks)
 
 `parse_timed` runs the exact same pipeline as `parse` and reports the nanoseconds spent in each layer. The API is always there; without the `parse_timing` feature nothing is measured and `ParseTiming` stays zeroed, so enabling the feature anywhere in a dependency graph never changes a signature.
@@ -198,5 +217,5 @@ cargo test --features parse_timing
 ## Known limitations
 
 - No TCP reassembly, no IP reassembly: the parser is **stateless** and sees one packet at a time.
-- The application layer is a **classification**, not a decode (see the [application chapter](./application.md)).
+- The application layer is a **classification**, not a decode (see the [application chapter](./application.md) and the [GIOP focus](./giop.md) for the tested example).
 - Checksums are never validated during parsing (hardware offloading leaves them uncomputed on sender-side captures). Use the `checksum` module when your context allows it.

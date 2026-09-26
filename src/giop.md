@@ -70,6 +70,12 @@ target object key: 60 bytes
 
 and `flow.application` is labelled `"GIOP"` by the pipeline, through a blind TCP probe: the literal magic, a version in 1.0..1.2 and a known message type make a strong enough signature.
 
+The book's example crate checks every one of these values on that frame — this is the test that pins down the difference between the pipeline's *classification* and the protocol parser's *decode* (*tested*):
+
+```rust
+{{#include ../examples/src/lib.rs:classification_vs_decode}}
+```
+
 ## The header: a `TryFrom` like the others
 
 ```rust

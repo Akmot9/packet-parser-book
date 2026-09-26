@@ -100,6 +100,12 @@ The two error paths of `PacketFlow` are asymmetric on purpose:
 
 ## No panic on hostile bytes
 
-A parser of hostile bytes must never bring its host down. `lib.rs` denies `unwrap`, `expect` and `panic!` in production code with clippy lints that the CI runs with `-D warnings`. Indexing after an explicit length check (`data[0]` after `validate_ipv4_min_length`) is the idiom; its absence of panic is verified by the fuzz targets under `fuzz/` (`parse_packetflow`, `parse_linktype`, `parse_dns`, `parse_giop`, `parse_quic`, `parse_s7comm`, `parse_cotp`, `parse_application`).
+A parser of hostile bytes must never bring its host down. What the crate does about it, precisely:
+
+- **Lints.** `lib.rs` enables `clippy::unwrap_used`, `clippy::expect_used` and `clippy::panic` as *warnings* outside of tests, and the CI runs clippy with `-D warnings`, which makes them blocking. The rare justified sites carry a motivated `#[expect]`. Test code is free to `unwrap`.
+- **The indexing idiom.** `data[0]` after `validate_ipv4_min_length(data)` is the pattern everywhere: index after an explicit length check. The lints `indexing_slicing` and `arithmetic_side_effects` are deliberately *not* enabled: with more than a thousand such accesses, they would flag every one of them.
+- **Fuzzing.** The absence of panic on these accesses is exercised by the fuzz targets under `fuzz/` (`parse_packetflow`, `parse_linktype`, `parse_dns`, `parse_giop`, `parse_quic`, `parse_s7comm`, `parse_cotp`, `parse_application`), seeded with real frames and run nightly.
+
+None of this is a proof. Lints catch the explicit panics, not an out-of-bounds index; fuzzing finds panics, it does not demonstrate their absence. What the crate can claim is that every parser follows the same length-checked discipline, that the tooling refuses the obvious deviations, and that the fuzzers have not found a panic on the published versions. The same honesty applies to the other properties described in this book: `TryFrom` and `corrupted` describe how the *supported* layers behave; a protocol the crate does not decode is simply `None`, and zero-copy holds for the L2/L3/L4 structs and most application parsers — a few (DNS, HTTP, SNMP, GIOP service contexts) allocate `Vec`s for lists whose length the packet dictates, always bounded first.
 
 Now let's go layer by layer.

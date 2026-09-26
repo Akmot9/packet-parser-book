@@ -154,6 +154,7 @@ That is why `parse` takes a `LinkType` and never guesses. `LinkType(pub u32)` us
 ```rust
 const fn decoder_for(link_type: LinkType) -> Option<DecoderKind> {
     match link_type {
+        LinkType::NULL => Some(DecoderKind::Null),
         LinkType::ETHERNET => Some(DecoderKind::Ethernet),
         // RAW, IPV4 and IPV6 share one decoder: bytes start at the IP header,
         // and the version nibble says which one.
@@ -207,6 +208,7 @@ So a RAW or SLL capture **cannot silently manufacture MAC addresses**, which is 
 
 ### Per-format notes
 
+- **BSD loopback (NULL, LINKTYPE 0)**, since 11.2.0: four bytes of address family, then the IP packet. The family is written in the byte order of the *capturing* host and the format keeps no trace of it, so the field is read both ways and only a reading consistent with the IP version nibble is kept: it is a cross-check, not the source of truth. An unknown or contradicting family is `LinkLayerError::InvalidAddressFamily`. `LINKTYPE_LOOP` (108), the OpenBSD twin in network order, is deliberately not handled: no capture attests it.
 - **Linux SLL v1** (16-byte cooked header): keeps the packet type, the raw ARPHRD hardware type, the declared address length, the available source-address bytes and the protocol value. An address longer than the 8-byte wire slot is reported as truncated (`address_is_truncated()`) rather than rejected. Use `LinkType::LINUX_SLL` (113): the value 25 shown by some Wireshark fields is an internal WTAP identifier.
 - **Linux SLL v2** (20-byte header): additionally keeps the interface index and the reserved-MBZ field. A non-zero reserved value is preserved and reported by `reserved_is_zero()`, matching Tshark's tolerant dissection.
 - **RAW IP**: an empty packet or a version nibble other than 4/6 is `LinkLayerError::InvalidIpVersion`. With `LinkType::IPV4`/`IPV6` the declared version is checked against the nibble.
