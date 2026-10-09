@@ -1,0 +1,3 @@
+# IEEE 802.3br
+
+LINKTYPE 274 ([#79](https://github.com/Akmot9/Packet-parser/issues/79)). An mPacket wraps the frame in a preamble, an SMD and a trailing 4-byte mCRC. Express mPackets (SMD-E, `0xd5`) are decoded as Ethernet once that wrapping is removed: `as_ethernet()` returns the frame while `link_type()` stays 274. The preamble is at most 7 octets of `0x55` and the standard lets the PHY shorten it, so the SMD is located as the first non-`0x55` octet: the corpus contains 6-octet preambles, and a fixed offset left 102 real frames in error. Preemptible fragments (SMD-S/C) are refused with `LinkLayerError::PreemptibleFragment`, their reassembly being stateful; a first byte other than `0x55` is `InvalidPreamble`, an unknown SMD is `InvalidSmd`.

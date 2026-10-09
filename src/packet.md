@@ -131,7 +131,7 @@ Ok(PacketFlow {
 Read from top to bottom:
 
 - **Each stage turns its error into data.** `parse_l3` and `parse_l4` map `UnsupportedProtocol` to `None` and every other error to a `CorruptedLayer`, whose `error` is the error's `Display`. A layer that is `None` leaves nothing for the next one, so `corrupted` holds at most one report: `l3_corruption.or(l4_corruption)` is the first failure, and the only one.
-- **An anomalous TCP segment leaves before L7**, in a `#[cold]` function: transport kept, anomaly reported, no application. Weaving that case into the common stages cost about 10 ns on every TCP segment ([transport chapter](./transport.md#tcp-validations)).
+- **An anomalous TCP segment leaves before L7**, in a `#[cold]` function: transport kept, anomaly reported, no application. Weaving that case into the common stages cost about 10 ns on every TCP segment ([transport chapter](./tcp.md)).
 - **L7 has a fixed order.** First an IP-level tunnel (GRE, IP-in-IP), then a UDP tunnel (CAPWAP, VXLAN, Geneve, GTP-U), then the [dispatch table](./application.md), Decode As ports first. STP comes last, from the link layer, and only when nothing gave a label: a BPDU has no network layer to reach the table.
 - **A tunnel re-enters at `DecodedLink`**, one level deeper, with the same Decode As ports ([tunnels chapter](./tunnels.md)). That recursion runs inside the L7 stage, which is where its time is counted.
 - **`sink` is the timing**: a no-op for `parse`, a clock for `parse_timed`, so the measured path is the parsed path ([getting started](./getting_started.md#timing-benchmarks)).
