@@ -23,6 +23,12 @@ for level in flow.flatten() {
 }
 ```
 
+Here is the TCP SYN of the previous chapters, carried in a VXLAN tunnel between two hypervisors:
+
+![A 124-byte VXLAN packet: the outer PacketFlow reads Ethernet, IPv4 10.0.0.1 to 10.0.0.2, UDP 51234 to 4789 and the VXLAN header, and is labelled VXLAN; its inner field holds a second PacketFlow, Ethernet, IPv4 192.168.0.104 to 192.168.0.1, TCP 54321 to 80](images/tunnels/vxlan_flows.svg)
+
+The outer flow stops at the VXLAN header: its `application` is the tunnel's name, and the 74 bytes that follow, a complete Ethernet frame, are parsed again from the link layer up into `inner`. `flatten()` returns the two levels, outer first.
+
 A non-tunneled packet yields one entry. The inner flows borrow the same buffer as the outer one: peeling is zero-copy, only the recursion boxes.
 
 Nesting is bounded by `MAX_TUNNEL_DEPTH = 4`, an anti-loop guard against malformed traffic that could claim endless encapsulation.

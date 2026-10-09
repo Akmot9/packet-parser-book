@@ -61,6 +61,10 @@ and the invariants are:
 3. **Probes read at most `PROBE_CAP` = 18 KiB.** Classification is a verdict on the application header, not on the whole segment; the cap is above the largest legitimate message a probe must see in full (an encrypted TLS record: 5 + 16 KiB + tag). The one exception is OpenVPN over TCP, whose length prefix is checked against the real payload.
 4. **The order of the table is the priority**, inspectable, testable, and locked by a golden snapshot over the reference captures.
 
+![One rule of the table: the transport payload, a TLS ClientHello on TCP 54322 to 443, passes the transport guard, then the port guard, then the content probe, and gets the label TLS; a failed gate moves on to the next rule, the last rule falls through to Unknown, an empty payload is not probed](images/application/dispatch_rule.svg)
+
+Each rule is three gates in a row, and a payload stops at the first rule whose three gates open. The TLS rule has no port guard, so its second gate always opens: the ClientHello is labelled by its content, whatever the port. A probe that fails is not re-run by a later rule that shares it. Two outcomes do not come from a rule: an empty payload is never probed (`application: None`), and a payload no rule matched is `"Unknown"`, except on the terminal mDNS and LLMNR ports, where a failed probe ends the search with `None` (see below).
+
 ### Reading the table
 
 ```rust
