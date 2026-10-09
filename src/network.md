@@ -105,22 +105,9 @@ match Internet::try_from_network_parts(network_protocol, network_payload) {
 
 ## IPv4 validations
 
-```text
-packet-beta
-0-3: "Version"
-4-7: "IHL"
-8-15: "DSCP/ECN"
-16-31: "Total length"
-32-47: "Identification"
-48-50: "Flags"
-51-63: "Fragment offset"
-64-71: "TTL"
-72-79: "Protocol"
-80-95: "Header checksum"
-96-127: "Source address"
-128-159: "Destination address"
-160-191: "Options (if IHL > 5)"
-```
+![A 60-byte IPv4 packet, 32 bits per row: the Protocol byte becomes payload_protocol, the two address words become source and destination, the bytes after the header become payload](images/network/ipv4_struct.svg)
+
+The **Protocol** byte plays the part the EtherType played one layer down: the internet layer does not parse what follows, it turns `6` into `payload_protocol: Some(Tcp)`, the announcement the [transport layer](./transport.md) dispatches on (`None` for a fragment, see [below](#fragments)). The bytes are those of a typical Linux TCP SYN, and the struct shows what `Internet::try_from_network_parts` returns for them.
 
 ✅ **Minimum length** – at least **20 bytes**, otherwise `Ipv4Error::InvalidLength`.  
 ✅ **Version** – the high nibble is **4**, otherwise `InvalidVersion`.  
