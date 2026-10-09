@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 456" width="900" height="456" role="img" aria-labelledby="t d">
+<title id="t">The GIOP header, and why the byte order matters</title>
+<desc id="d">The 12-byte GIOP header of frame 19 of corba.pcap, a little-endian Request inside a MIOP datagram: magic GIOP, version 1.2, flags 01, type 0 (Request), message size D8 00 00 00. Bit 0 of the flags says little-endian, so the size is 216 bytes. Read big-endian, as the first version of the parser did, the same bytes say 3623878656 and the message was rejected.</desc>
+<rect x="12" y="12" width="876" height="432" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="60" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">GIOP header</text>
+<text x="60" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="start">frame 19 of corba.pcap: a Request inside a MIOP datagram · 32 bits per row</text>
+<clipPath id="g"><rect x="60" y="120" width="384" height="220" rx="12"/></clipPath>
+<g clip-path="url(#g)">
+<rect x="60" y="120" width="384" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="146" x2="156" y2="180" stroke="#E9CF86" stroke-width="1"/>
+<line x1="252" y1="146" x2="252" y2="180" stroke="#E9CF86" stroke-width="1"/>
+<line x1="348" y1="146" x2="348" y2="180" stroke="#E9CF86" stroke-width="1"/>
+<text x="252.0" y="139" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Magic "GIOP"</text>
+<text x="108.0" y="169" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">47</text>
+<text x="204.0" y="169" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">49</text>
+<text x="300.0" y="169" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">4F</text>
+<text x="396.0" y="169" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">50</text>
+<rect x="60" y="180" width="96" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="108.0" y="199" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Major</text>
+<text x="108.0" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="156" y="180" width="96" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="204.0" y="199" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Minor</text>
+<text x="204.0" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">02</text>
+<rect x="252" y="180" width="96" height="60" fill="#FF9E42" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="300.0" y="199" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Flags</text>
+<text x="300.0" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="348" y="180" width="96" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="396.0" y="199" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Type</text>
+<text x="396.0" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="60" y="240" width="384" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="266" x2="156" y2="300" stroke="#E9CF86" stroke-width="1"/>
+<line x1="252" y1="266" x2="252" y2="300" stroke="#E9CF86" stroke-width="1"/>
+<line x1="348" y1="266" x2="348" y2="300" stroke="#E9CF86" stroke-width="1"/>
+<text x="252.0" y="259" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Message size</text>
+<text x="108.0" y="289" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">D8</text>
+<text x="204.0" y="289" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="300.0" y="289" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="396.0" y="289" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="60" y="300" width="384" height="40" fill="#FFC943"/>
+<line x1="60" y1="300" x2="444" y2="300" stroke="#E0AE2E" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="252.0" y="325" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">CDR body: 216 bytes, in the same byte order</text>
+</g>
+<rect x="60" y="120" width="384" height="220" rx="12" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="252" y="180" width="96" height="60" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="60" y="240" width="384" height="60" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="570" y="170.0" width="290" height="96" rx="8" fill="#66D575"/>
+<text x="715.0" y="204" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#1E1E1E" text-anchor="middle">216 bytes</text>
+<text x="715.0" y="226" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">little-endian, as Flags bit 0 says</text>
+<text x="715.0" y="248" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0x000000D8</text>
+<rect x="570" y="316.0" width="290" height="96" rx="8" fill="#D56666"/>
+<text x="715.0" y="350" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">3 623 878 656 bytes</text>
+<text x="715.0" y="372" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.9" text-anchor="middle">big-endian, as the first version read it</text>
+<text x="715.0" y="394" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#FFFFFF" fill-opacity="0.9" text-anchor="middle">0xD8000000: rejected</text>
+<path d="M 344 208 L 560 208" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="551,199 560,208 551,217" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 450 270.0 L 481.0 270.0 Q 494 270.0 494.0 257.0 L 494.0 257.0 Q 494 244 507.0 244.0 L 560 244" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="551,235 560,244 551,253" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 450 270.0 L 480 270.0 Q 494 270.0 494 284.0 L 494 350 Q 494 364 508 364 L 560 364" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="551,355 560,364 551,373" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

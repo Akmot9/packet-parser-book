@@ -35,7 +35,11 @@ ARROW_DARK = "#3A3A3A"
 WHITE = "#FFFFFF"
 
 # Grid lines: (between fields, inside the strong payload rows)
-LINES = {BLUE_LIGHT: ("#8EC6EE", "#2F97E3"), GREEN_LIGHT: ("#93D9A0", "#4DBE5E")}
+LINES = {BLUE_LIGHT: ("#8EC6EE", "#2F97E3"), GREEN_LIGHT: ("#93D9A0", "#4DBE5E"),
+         YELLOW_LIGHT: ("#E9CF86", "#E0AE2E")}
+RED = "#D56666"
+NONE_FILL = "#4A4A4A"
+HATCH = "url(#hatch)"
 
 SANS = "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
 MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace"
@@ -100,6 +104,26 @@ _handshake = b"\x01" + struct.pack("!I", len(_hello))[1:] + _hello
 TLS_RECORD = b"\x16\x03\x01" + struct.pack("!H", len(_handshake)) + _handshake
 
 
+# The book's other examples, already used in the getting started chapter and by examples/
+ACK_FRAME = bytes.fromhex(
+    "feaa81e86d1efeaa818ec864080045500034000000003d06206b36e6700d"
+    "ac140a0201bbc1087d7f02aa4e2b998e80100081748300000101080a9373"
+    "c9c207ef14e3")
+LLDP_FRAME = bytes.fromhex("0180c200000e00112233445588cc0207040011223344 55".replace(" ", ""))
+SYN_FIN_FRAME = SYN_FRAME[:14 + 33] + b"\x03" + SYN_FRAME[14 + 34:]
+
+# pcaps_exemple/protocols/giop/corba.pcap (nDPI test corpus), frame 4: the TCP payload,
+# a GIOP 1.2 big-endian Request "echo"
+GIOP_FRAME4 = bytes.fromhex(
+    "47494f5001020000000000d80000000003000000000000000000003c000000000000000100000010"
+    "4d795f436f6d70726573735f506f6100000000000000011f5a056dca000000100000011f5a056dca"
+    "0000000000000000000000056563686f000000000000000100000007000000280000000000000001"
+    "0000001c00000018000000000000000001ddf68a6dc5c42000000000000000000000004100020206"
+    "04020105030102050307070601020707050301050307030301030606020206040102020201010407"
+    "05020707030604060502020202020502020504010000000000000000")
+# frame 19: the GIOP header of a little-endian Request, at offset 32 of a MIOP datagram
+GIOP_FRAME19_HEADER = bytes.fromhex("47494f5001020100d8000000")
+
 def hexs(data: bytes) -> str:
     return " ".join(f"{b:02X}" for b in data)
 
@@ -117,6 +141,11 @@ class Svg:
             f'<rect x="12" y="12" width="{W - 24}" height="{height - 24}" rx="18" fill="{FRAME_FILL}" '
             f'stroke="{FRAME_LINE}" stroke-width="2.5"/>',
         ]
+
+    def define_hatch(self):
+        self.out.insert(3, '<defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="9" height="9" '
+                           'patternTransform="rotate(45)"><rect width="9" height="9" fill="#FFF4D6"/>'
+                           '<line x1="0" y1="0" x2="0" y2="9" stroke="#E9CF86" stroke-width="5"/></pattern></defs>')
 
     def add(self, s):
         self.out.append(s)
@@ -175,10 +204,10 @@ def _unit(dx, dy):
     return ((dx > 0) - (dx < 0), (dy > 0) - (dy < 0))
 
 
-def byte_grid(svg, gx, gy, rows, light, strong, highlight=ORANGE, cols=4):
+def byte_grid(svg, gx, gy, rows, light, strong, highlight=ORANGE, cols=4, strong_ink=WHITE):
     """Draw a 32-bit-per-row byte grid; return the y of each row and the grid bottom.
 
-    rows: ("fields", [(col, n, caption, hex, highlighted)]),
+    rows: ("fields", [(col, n, caption, hex, highlighted or a fill)]),
           ("bytes", hex, caption_or_None, fill) for undivided rows,
           ("ellipsis", text, fill, height).
     """
@@ -195,15 +224,17 @@ def byte_grid(svg, gx, gy, rows, light, strong, highlight=ORANGE, cols=4):
         if row[0] == "fields":
             for col, n, cap, hx, hl in row[1]:
                 x = gx + col * CW
-                svg.rect(x, y, n * CW, RH, highlight if hl else light, stroke=field_line)
+                fill = hl if isinstance(hl, str) else highlight if hl else light
+                svg.rect(x, y, n * CW, RH, fill, stroke=field_line)
                 for k in range(1, n):  # byte separators below the caption
                     svg.line(x + k * CW, y + 26, x + k * CW, y + RH, field_line)
                 svg.text(x + n * CW / 2, y + CAP_Y, cap, 13.5, weight=500, opacity=0.62)
                 for k, b in enumerate(hx.split()):
-                    svg.text(x + k * CW + CW / 2, y + HEX_Y, b, 20, weight=500)
+                    svg.text(x + k * CW + CW / 2, y + HEX_Y, b, 20, weight=500,
+                             opacity=0.45 if fill == HATCH else None)
         elif row[0] == "bytes":
             _, hx, cap, fill = row
-            ink, sep = (WHITE, strong_line) if fill == strong else (DARK, field_line)
+            ink, sep = (strong_ink, strong_line) if fill == strong else (DARK, field_line)
             svg.rect(gx, y, width, RH, fill)
             for k in range(1, cols):
                 svg.line(gx + k * CW, y + 26 if cap else y, gx + k * CW, y + RH, sep)
@@ -215,10 +246,10 @@ def byte_grid(svg, gx, gy, rows, light, strong, highlight=ORANGE, cols=4):
                 svg.text(gx + k * CW + CW / 2, hex_y, b, 20, fill=ink, weight=500)
         else:
             _, label, fill, h = row
-            ink, sep = (WHITE, strong_line) if fill == strong else (DARK, field_line)
+            ink, sep = (strong_ink, strong_line) if fill == strong else (DARK, field_line)
             svg.rect(gx, y, width, h, fill)
             svg.line(gx, y, gx + width, y, sep, dash="4 4")
-            svg.text(gx + width / 2, y + 25, label, 14, fill=ink, weight=500, opacity=0.9 if ink == WHITE else 0.7)
+            svg.text(gx + width / 2, y + h // 2 + 5, label, 14, fill=ink, weight=500, opacity=0.9 if ink == WHITE else 0.7)
     svg.add("</g>")
     svg.rect(gx, gy, width, bottom - gy, "none", rx=12, stroke=DARK, sw=3.5)
     return ys, bottom
@@ -496,8 +527,261 @@ def dispatch_diagram():
     svg.save("application/dispatch_rule.svg")
 
 
+def span_struct(svg, x, w, title, fields):
+    """Struct whose fields cover explicit spans: [(name, value, fill, ink, top, bottom)]."""
+    top = fields[0][4] - GAP - TITLE_H - GAP
+    svg.rect(x, top, w, fields[-1][5] + GAP - top, DARK, rx=10)
+    svg.text(x + w / 2, top + GAP + TITLE_H / 2 + 7, title, 20, fill=WHITE, weight=600)
+    for name, value, fill, ink, f_top, f_bottom in fields:
+        cy = (f_top + f_bottom) / 2
+        svg.rect(x + 4, f_top + GAP / 2, w - 8, f_bottom - f_top - GAP, fill, rx=6)
+        svg.text(x + w / 2, cy - 3, name, 16, fill=ink, weight=600)
+        svg.text(x + w / 2, cy + 18, value, 14, fill=ink, family=MONO, opacity=0.8)
+
+
+def outcomes_diagram():
+    height = 590
+    svg = Svg(height, "The outcomes of parse",
+              "parse returns Err only when the link layer fails: an unsupported LINKTYPE or a truncated link "
+              "header. Otherwise it returns a PacketFlow, in one of four shapes: every layer decoded (a TCP "
+              "pure ACK, no application); an unsupported protocol above the link layer, the upper layers None "
+              "and nothing corrupted (LLDP); a recognized layer with invalid bytes, None and reported in "
+              "corrupted (an IPv4 header cut after 6 bytes); a readable header no conforming stack sends, kept "
+              "and reported (TCP with SYN and FIN).")
+    svg.text(40, 62, "What parse returns", 22, weight=600, anchor="start")
+    svg.text(40, 88, "Only the link layer can fail the parse. Above it, a layer is decoded, absent, or reported.",
+             14, anchor="start", opacity=0.6)
+    # parse → Err
+    px, py, pw, ph = 250, 116, 320, 56
+    svg.rect(px, py, pw, ph, GREY, rx=8)
+    svg.text(px + pw / 2, py + ph / 2 + 6, "parse(link_type, bytes)", 17, fill=WHITE, family=MONO, weight=600)
+    ex, ew = 680, 180
+    svg.rect(ex, py - 10, ew, ph + 20, RED, rx=8)
+    svg.text(ex + ew / 2, py + 16, "Err(ParseError)", 16, fill=WHITE, weight=700, family=MONO)
+    svg.text(ex + ew / 2, py + 38, "unsupported LINKTYPE", 13, fill=WHITE, opacity=0.95)
+    svg.text(ex + ew / 2, py + 56, "truncated link header", 13, fill=WHITE, opacity=0.95)
+    svg.arrow([(px + pw + 6, py + ph / 2), (ex - 10, py + ph / 2)], RED)
+    svg.text((px + pw + ex) / 2, py + ph / 2 - 12, "link layer", 13, fill=RED, weight=600)
+
+    cw, gap, cx0, ctop = 196, 12, 40, 262
+    centers = [cx0 + i * (cw + gap) + cw / 2 for i in range(4)]
+    bus = ctop - 34
+    svg.add(f'<path d="M {px + pw / 2} {py + ph + 6} V {bus} M {centers[0]} {bus} H {centers[-1]}" fill="none" '
+            f'stroke="{SUCCESS}" stroke-width="3.5" stroke-linecap="round"/>')
+    svg.text(px + pw / 2 + 12, py + ph + 30, "Ok(PacketFlow)", 14, fill=SUCCESS, weight=700, family=MONO,
+             anchor="start")
+    for c in centers:
+        svg.arrow([(c, bus), (c, ctop - 8)], SUCCESS)
+
+    filled = lambda name, value, fill, ink=DARK: (name, value, fill, ink)  # noqa: E731
+    none = lambda name, why="None": (name, why, NONE_FILL, "#E6E6E6")  # noqa: E731
+    cards = [
+        ("Decoded", "a TCP pure ACK", [
+            filled("data_link", "Ethernet", GREY_LIGHT), filled("internet", "IPv4", BLUE_LIGHT),
+            filled("transport", "TCP 443 → 49416", GREEN_LIGHT), none("application", "None: empty payload"),
+            none("corrupted")]),
+        ("Not supported", "EtherType 0x88CC (LLDP)", [
+            filled("data_link", "Ethernet", GREY_LIGHT), none("internet"), none("transport"),
+            none("application"), none("corrupted")]),
+        ("Corrupted", "IPv4 cut after 6 bytes", [
+            filled("data_link", "Ethernet", GREY_LIGHT), none("internet"), none("transport"),
+            none("application"), filled("corrupted", "Internet: IPv4 error", RED, WHITE)]),
+        ("Anomaly", "TCP with SYN and FIN", [
+            filled("data_link", "Ethernet", GREY_LIGHT), filled("internet", "IPv4", BLUE_LIGHT),
+            filled("transport", "TCP 54321 → 80", GREEN_LIGHT), none("application", "None: not probed"),
+            filled("corrupted", "Transport: SYN+FIN", RED, WHITE)]),
+    ]
+    rh, th = 46, 54
+    for i, (title, example, rows) in enumerate(cards):
+        x = cx0 + i * (cw + gap)
+        h = th + len(rows) * (rh + GAP) + GAP
+        svg.rect(x, ctop, cw, h, DARK, rx=10)
+        svg.text(x + cw / 2, ctop + 24, title, 17, fill=WHITE, weight=600)
+        svg.text(x + cw / 2, ctop + 43, example, 12.5, fill=WHITE, opacity=0.7)
+        fy = ctop + th
+        for name, value, fill, ink in rows:
+            svg.rect(x + 4, fy, cw - 8, rh, fill, rx=6)
+            svg.text(x + cw / 2, fy + 18, name, 12.5, fill=ink, weight=600, opacity=0.75)
+            svg.text(x + cw / 2, fy + 36, value, 13, fill=ink, family=MONO)
+            fy += rh + GAP
+    svg.save("getting_started/parse_outcomes.svg")
+
+
+def giop_header_diagram():
+    gx, gy = 60, 120
+    hdr = GIOP_FRAME19_HEADER
+    h = lambda a, b: hexs(hdr[a:b])  # noqa: E731
+    size = int.from_bytes(hdr[8:12], "little")
+    wrong = int.from_bytes(hdr[8:12], "big")
+    rows = [
+        ("fields", [(0, 4, 'Magic "GIOP"', h(0, 4), False)]),
+        ("fields", [(0, 1, "Major", h(4, 5), False), (1, 1, "Minor", h(5, 6), False),
+                    (2, 1, "Flags", h(6, 7), True), (3, 1, "Type", h(7, 8), False)]),
+        ("fields", [(0, 4, "Message size", h(8, 12), False)]),
+        ("ellipsis", f"CDR body: {size} bytes, in the same byte order", YELLOW, 40),
+    ]
+    height = 456
+    svg = Svg(height, "The GIOP header, and why the byte order matters",
+              "The 12-byte GIOP header of frame 19 of corba.pcap, a little-endian Request inside a MIOP "
+              "datagram: magic GIOP, version 1.2, flags 01, type 0 (Request), message size D8 00 00 00. Bit 0 of "
+              f"the flags says little-endian, so the size is {size} bytes. Read big-endian, as the first version "
+              f"of the parser did, the same bytes say {wrong} and the message was rejected.")
+    svg.text(gx, 62, "GIOP header", 22, weight=600, anchor="start")
+    svg.text(gx, 88, "frame 19 of corba.pcap: a Request inside a MIOP datagram · 32 bits per row", 14,
+             anchor="start", opacity=0.55)
+    ys, bottom = byte_grid(svg, gx, gy, rows, YELLOW_LIGHT, YELLOW, strong_ink=DARK)
+    right = gx + 4 * CW
+    svg.outline(gx + 2 * CW, ys[1], CW, RH)
+    svg.outline(gx, ys[2], 4 * CW, RH)
+
+    bx, bw, bh = 570, 290, 96
+    ok_cy = ys[1] + ARROW_DY + 10
+    bad_cy = ys[2] + RH + 64
+    svg.rect(bx, ok_cy - bh / 2, bw, bh, GREEN, rx=8)
+    svg.text(bx + bw / 2, ok_cy - 14, f"{size} bytes", 20, weight=700)
+    svg.text(bx + bw / 2, ok_cy + 8, "little-endian, as Flags bit 0 says", 13.5, opacity=0.8)
+    svg.text(bx + bw / 2, ok_cy + 30, f"0x{size:08X}", 14, family=MONO, opacity=0.8)
+    svg.rect(bx, bad_cy - bh / 2, bw, bh, RED, rx=8)
+    svg.text(bx + bw / 2, bad_cy - 14, f"{wrong:,} bytes".replace(",", " "), 20, fill=WHITE, weight=700)
+    svg.text(bx + bw / 2, bad_cy + 8, "big-endian, as the first version read it", 13.5, fill=WHITE, opacity=0.9)
+    svg.text(bx + bw / 2, bad_cy + 30, f"0x{wrong:08X}: rejected", 14, fill=WHITE, family=MONO, opacity=0.9)
+    # Flags decide how the size is read
+    svg.arrow([(gx + 3 * CW - 4, ys[1] + ARROW_DY), (bx - 10, ys[1] + ARROW_DY)], ORANGE_DARK)
+    fork = right + 50
+    size_y = ys[2] + RH / 2
+    svg.arrow([(right + 6, size_y), (fork, size_y), (fork, ok_cy + 26), (bx - 10, ok_cy + 26)], GREY)
+    svg.arrow([(right + 6, size_y), (fork, size_y), (fork, bad_cy), (bx - 10, bad_cy)], GREY)
+    svg.save("giop/giop_header.svg")
+
+
+def giop_cdr_diagram():
+    gx, gy = 60, 120
+    body = GIOP_FRAME4[12:]
+    h = lambda a, b: hexs(body[a:b])  # noqa: E731
+    key_len = int.from_bytes(body[12:16], "big")
+    op_at = 16 + key_len
+    op_len = int.from_bytes(body[op_at:op_at + 4], "big")
+    assert body[op_at + 4:op_at + 4 + op_len] == b"echo\0"
+    pad_at = op_at + 4 + op_len
+    ctx_at = pad_at + (-(op_at + 4 + op_len)) % 4
+    rows = [
+        ("fields", [(0, 4, "request_id · ulong", h(0, 4), False)]),
+        ("fields", [(0, 1, "flags", h(4, 5), False), (1, 3, "reserved", h(5, 8), False)]),
+        ("fields", [(0, 2, "Target · short", h(8, 10), True), (2, 2, "padding to 4", h(10, 12), HATCH)]),
+        ("fields", [(0, 4, "object key length · ulong", h(12, 16), False)]),
+        ("ellipsis", f"{key_len} bytes of object key", YELLOW_LIGHT, 40),
+        ("fields", [(0, 4, "operation length · ulong", h(op_at, op_at + 4), False)]),
+        ("fields", [(0, 4, '"echo"', h(op_at + 4, op_at + 8), False)]),
+        ("fields", [(0, 1, "NUL", h(op_at + 8, op_at + 9), False),
+                    (1, 3, "padding to 4", h(pad_at, ctx_at), HATCH)]),
+        ("fields", [(0, 4, "service context count · ulong", h(ctx_at, ctx_at + 4), False)]),
+        ("ellipsis", "… a 40-byte context, then 76 bytes of stub data", YELLOW_LIGHT, RH),
+    ]
+    height = gy + 9 * RH + 40 + 76
+    svg = Svg(height, "The CDR body of a GIOP 1.2 Request",
+              "The body of frame 4 of corba.pcap, a big-endian GIOP 1.2 Request, 32 bits per row. CDR aligns "
+              "every primitive on its size: the 2-byte Target discriminant is followed by 2 bytes of padding "
+              "before the object key length, and the operation name echo with its NUL is followed by 3 bytes "
+              "of padding before the service context count. The GiopRequest fields come out as request_id 0, "
+              "response_flags 3, target KeyAddr of 60 bytes, operation echo, one service context and 76 bytes "
+              "of stub data.")
+    svg.define_hatch()
+    svg.text(gx, 62, "GIOP 1.2 Request body", 22, weight=600, anchor="start")
+    svg.text(gx, 88, "frame 4 of corba.pcap · big-endian CDR, 32 bits per row", 14, anchor="start", opacity=0.55)
+    ys, bottom = byte_grid(svg, gx, gy, rows, YELLOW_LIGHT, YELLOW, strong_ink=DARK)
+    right = gx + 4 * CW
+    svg.outline(gx, ys[2], 2 * CW, RH)
+    # legend
+    svg.rect(gx, bottom + 22, 34, 22, HATCH, rx=4, stroke="#E9CF86")
+    svg.text(gx + 46, bottom + 38, "padding: CDR aligns each primitive on its own size", 14, anchor="start",
+             opacity=0.7)
+
+    sx, sw = 610, 240
+    fields = [
+        ("request_id", "0", YELLOW_LIGHT, DARK, ys[0], ys[1]),
+        ("response_flags", "3", YELLOW_LIGHT, DARK, ys[1], ys[2]),
+        ("target", f"KeyAddr({key_len} bytes)", ORANGE, DARK, ys[2], ys[5]),
+        ("operation", '"echo"', YELLOW_LIGHT, DARK, ys[5], ys[8]),
+        ("service_contexts", "1 entry, id 7", YELLOW_LIGHT, DARK, ys[8], ys[9]),
+        ("stub_data", "76 bytes", YELLOW, DARK, ys[9], bottom),
+    ]
+    span_struct(svg, sx, sw, "GiopRequest", fields)
+    svg.arrow([(sx - 12, ys[0] + RH / 2), (right + 10, ys[0] + RH / 2)], GREY)
+    svg.arrow([(sx - 12, ys[1] + ARROW_DY), (gx + CW + 8, ys[1] + ARROW_DY)], GREY)
+    svg.arrow([(sx - 12, ys[2] + ARROW_DY), (gx + 2 * CW + 8, ys[2] + ARROW_DY)], ORANGE_DARK)
+    svg.arrow([(sx - 12, ys[6] + RH / 2), (right + 10, ys[6] + RH / 2)], GREY)
+    svg.arrow([(sx - 12, ys[8] + RH / 2), (right + 10, ys[8] + RH / 2)], GREY)
+    svg.arrow([(sx - 12, ys[9] + RH / 2), (right + 10, ys[9] + RH / 2)], ARROW_DARK)
+    svg.save("giop/giop_cdr.svg")
+
+
+def tryfrom_diagram():
+    height = 640
+    svg = Svg(height, "The shape of a parser: one TryFrom, one straight line",
+              "FooPacket, the example of the chapter, on synthetic bytes 10 01 00 08 DE AD BE EF. The TryFrom "
+              "runs a length pre-check, then one extract per constrained field in wire order, then the "
+              "cross-field checks, and builds the struct: version 1, message type 1, length 8, a 4-byte "
+              "payload. Each step can return a typed FooError. Below, the files each part lives in.")
+    svg.text(40, 62, "One TryFrom, one straight line", 22, weight=600, anchor="start")
+    svg.text(40, 88, "FooPacket, the example of this chapter, on synthetic bytes", 14, anchor="start", opacity=0.55)
+    cy = 214
+    bx, bw, bh = 40, 130, 96
+    svg.rect(bx, cy - bh / 2, bw, bh, GREY, rx=8)
+    svg.text(bx + bw / 2, cy - 18, "packet: &amp;[u8]", 15, fill=WHITE, weight=600)
+    svg.text(bx + bw / 2, cy + 6, "10 01 00 08", 14, fill=WHITE, family=MONO, opacity=0.9)
+    svg.text(bx + bw / 2, cy + 28, "DE AD BE EF", 14, fill=WHITE, family=MONO, opacity=0.9)
+    steps = [(280, "length", "pre-check", "validate_foo_min_length", "too short"),
+             (442, "extract_*", "per field", "extract_foo_version", "bad version"),
+             (604, "cross-field", "checks", "validate_foo_announced_length", "length ≠ announced")]
+    r = 52
+    for i, (x, l1, l2, fn, err) in enumerate(steps):
+        svg.add(f'<path d="M {x} {cy - r} L {x + r} {cy} L {x} {cy + r} L {x - r} {cy} Z" fill="{BLUE}" '
+                f'stroke="{BLUE}" stroke-width="8" stroke-linejoin="round"/>')
+        svg.text(x, cy - 3, l1, 14.5, fill=WHITE, weight=600)
+        svg.text(x, cy + 15, l2, 14.5, fill=WHITE, weight=600)
+        # function names are staggered: side by side they would touch
+        svg.text(x, cy - r - (34 if i == 1 else 14), fn, 12, family=MONO, opacity=0.7)
+    svg.arrow([(bx + bw + 6, cy), (steps[0][0] - r - 12, cy)], GREY)
+    for (xa, *_), (xb, *_) in zip(steps, steps[1:]):
+        svg.arrow([(xa + r + 10, cy), (xb - r - 12, cy)], SUCCESS)
+    ox, ow, oh = 714, 146, 124
+    svg.arrow([(steps[-1][0] + r + 10, cy), (ox - 10, cy)], SUCCESS)
+    svg.rect(ox, cy - oh / 2, ow, oh, GREEN, rx=8)
+    svg.text(ox + ow / 2, cy - 36, "Ok(FooPacket)", 14.5, weight=700, family=MONO)
+    for k, line in enumerate(("version: 1", "message_type: 1", "length: 8", "payload: 4 bytes")):
+        svg.text(ox + 12, cy - 11 + k * 19, line, 13, family=MONO, anchor="start", opacity=0.85)
+    # errors
+    ey, eh = cy + r + 64, 62
+    for x, *_, err in steps:
+        svg.arrow([(x, cy + r + 10), (x, ey - 10)], RED)
+        svg.text(x + 10, cy + r + 38, err, 13, fill=RED, weight=600, anchor="start")
+    svg.rect(200, ey, 520, eh, RED, rx=8)
+    svg.text(460, ey + 25, "Err(FooError)", 16, fill=WHITE, weight=700, family=MONO)
+    svg.text(460, ey + 46, "typed, with the offending values: InvalidLength { expected: 8, actual: 3 }", 13,
+             fill=WHITE, opacity=0.95)
+    # files
+    fy0 = ey + eh + 40
+    svg.text(40, fy0, "Where each part lives", 15, weight=600, anchor="start")
+    files = [(BLUE, WHITE, "src/checks/application/foo.rs", "validate_* and extract_*"),
+             (RED, WHITE, "src/errors/application/foo.rs", "enum FooError, with thiserror"),
+             (GREEN, DARK, "src/parse/application/protocols/foo.rs", "FooPacket and its TryFrom"),
+             (YELLOW, DARK, "src/parse/dispatch.rs", "a ProbeId and one line in RULES"),
+             (GREY, WHITE, "pcaps_exemple/protocols/foo/", "a real capture and its SOURCE.md")]
+    for i, (fill, ink, path, what) in enumerate(files):
+        x = 40 + (i % 2) * 414
+        y = fy0 + 16 + (i // 2) * 52
+        svg.rect(x, y, 22, 40, fill, rx=5)
+        svg.text(x + 34, y + 17, path, 13.5, family=MONO, weight=600, anchor="start")
+        svg.text(x + 34, y + 35, what, 13, anchor="start", opacity=0.65)
+    svg.save("adding_a_protocol/tryfrom_line.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
     tunnel_diagram()
     dispatch_diagram()
+    outcomes_diagram()
+    giop_header_diagram()
+    giop_cdr_diagram()
+    tryfrom_diagram()

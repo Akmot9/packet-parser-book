@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 590" width="900" height="590" role="img" aria-labelledby="t d">
+<title id="t">The outcomes of parse</title>
+<desc id="d">parse returns Err only when the link layer fails: an unsupported LINKTYPE or a truncated link header. Otherwise it returns a PacketFlow, in one of four shapes: every layer decoded (a TCP pure ACK, no application); an unsupported protocol above the link layer, the upper layers None and nothing corrupted (LLDP); a recognized layer with invalid bytes, None and reported in corrupted (an IPv4 header cut after 6 bytes); a readable header no conforming stack sends, kept and reported (TCP with SYN and FIN).</desc>
+<rect x="12" y="12" width="876" height="566" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">What parse returns</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">Only the link layer can fail the parse. Above it, a layer is decoded, absent, or reported.</text>
+<rect x="250" y="116" width="320" height="56" rx="8" fill="#757575"/>
+<text x="410.0" y="150.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">parse(link_type, bytes)</text>
+<rect x="680" y="106" width="180" height="76" rx="8" fill="#D56666"/>
+<text x="770.0" y="132" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">Err(ParseError)</text>
+<text x="770.0" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#FFFFFF" fill-opacity="0.95" text-anchor="middle">unsupported LINKTYPE</text>
+<text x="770.0" y="172" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#FFFFFF" fill-opacity="0.95" text-anchor="middle">truncated link header</text>
+<path d="M 576 144.0 L 670 144.0" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="661,135.0 670,144.0 661,153.0" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="625.0" y="132.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#D56666" text-anchor="middle">link layer</text>
+<path d="M 410.0 178 V 228 M 138.0 228 H 762.0" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round"/>
+<text x="422.0" y="202" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="700" fill="#3E9B4F" text-anchor="start">Ok(PacketFlow)</text>
+<path d="M 138.0 228 L 138.0 254" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="129.0,245 138.0,254 147.0,245" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 346.0 228 L 346.0 254" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="337.0,245 346.0,254 355.0,245" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 554.0 228 L 554.0 254" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="545.0,245 554.0,254 563.0,245" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 762.0 228 L 762.0 254" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="753.0,245 762.0,254 771.0,245" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="40" y="262" width="196" height="308" rx="10" fill="#1E1E1E"/>
+<text x="138.0" y="286" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Decoded</text>
+<text x="138.0" y="305" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.7" text-anchor="middle">a TCP pure ACK</text>
+<rect x="44" y="316" width="188" height="46" rx="6" fill="#B3B3B3"/>
+<text x="138.0" y="334" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">data_link</text>
+<text x="138.0" y="352" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">Ethernet</text>
+<rect x="44" y="366" width="188" height="46" rx="6" fill="#C2E5FF"/>
+<text x="138.0" y="384" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">internet</text>
+<text x="138.0" y="402" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">IPv4</text>
+<rect x="44" y="416" width="188" height="46" rx="6" fill="#CDF4D3"/>
+<text x="138.0" y="434" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">transport</text>
+<text x="138.0" y="452" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">TCP 443 → 49416</text>
+<rect x="44" y="466" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="138.0" y="484" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">application</text>
+<text x="138.0" y="502" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None: empty payload</text>
+<rect x="44" y="516" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="138.0" y="534" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">corrupted</text>
+<text x="138.0" y="552" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="248" y="262" width="196" height="308" rx="10" fill="#1E1E1E"/>
+<text x="346.0" y="286" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Not supported</text>
+<text x="346.0" y="305" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.7" text-anchor="middle">EtherType 0x88CC (LLDP)</text>
+<rect x="252" y="316" width="188" height="46" rx="6" fill="#B3B3B3"/>
+<text x="346.0" y="334" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">data_link</text>
+<text x="346.0" y="352" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">Ethernet</text>
+<rect x="252" y="366" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="346.0" y="384" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">internet</text>
+<text x="346.0" y="402" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="252" y="416" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="346.0" y="434" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">transport</text>
+<text x="346.0" y="452" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="252" y="466" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="346.0" y="484" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">application</text>
+<text x="346.0" y="502" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="252" y="516" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="346.0" y="534" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">corrupted</text>
+<text x="346.0" y="552" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="456" y="262" width="196" height="308" rx="10" fill="#1E1E1E"/>
+<text x="554.0" y="286" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Corrupted</text>
+<text x="554.0" y="305" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.7" text-anchor="middle">IPv4 cut after 6 bytes</text>
+<rect x="460" y="316" width="188" height="46" rx="6" fill="#B3B3B3"/>
+<text x="554.0" y="334" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">data_link</text>
+<text x="554.0" y="352" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">Ethernet</text>
+<rect x="460" y="366" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="554.0" y="384" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">internet</text>
+<text x="554.0" y="402" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="460" y="416" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="554.0" y="434" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">transport</text>
+<text x="554.0" y="452" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="460" y="466" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="554.0" y="484" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">application</text>
+<text x="554.0" y="502" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None</text>
+<rect x="460" y="516" width="188" height="46" rx="6" fill="#D56666"/>
+<text x="554.0" y="534" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#FFFFFF" fill-opacity="0.75" text-anchor="middle">corrupted</text>
+<text x="554.0" y="552" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#FFFFFF" text-anchor="middle">Internet: IPv4 error</text>
+<rect x="664" y="262" width="196" height="308" rx="10" fill="#1E1E1E"/>
+<text x="762.0" y="286" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Anomaly</text>
+<text x="762.0" y="305" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.7" text-anchor="middle">TCP with SYN and FIN</text>
+<rect x="668" y="316" width="188" height="46" rx="6" fill="#B3B3B3"/>
+<text x="762.0" y="334" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">data_link</text>
+<text x="762.0" y="352" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">Ethernet</text>
+<rect x="668" y="366" width="188" height="46" rx="6" fill="#C2E5FF"/>
+<text x="762.0" y="384" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">internet</text>
+<text x="762.0" y="402" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">IPv4</text>
+<rect x="668" y="416" width="188" height="46" rx="6" fill="#CDF4D3"/>
+<text x="762.0" y="434" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">transport</text>
+<text x="762.0" y="452" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">TCP 54321 → 80</text>
+<rect x="668" y="466" width="188" height="46" rx="6" fill="#4A4A4A"/>
+<text x="762.0" y="484" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#E6E6E6" fill-opacity="0.75" text-anchor="middle">application</text>
+<text x="762.0" y="502" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#E6E6E6" text-anchor="middle">None: not probed</text>
+<rect x="668" y="516" width="188" height="46" rx="6" fill="#D56666"/>
+<text x="762.0" y="534" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#FFFFFF" fill-opacity="0.75" text-anchor="middle">corrupted</text>
+<text x="762.0" y="552" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#FFFFFF" text-anchor="middle">Transport: SYN+FIN</text>
+</svg>

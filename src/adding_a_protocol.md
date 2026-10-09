@@ -13,6 +13,10 @@ The crate is built so that adding a protocol is a mechanical job with the same s
 - No `unwrap()` in a parser. The CI runs clippy with `-D warnings` and the `unwrap_used`/`expect_used`/`panic` lints.
 - Golden tests use **real frames** from a capture under `pcaps_exemple/`, with the pcap file and frame number cited in a comment. Synthetic bytes are for targeted unit tests (truncation, invalid value, limits) and are labelled as such.
 
+![The TryFrom of FooPacket as a straight line: length pre-check, one extract per field, cross-field checks, then the struct; each step can return a typed FooError; below, the file each part lives in](images/adding_a_protocol/tryfrom_line.svg)
+
+The first principle drawn on `FooPacket`, the example this chapter builds, with the file each part lives in. This is the shape the method asks of every parser: a straight line, where every exit before the struct is a typed error.
+
 ## Files to create
 
 For an application protocol `foo`:
