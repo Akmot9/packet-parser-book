@@ -42,7 +42,7 @@ Nesting is bounded by `MAX_TUNNEL_DEPTH = 4`, an anti-loop guard against malform
 
 Tunnels are looked for at two places in the pipeline, because they live at two levels:
 
-- **IP-level** (`detect_inner_l3`), from `Internet::payload_protocol`, *before* transport parsing: GRE and IP-in-IP have no transport layer, so their detection cannot depend on the hollow `Transport` the catch-all branch of `try_from_parts` builds for them. For IP-in-IP, the outer protocol number *announces* the inner version (4 or 41), and the raw-IP decoder checks it against the inner version nibble: a mismatch is refused.
+- **IP-level** (`detect_inner_l3`), from `Internet::payload_protocol`, first in the L7 stage, before the transport-level detection and the application probes. Transport parsing has already run by then, but GRE and IP-in-IP have no transport layer, so their detection does not depend on the hollow `Transport` the catch-all branch of `try_from_parts` builds for them. A fragmented packet has no `payload_protocol`, so a tunnel carried in fragments is not peeled. For IP-in-IP, the outer protocol number *announces* the inner version (4 or 41), and the raw-IP decoder checks it against the inner version nibble: a mismatch is refused.
 - **Transport-level** (`detect_inner`), from a UDP port and the payload shape: CAPWAP, VXLAN, Geneve, GTP-U.
 
 Detection returns `None`, never an error: no tunnel, an encrypted payload (CAPWAP over DTLS), a truncated one, or a shape we don't decode all mean "this is just an ordinary flow".
