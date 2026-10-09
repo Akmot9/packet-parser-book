@@ -120,6 +120,29 @@ DNS_FRAME = ethernet("02:42:c0:a8:00:01", "02:42:c0:a8:00:68",
 # A MAC address whose OUI is in the crate's table (Siemens)
 SIEMENS_MAC = bytes.fromhex("e0dca04d2e91")
 
+
+def addr6(a: str) -> bytes:
+    import ipaddress
+    return ipaddress.IPv6Address(a).packed
+
+
+def tcp6(src, dst, segment):
+    """The book's TCP SYN with its checksum recomputed over an IPv6 pseudo-header."""
+    hdr = segment[:16] + b"\0\0" + segment[18:]
+    pseudo = addr6(src) + addr6(dst) + struct.pack("!IBBBB", len(hdr), 0, 0, 0, 6)
+    return hdr[:16] + struct.pack("!H", checksum(pseudo + hdr)) + hdr[18:]
+
+
+def ipv6(src, dst, next_header, payload, hop_limit=64):
+    return (struct.pack("!IHBB", 6 << 28, len(payload), next_header, hop_limit) + addr6(src) + addr6(dst)
+            + payload)
+
+
+# The SYN over IPv6, behind one Hop-by-Hop extension header (next header 6, length 0: 8 bytes, a PadN option)
+IPV6_SRC, IPV6_DST = "2001:db8::1", "2001:db8::2"
+HOP_BY_HOP = bytes.fromhex("0600010400000000")
+IPV6_SYN = ipv6(IPV6_SRC, IPV6_DST, 0, HOP_BY_HOP + tcp6(IPV6_SRC, IPV6_DST, SYN_TCP))
+
 # The book's other examples, already used in the getting started chapter and by examples/
 ACK_FRAME = bytes.fromhex(
     "feaa81e86d1efeaa818ec864080045500034000000003d06206b36e6700d"
@@ -1325,6 +1348,101 @@ def ethernet_struct_diagram():
     svg.save("datalink/ethernet_struct.svg")
 
 
+
+def ipv6_diagram():
+    gx, gy = 60, 84
+    pkt = IPV6_SYN
+    h = lambda a, b: hexs(pkt[a:b])  # noqa: E731
+    rows = [
+        ("fields", [(0, 1, "Ver · TC", h(0, 1), False), (1, 3, "Traffic class · Flow label", h(1, 4), False)]),
+        ("fields", [(0, 2, "Payload length", h(4, 6), False), (2, 1, "Next header", h(6, 7), True),
+                    (3, 1, "Hop limit", h(7, 8), False)]),
+    ]
+    for base, cap in ((8, "Source address"), (24, "Destination address")):
+        for k in range(4):
+            rows.append(("bytes", h(base + 4 * k, base + 4 * k + 4), cap if k == 0 else None, BLUE_LIGHT))
+    rows += [("bytes", h(40, 44), "Hop-by-Hop extension header", "#A9D8F5"), ("bytes", h(44, 48), None, "#A9D8F5"),
+             ("bytes", h(48, 52), "Payload · TCP segment", BLUE), ("bytes", h(52, 56), None, BLUE),
+             ("ellipsis", f"… {len(pkt) - 56} more bytes, up to Payload length (48)", BLUE, 40)]
+    height = gy + 14 * RH + 40 + 34
+    svg = Svg(height, "From IPv6 bytes to the Internet struct",
+              "The book's TCP SYN carried by IPv6, 32 bits per row: the 40-byte fixed header, with its Next header "
+              "byte 00 announcing a Hop-by-Hop extension, the 8-byte extension header, then the TCP segment. "
+              "The struct gets source 2001:db8::1, destination 2001:db8::2, payload_protocol Some(Tcp) from the "
+              "end of the extension chain, and the 40-byte payload after it.")
+    svg.text(gx, gy - 20, "IPv6 packet", 22, weight=600, anchor="start")
+    svg.text(gx + 4 * CW, gy - 20, "32 bits per row", 14, anchor="end", opacity=0.55)
+    ys, bottom = byte_grid(svg, gx, gy, rows, BLUE_LIGHT, BLUE)
+    right = gx + 4 * CW
+    svg.outline(gx + 2 * CW, ys[1], CW, RH)
+    svg.outline(gx, ys[2], 4 * CW, 4 * RH)
+    svg.outline(gx, ys[6], 4 * CW, 4 * RH)
+    svg.outline(gx, ys[10], 4 * CW, 2 * RH)
+
+    sx, sw = 610, 240
+    span_struct(svg, sx, sw, "Internet", [
+        ("payload_protocol", "Some(Tcp), after the chain", ORANGE, DARK, ys[1], ys[2]),
+        ("source", "2001:db8::1", BLUE_LIGHT, DARK, ys[2], ys[6]),
+        ("destination", "2001:db8::2", BLUE_LIGHT, DARK, ys[6], ys[10]),
+        ("details", "Ipv6Packet · 8 B chain", "#A9D8F5", DARK, ys[10], ys[12]),
+        ("payload", "&amp;[u8] · 40 bytes", BLUE, WHITE, ys[12], bottom),
+    ])
+    svg.arrow([(sx - 12, ys[1] + ARROW_DY), (gx + 3 * CW + 8, ys[1] + ARROW_DY)], ORANGE_DARK)
+    for a, b, color in ((ys[2], ys[6], GREY), (ys[6], ys[10], GREY), (ys[10], ys[12], GREY), (ys[12], bottom, ARROW_DARK)):
+        svg.arrow([(sx - 12, (a + b) / 2), (right + 10, (a + b) / 2)], color)
+    svg.save("network/ipv6_struct.svg")
+
+
+def ipv6_extensions_diagram():
+    height = 520
+    svg = Svg(height, "The extension header chain",
+              "The IPv6 fixed header's Next header byte is 0: a Hop-by-Hop extension header follows. The parser "
+              "walks the chain: the extension's own next header is 6, TCP, and its length byte 0 means 8 bytes. "
+              "So next_header is 0, extension_headers holds the 8 bytes, transport_protocol is Some(6), and the "
+              "payload starts after the chain. A Fragment header (44) or No Next Header (59) in the chain "
+              "makes transport_protocol None: nothing is parsed above.")
+    svg.text(40, 62, "Walking the extension header chain", 22, weight=600, anchor="start")
+    svg.text(40, 88, "each header announces the next; the walk stops at a value that is not an extension", 14,
+             anchor="start", opacity=0.6)
+    cy, bh = 190, 96
+    boxes = [(40, 250, BLUE, WHITE, "IPv6 fixed header", "40 bytes", "Next header = 0"),
+             (350, 240, "#A9D8F5", DARK, "Hop-by-Hop", "length 0 → 8 bytes", "Next header = 6"),
+             (650, 210, GREEN, DARK, "TCP segment", "40 bytes", None)]
+    for x, w, fill, ink, title, size, nxt in boxes:
+        svg.rect(x, cy - bh / 2, w, bh, fill, rx=8)
+        svg.text(x + w / 2, cy - 18, title, 16, fill=ink, weight=600)
+        svg.text(x + w / 2, cy + 4, size, 13, fill=ink, opacity=0.85)
+        if nxt:
+            svg.rect(x + w / 2 - 70, cy + 14, 140, 26, ORANGE, rx=5)
+            svg.text(x + w / 2, cy + 32, nxt, 13, family=MONO, weight=600)
+    svg.arrow([(290, cy + 27), (340, cy + 27)], ORANGE_DARK)
+    svg.text(315, cy + 14, "0", 13, fill=ORANGE_DARK, weight=700)
+    svg.arrow([(590, cy + 27), (640, cy + 27)], ORANGE_DARK)
+    svg.text(615, cy + 14, "6", 13, fill=ORANGE_DARK, weight=700)
+
+    # what Ipv6Packet keeps
+    fy = cy + bh / 2 + 44
+    fields = [(40, 250, "next_header", "0", BLUE_LIGHT), (350, 240, "extension_headers", "&amp;[u8] · 8 bytes", "#A9D8F5"),
+              (650, 210, "transport_protocol", "Some(6) → Tcp", ORANGE)]
+    for x, w, name, value, fill in fields:
+        svg.arrow([(x + w / 2, cy + bh / 2 + 6), (x + w / 2, fy - 8)], GREY)
+        svg.rect(x, fy, w, 50, fill, rx=6)
+        svg.text(x + w / 2, fy + 21, name, 14.5, weight=600)
+        svg.text(x + w / 2, fy + 40, value, 13, family=MONO, opacity=0.8)
+    # the two chains that end nowhere
+    ny = fy + 86
+    svg.text(40, ny, "Two chains stop the transport layer:", 14, weight=600, anchor="start")
+    for k, (what, why) in enumerate((("Fragment header (44) in the chain", "a piece of a datagram: is_fragmented()"),
+                                     ("No Next Header (59) at the end", "nothing above, by design"))):
+        y = ny + 22 + k * 54
+        svg.rect(40, y, 420, 46, "#F2C9C9", rx=6)
+        svg.text(60, y + 20, what, 13.5, weight=600, anchor="start")
+        svg.text(60, y + 37, why, 12.5, anchor="start", opacity=0.75)
+        svg.text(480, y + 28, "→ transport_protocol: None", 13.5, anchor="start", weight=600, family=MONO,
+                 opacity=0.85)
+    svg.save("network/ipv6_extensions.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -1346,3 +1464,5 @@ if __name__ == "__main__":
     ethernet_frame_diagram()
     mac_address_diagram()
     ethernet_struct_diagram()
+    ipv6_diagram()
+    ipv6_extensions_diagram()

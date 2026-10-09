@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="900" height="520" role="img" aria-labelledby="t d">
+<title id="t">The extension header chain</title>
+<desc id="d">The IPv6 fixed header's Next header byte is 0: a Hop-by-Hop extension header follows. The parser walks the chain: the extension's own next header is 6, TCP, and its length byte 0 means 8 bytes. So next_header is 0, extension_headers holds the 8 bytes, transport_protocol is Some(6), and the payload starts after the chain. A Fragment header (44) or No Next Header (59) in the chain makes transport_protocol None: nothing is parsed above.</desc>
+<rect x="12" y="12" width="876" height="496" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">Walking the extension header chain</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">each header announces the next; the walk stops at a value that is not an extension</text>
+<rect x="40" y="142.0" width="250" height="96" rx="8" fill="#3DADFF"/>
+<text x="165.0" y="172" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">IPv6 fixed header</text>
+<text x="165.0" y="194" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#FFFFFF" fill-opacity="0.85" text-anchor="middle">40 bytes</text>
+<rect x="95.0" y="204" width="140" height="26" rx="5" fill="#FF9E42"/>
+<text x="165.0" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">Next header = 0</text>
+<rect x="350" y="142.0" width="240" height="96" rx="8" fill="#A9D8F5"/>
+<text x="470.0" y="172" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">Hop-by-Hop</text>
+<text x="470.0" y="194" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">length 0 → 8 bytes</text>
+<rect x="400.0" y="204" width="140" height="26" rx="5" fill="#FF9E42"/>
+<text x="470.0" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">Next header = 6</text>
+<rect x="650" y="142.0" width="210" height="96" rx="8" fill="#66D575"/>
+<text x="755.0" y="172" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">TCP segment</text>
+<text x="755.0" y="194" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">40 bytes</text>
+<path d="M 290 217 L 340 217" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="331,208 340,217 331,226" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="315" y="204" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#EB7500" text-anchor="middle">0</text>
+<path d="M 590 217 L 640 217" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="631,208 640,217 631,226" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="615" y="204" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#EB7500" text-anchor="middle">6</text>
+<path d="M 165.0 244.0 L 165.0 274.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="156.0,265.0 165.0,274.0 174.0,265.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="40" y="282.0" width="250" height="50" rx="6" fill="#C2E5FF"/>
+<text x="165.0" y="303.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#1E1E1E" text-anchor="middle">next_header</text>
+<text x="165.0" y="322.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0</text>
+<path d="M 470.0 244.0 L 470.0 274.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="461.0,265.0 470.0,274.0 479.0,265.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="350" y="282.0" width="240" height="50" rx="6" fill="#A9D8F5"/>
+<text x="470.0" y="303.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#1E1E1E" text-anchor="middle">extension_headers</text>
+<text x="470.0" y="322.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">&amp;[u8] · 8 bytes</text>
+<path d="M 755.0 244.0 L 755.0 274.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="746.0,265.0 755.0,274.0 764.0,265.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="650" y="282.0" width="210" height="50" rx="6" fill="#FF9E42"/>
+<text x="755.0" y="303.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#1E1E1E" text-anchor="middle">transport_protocol</text>
+<text x="755.0" y="322.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">Some(6) → Tcp</text>
+<text x="40" y="368.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" text-anchor="start">Two chains stop the transport layer:</text>
+<rect x="40" y="390.0" width="420" height="46" rx="6" fill="#F2C9C9"/>
+<text x="60" y="410.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">Fragment header (44) in the chain</text>
+<text x="60" y="427.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">a piece of a datagram: is_fragmented()</text>
+<text x="480" y="418.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">→ transport_protocol: None</text>
+<rect x="40" y="444.0" width="420" height="46" rx="6" fill="#F2C9C9"/>
+<text x="60" y="464.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">No Next Header (59) at the end</text>
+<text x="60" y="481.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">nothing above, by design</text>
+<text x="480" y="472.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">→ transport_protocol: None</text>
+</svg>
