@@ -1,0 +1,5 @@
+# STP
+
+Spanning Tree BPDUs are 802.3 frames (a length field instead of an EtherType) sent to `01:80:c2:00:00:00` with an LLC header `42-42-03`. They have no network layer, and `DataLink` does not tell a length from an EtherType: a value up to `0x05DC` lands in `ethertype` as an unknown value. Without a dedicated check they came out with L3/L4/L7 all `None` and no signal, so the pipeline validates the BPDU and labels the flow `application_protocol: "STP"` directly from the link layer ([#4](https://github.com/Akmot9/Packet-parser/issues/4)).
+
+The check needs an Ethernet view (`as_ethernet()`, so an 802.3br express frame qualifies too), the bridge group address, a length field of at most `0x05DC` that bounds LLC + BPDU (Ethernet padding beyond it is never parsed), the `42-42-03` header (which leaves out PVST+, carried in SNAP) and a BPDU that `BpduPacket::try_from` accepts. That decoder is public in `parse::data_link::stp`: it covers STP, RSTP and MSTP and fails with `StpError`. The flow itself only carries the label.

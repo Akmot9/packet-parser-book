@@ -31,6 +31,8 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 DNS (plus mDNS and LLMNR forms), TLS, SNMP, NTP, DHCP, DHCPv6, HTTP, MQTT, PostgreSQL, FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, Modbus TCP, UMAS, EtherNet/IP, OPC UA, S7Comm, COTP, AMS, GIOP, SRVLOC, ASTERIX (CAT 021, 034 and 048), QUIC, Bitcoin, and STP from the link layer.
 
+Some have a page of their own: [ASTERIX](./asterix.md) and [GIOP](./giop.md).
+
 A probed payload that matches nothing is labelled `"Unknown"`. An empty payload (a pure ACK) is not probed at all and `application` stays `None`.
 
 ## How the label is chosen: one ordered table
@@ -127,12 +129,6 @@ When choosing where a new protocol goes, the question is: *can a valid payload o
 | **Strong signature with transport constraint** | recognizable off-port, but only defined on one transport | S7Comm: the full TPKT + COTP-DT + S7 envelope is probed on any TCP port, and the same bytes on UDP never yield the label |
 
 Whatever the route, the **transport guard** is always there: the RFC says on which transport a protocol exists, and probing it elsewhere only produces false positives.
-
-### Recognized by structure alone: ASTERIX
-
-ASTERIX (EUROCONTROL-SPEC-0149), the exchange format of air traffic surveillance data, is the first protocol of the crate with **neither a magic nor a port**: no IANA port (Wireshark suggests 8600, the maintainer's capture runs on 8611 and 8612), and it usually travels as UDP multicast. What it has is structure. A datagram is a sequence of data blocks (`CAT`, `LEN`, records), and each record is cut item by item along the UAP of its category: fixed, extensible (FX), repetitive, compound and explicit (SP/RE) items.
-
-`CAT + LEN` alone match far too many things, so the probe asks for everything: every data block must be of a decoded category (CAT 048 monoradar plots and tracks, CAT 034 service messages from the same radar, CAT 021 ADS-B in its 2.x editions), and its records must split exactly along the UAP up to the last byte. One block of another category (CAT 062, say) fails the whole datagram. On the reference corpus, the probe labels exactly the 303 frames `tshark -Y asterix` sees, and no other. CAT 021 editions 0.2x, whose UAP is entirely different, are not decoded: nothing in the bytes tells them apart.
 
 ### Tightening a blind probe
 

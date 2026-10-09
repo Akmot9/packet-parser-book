@@ -1,4 +1,4 @@
-# Focus: GIOP
+# GIOP
 
 GIOP (General Inter-ORB Protocol) is the wire protocol of CORBA. It is the most complete application decoder of the crate, and the one whose development taught the most about parsing real traffic: two bugs were only found when the parser met genuine captures, and the final shape of the decoder — accept truncated messages, walk consecutive messages in a segment, resynchronize in the middle of a stream — comes straight from what an ORB actually puts on the wire. This chapter walks through it as a worked example of the method described in the previous chapters.
 
