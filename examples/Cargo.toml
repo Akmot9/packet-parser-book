@@ -10,7 +10,7 @@ publish = false
 [dependencies]
 # The version of the crate this book documents. Bump it together with the
 # text of the chapters.
-packet_parser = "=11.2.0"
+packet_parser = "=11.4.0"
 hex = "0.4"
 serde_json = "1"
 

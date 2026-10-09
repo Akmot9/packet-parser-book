@@ -5,7 +5,7 @@ The design documentation of the [**`packet_parser`**](https://github.com/Akmot9/
 This is not the API reference (that is on [docs.rs](https://docs.rs/packet_parser)). The book explains how the crate is built: the `PacketFlow` structure, the `TryFrom` validation procedure, each layer's decoders, the application dispatch table, tunnels, a GIOP walkthrough, and how to add a protocol.
 
 - Read it online: **<https://akmot9.github.io/packet-parser-book/>**
-- Reference version: `packet_parser` **11.2.0** — [crates.io](https://crates.io/crates/packet_parser) · [docs.rs](https://docs.rs/packet_parser) · [sources](https://github.com/Akmot9/Packet-parser)
+- Reference version: `packet_parser` **11.4.0** — [crates.io](https://crates.io/crates/packet_parser) · [docs.rs](https://docs.rs/packet_parser) · [sources](https://github.com/Akmot9/Packet-parser)
 
 ## Layout
 

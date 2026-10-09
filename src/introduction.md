@@ -20,7 +20,7 @@ This book explains how I developed it and its internal architecture, so you can 
 
 ## Reference version
 
-This book describes **`packet_parser` 11.2.0** ([crates.io](https://crates.io/crates/packet_parser/11.2.0), tag `v11.2.0` in the [repository](https://github.com/Akmot9/Packet-parser)). Code excerpts of the crate's internals are quoted from that revision; the user-facing snippets marked *tested* are compiled and run against it by the book's `examples/` crate. When the crate moves, the book is updated with it and this line changes.
+This book describes **`packet_parser` 11.4.0** ([crates.io](https://crates.io/crates/packet_parser/11.4.0), tag `v11.4.0` in the [repository](https://github.com/Akmot9/Packet-parser)). Code excerpts of the crate's internals are quoted from that revision; the user-facing snippets marked *tested* are compiled and run against it by the book's `examples/` crate. When the crate moves, the book is updated with it and this line changes.
 
 ## Purpose of this crate
 

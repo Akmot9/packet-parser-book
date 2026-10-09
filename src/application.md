@@ -29,7 +29,7 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 ## Supported protocols
 
-DNS (plus mDNS and LLMNR forms), TLS, SNMP, NTP, DHCP, DHCPv6, HTTP, MQTT, PostgreSQL, FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, Modbus TCP, UMAS, EtherNet/IP, OPC UA, S7Comm, COTP, AMS, GIOP, SRVLOC, QUIC, Bitcoin, and STP from the link layer.
+DNS (plus mDNS and LLMNR forms), TLS, SNMP, NTP, DHCP, DHCPv6, HTTP, MQTT, PostgreSQL, FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, Modbus TCP, UMAS, EtherNet/IP, OPC UA, S7Comm, COTP, AMS, GIOP, SRVLOC, ASTERIX (CAT 021, 034 and 048), QUIC, Bitcoin, and STP from the link layer.
 
 A probed payload that matches nothing is labelled `"Unknown"`. An empty payload (a pure ACK) is not probed at all and `application` stays `None`.
 
@@ -90,11 +90,12 @@ static RULES: &[Rule] = &[
     port_rule("DNS",     Guard::Udp, is_dns_port, ProbeId::Dns),            // 53: datagram form
     // --- blind cascade, with the transport guards the RFCs impose ---
     rule("NTP",         Guard::Udp, ProbeId::Ntp),
+    rule("ASTERIX",     Guard::Udp, ProbeId::Asterix),     // structure only: no magic, no port; before DNS
     rule("Bitcoin",     Guard::Tcp, ProbeId::Bitcoin),
     rule("OPC UA",      Guard::Tcp, ProbeId::Opcua),       // memoized: not re-run if the port rule failed
     rule("EtherNet/IP", Guard::Any, ProbeId::EthernetIp),  // truly bi-transport (TCP 44818, UDP 2222)
     rule("PostgreSQL",  Guard::Tcp, ProbeId::Postgresql),
-    rule("DNS",         Guard::Udp, ProbeId::Dns),         // datagram form exists only on UDP
+    rule("DNS",         Guard::Udp, ProbeId::DnsBlind),    // UDP only; off port 53 the sections must fill the datagram
     rule("SNMP",        Guard::Any, ProbeId::Snmp),        // SNMP over TCP exists (RFC 3430)
     rule("TLS",         Guard::Tcp, ProbeId::Tls),
     rule("SSH",         Guard::Tcp, ProbeId::Ssh),         // literal "SSH-" prefix, before HTTP
@@ -117,11 +118,26 @@ When choosing where a new protocol goes, the question is: *can a valid payload o
 
 | Route | When | Example |
 | --- | --- | --- |
-| **Blind probe** (`rule`) | the bytes identify themselves: literal marker (`HTTP/`, `GIOP`, `SSH-`), tight binary header (DNS, NTP), announced length that must match exactly (PostgreSQL) | `rule("TLS", Guard::Tcp, ..)` |
+| **Blind probe** (`rule`) | the bytes identify themselves: literal marker (`HTTP/`, `GIOP`, `SSH-`), tight binary header (DNS, NTP), announced length that must match exactly (PostgreSQL), or a structure that must tile the datagram to the last byte (ASTERIX) | `rule("TLS", Guard::Tcp, ..)` |
 | **Port-guarded** (`port_rule`) | the signature is weak or ambiguous even with perfect checks: identical reply syntax (FTP/SMTP/NNTP), loose headers (DHCPv6, AMS, COTP, QUIC short header), relaxed validation (mDNS) | `port_rule("FTP", Guard::Tcp, is_ftp_tcp_port, ..)` |
 | **Strong signature with transport constraint** | recognizable off-port, but only defined on one transport | S7Comm: the full TPKT + COTP-DT + S7 envelope is probed on any TCP port, and the same bytes on UDP never yield the label |
 
 Whatever the route, the **transport guard** is always there: the RFC says on which transport a protocol exists, and probing it elsewhere only produces false positives.
+
+### Recognized by structure alone: ASTERIX
+
+ASTERIX (EUROCONTROL-SPEC-0149), the exchange format of air traffic surveillance data, is the first protocol of the crate with **neither a magic nor a port**: no IANA port (Wireshark suggests 8600, the maintainer's capture runs on 8611 and 8612), and it usually travels as UDP multicast. What it has is structure. A datagram is a sequence of data blocks (`CAT`, `LEN`, records), and each record is cut item by item along the UAP of its category: fixed, extensible (FX), repetitive, compound and explicit (SP/RE) items.
+
+`CAT + LEN` alone match far too many things, so the probe asks for everything: every data block must be of a decoded category (CAT 048 monoradar plots and tracks, CAT 034 service messages from the same radar, CAT 021 ADS-B in its 2.x editions), and its records must split exactly along the UAP up to the last byte. One block of another category (CAT 062, say) fails the whole datagram. On the reference corpus, the probe labels exactly the 303 frames `tshark -Y asterix` sees, and no other. CAT 021 editions 0.2x, whose UAP is entirely different, are not decoded: nothing in the bytes tells them apart.
+
+### Tightening a blind probe
+
+A blind probe is only as good as the captures it has been confronted with. The defense corpus added in 11.4.0 showed two probes accepting traffic that was not theirs:
+
+- **SRVLOC**: 829 PTPv2 `Delay_Req` messages were labelled SRVLOC. Their header has exactly the shape of an SLPv1 one (version 1, a `SrvRply` function, a length equal to the datagram). The SLPv1 language field must now be a two-letter ASCII ISO 639 code (RFC 2165 §7); anything else is `SrvlocPacketParseError::InvalidLanguageCode`.
+- **DNS**: off port 53, any UDP datagram whose first twelve bytes formed a plausible empty header was DNS, among them 37 datagrams of a radar stream. The blind rule now runs its own probe, `ProbeId::DnsBlind`: the sections must consume the datagram exactly and carry at least one question or record. Port 53 keeps the tolerant decoder, so the two DNS rules no longer share a probe.
+
+In both cases the rule kept its place in the table; what changed is what the probe demands. Both corrections only remove labels: the 866 frames concerned now come out as `"Unknown"`, and the golden histogram moves on those frames and nowhere else.
 
 ## "Decode As"
 
