@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 640" width="900" height="640" role="img" aria-labelledby="t d">
+<title id="t">The shape of a parser: one TryFrom, one straight line</title>
+<desc id="d">FooPacket, the example of the chapter, on synthetic bytes 10 01 00 08 DE AD BE EF. The TryFrom runs a length pre-check, then one extract per constrained field in wire order, then the cross-field checks, and builds the struct: version 1, message type 1, length 8, a 4-byte payload. Each step can return a typed FooError. Below, the files each part lives in.</desc>
+<rect x="12" y="12" width="876" height="616" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">One TryFrom, one straight line</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="start">FooPacket, the example of this chapter, on synthetic bytes</text>
+<rect x="40" y="166.0" width="130" height="96" rx="8" fill="#757575"/>
+<text x="105.0" y="196" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#FFFFFF" text-anchor="middle">packet: &amp;[u8]</text>
+<text x="105.0" y="220" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#FFFFFF" fill-opacity="0.9" text-anchor="middle">10 01 00 08</text>
+<text x="105.0" y="242" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#FFFFFF" fill-opacity="0.9" text-anchor="middle">DE AD BE EF</text>
+<path d="M 280 162 L 332 214 L 280 266 L 228 214 Z" fill="#3DADFF" stroke="#3DADFF" stroke-width="8" stroke-linejoin="round"/>
+<text x="280" y="211" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">length</text>
+<text x="280" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">pre-check</text>
+<text x="280" y="148" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">validate_foo_min_length</text>
+<path d="M 442 162 L 494 214 L 442 266 L 390 214 Z" fill="#3DADFF" stroke="#3DADFF" stroke-width="8" stroke-linejoin="round"/>
+<text x="442" y="211" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">extract_*</text>
+<text x="442" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">per field</text>
+<text x="442" y="128" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">extract_foo_version</text>
+<path d="M 604 162 L 656 214 L 604 266 L 552 214 Z" fill="#3DADFF" stroke="#3DADFF" stroke-width="8" stroke-linejoin="round"/>
+<text x="604" y="211" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">cross-field</text>
+<text x="604" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#FFFFFF" text-anchor="middle">checks</text>
+<text x="604" y="148" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">validate_foo_announced_length</text>
+<path d="M 176 214 L 216 214" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="207,205 216,214 207,223" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 342 214 L 378 214" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="369,205 378,214 369,223" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 504 214 L 540 214" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="531,205 540,214 531,223" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 666 214 L 704 214" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="695,205 704,214 695,223" fill="none" stroke="#3E9B4F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="714" y="152.0" width="146" height="124" rx="8" fill="#66D575"/>
+<text x="787.0" y="178" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14.5" font-weight="700" fill="#1E1E1E" text-anchor="middle">Ok(FooPacket)</text>
+<text x="726" y="203" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">version: 1</text>
+<text x="726" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">message_type: 1</text>
+<text x="726" y="241" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">length: 8</text>
+<text x="726" y="260" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">payload: 4 bytes</text>
+<path d="M 280 276 L 280 320" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="271,311 280,320 289,311" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="290" y="304" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#D56666" text-anchor="start">too short</text>
+<path d="M 442 276 L 442 320" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="433,311 442,320 451,311" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="452" y="304" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#D56666" text-anchor="start">bad version</text>
+<path d="M 604 276 L 604 320" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="595,311 604,320 613,311" fill="none" stroke="#D56666" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="614" y="304" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#D56666" text-anchor="start">length ≠ announced</text>
+<rect x="200" y="330" width="520" height="62" rx="8" fill="#D56666"/>
+<text x="460" y="355" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">Err(FooError)</text>
+<text x="460" y="376" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#FFFFFF" fill-opacity="0.95" text-anchor="middle">typed, with the offending values: InvalidLength { expected: 8, actual: 3 }</text>
+<text x="40" y="432" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1E1E1E" text-anchor="start">Where each part lives</text>
+<rect x="40" y="448" width="22" height="40" rx="5" fill="#3DADFF"/>
+<text x="74" y="465" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">src/checks/application/foo.rs</text>
+<text x="74" y="483" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">validate_* and extract_*</text>
+<rect x="454" y="448" width="22" height="40" rx="5" fill="#D56666"/>
+<text x="488" y="465" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">src/errors/application/foo.rs</text>
+<text x="488" y="483" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">enum FooError, with thiserror</text>
+<rect x="40" y="500" width="22" height="40" rx="5" fill="#66D575"/>
+<text x="74" y="517" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">src/parse/application/protocols/foo.rs</text>
+<text x="74" y="535" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">FooPacket and its TryFrom</text>
+<rect x="454" y="500" width="22" height="40" rx="5" fill="#FFC943"/>
+<text x="488" y="517" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">src/parse/dispatch.rs</text>
+<text x="488" y="535" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">a ProbeId and one line in RULES</text>
+<rect x="40" y="552" width="22" height="40" rx="5" fill="#757575"/>
+<text x="74" y="569" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">pcaps_exemple/protocols/foo/</text>
+<text x="74" y="587" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">a real capture and its SOURCE.md</text>
+</svg>

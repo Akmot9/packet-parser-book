@@ -6,16 +6,9 @@ Module: `packet_parser::parse::application::protocols::giop`. Specification: COR
 
 ## The message
 
-```text
-packet-beta
-0-31:   "Magic 'GIOP' (4 bytes)"
-32-39:  "Major version u8 (1)"
-40-47:  "Minor version u8 (0, 1, 2)"
-48-55:  "Flags u8: bit 0 endianness, bit 1 more fragments (1.1+)"
-56-63:  "Message type u8 (0..7)"
-64-95:  "Message size u32 (body only, in the message's endianness)"
-96-..:  "Body (CDR-encoded, layout depends on type and version)"
-```
+![The 12-byte GIOP header of frame 19 of corba.pcap: magic GIOP, version 1.2, flags 01, type Request, message size D8 00 00 00, which is 216 read little-endian as the flags say, and 3 623 878 656 read big-endian](images/giop/giop_header.svg)
+
+The header is 12 bytes: the `GIOP` magic, the version, a flags byte, the message type, and the size of the body. That size is not in a fixed byte order: bit 0 of the flags says which. Frame 19 of `corba.pcap`, drawn here, is the message that taught the parser this lesson ([below](#the-header-a-tryfrom-like-the-others)).
 
 ```rust
 pub struct GiopPacket<'a> {
@@ -130,6 +123,10 @@ impl<'a> Cursor<'a> {
 Every read checks `ensure_available` first and returns `UnexpectedEof` otherwise: the cursor is the one place where bounds are enforced, and the parsers above it never index the buffer. It stays zero-copy: `read_bytes`, `read_octet_sequence` and `read_str` return slices of the original buffer, and `rest()` is how `stub_data` and `body` are obtained.
 
 The second bug found on real frames lives here. The `TargetAddress` discriminant is a CDR `short` (2 bytes, followed by 2 bytes of padding before the next `ulong`), not an octet. Read as one byte, no real GIOP 1.2 Request decoded. The golden tests on `corba.pcap` lock these paddings in: without them, the operation name and service contexts of every real Request come out shifted.
+
+![The CDR body of the Request of frame 4: request_id, response flags and 3 reserved bytes, the 2-byte Target discriminant followed by 2 bytes of padding, the 60-byte object key, the operation "echo" with its NUL and 3 bytes of padding, then the service context count](images/giop/giop_cdr.svg)
+
+The body of frame 4, the Request of the [example above](#reading-it). The message starts 12 bytes earlier, and 12 is a multiple of 4, so each 4-byte alignment falls at the start of a row here. The hatched bytes are the padding: the 2 after the `short` discriminant are the ones the first version did not skip.
 
 The `base` field handles a subtlety: the alignment of a message body counts from the start of the message, header included (offset 0 is the magic), while an **encapsulation** — the opaque `profile_data` of an IOR profile — is its own CDR stream, starting at its own endianness byte. `Cursor::encapsulation()` restarts at base 0 and reads that byte.
 

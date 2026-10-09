@@ -112,6 +112,10 @@ Only the link layer can fail the parse. Above it, three outcomes are distinct an
 | `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why. |
 | `Some(..)` | `Some(..)` | Semantic anomaly: the header is readable but no conforming stack emits it (TCP SYN+FIN, reserved bits set). The layer is **kept** so its ports remain available for flow correlation; nothing is parsed above it. |
 
+![What parse returns: Err only from the link layer, otherwise a PacketFlow in one of four shapes, decoded, not supported, corrupted or anomalous](images/getting_started/parse_outcomes.svg)
+
+The four shapes side by side, on the frames of the tests below (the anomaly is a TCP segment with SYN and FIN both set), and the `Err` only the link layer returns. A dark row is `None`: the difference between *not supported* and *corrupted* is only the `corrupted` row.
+
 A recognized layer with invalid bytes (*tested*):
 
 ```rust
