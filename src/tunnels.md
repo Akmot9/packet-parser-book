@@ -31,7 +31,7 @@ The outer flow stops at the VXLAN header: its `application` is the tunnel's name
 
 A non-tunneled packet yields one entry. The inner flows borrow the same buffer as the outer one: peeling is zero-copy, only the recursion boxes.
 
-Nesting is bounded by `MAX_TUNNEL_DEPTH = 4`, an anti-loop guard against malformed traffic that could claim endless encapsulation.
+Nesting is bounded by `MAX_TUNNEL_DEPTH = 4`, an anti-loop guard against malformed traffic that could claim endless encapsulation. The bound counts flow levels, the outer one included: `flatten()` returns at most four entries. At the fourth level the tunnel is no longer peeled, and its payload goes to the dispatch table like any other: four VXLAN layers around the SYN above give three flows labelled `"VXLAN"`, then a fourth labelled `"Unknown"`, and the SYN is never read.
 
 ## Supported tunnels
 

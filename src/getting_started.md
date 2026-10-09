@@ -170,6 +170,18 @@ let flow = parse_with(LinkType::ETHERNET, &raw, &config)?;
 
 `PacketFlow<'a>` borrows the input buffer: it cannot outlive it. To store a flow, send it across threads or keep it after the capture buffer is reused, convert it with `to_owned_flow()`. The conversion is **lossy** on purpose: the owned form drops the payloads and the per-layer `details`, and keeps the flow identity (addresses, protocols, ports).
 
+What `PacketFlowOwned` keeps, layer by layer:
+
+| Field | Owned type | Kept |
+| --- | --- | --- |
+| `data_link` | `LinkLayerOwned` | the LINKTYPE, the `NetworkProtocol`, and the fields of the format's view: MACs, EtherType and VLAN stack for Ethernet, the cooked-header fields for SLL and SLL2, the 802.11 addresses |
+| `internet` | `InternetOwned` | both addresses, their `IpType`, the protocol name as a `String` |
+| `transport` | `TransportOwned` | both ports, the protocol as its display name (`"TCP"`), not the typed `TransportProtocol` |
+| `application` | `ApplicationOwned` | the label, as a `String` |
+| `inner`, `corrupted` | `Box<PacketFlowOwned>`, `CorruptedLayer` | both, `inner` converted recursively |
+
+Dropped: every payload, every `details`, and `Internet::payload_protocol`. Every owned type derives `PartialEq`, `Eq` and `Hash` over what it keeps, which makes `PacketFlowOwned` usable as the key of a flow table.
+
 `PacketFlow` and `PacketFlowOwned` both implement `serde::Serialize` and produce the **same JSON**: the link layer is nested and tagged, the upper layers are flattened, payloads and `details` are not serialized.
 
 ```json
@@ -217,6 +229,15 @@ println!("L2={}ns L3={}ns L4={}ns L7={}ns total={}ns",
 ```bash
 cargo test --features parse_timing
 ```
+
+What each counter covers (see [the engine](./packet.md#the-engine-end-to-end)):
+
+- `l2_ns`: the link decoder. Choosing it (`decoder_for`) is not counted.
+- `l3_ns` and `l4_ns`: the internet and transport stages.
+- `l7_ns`: tunnel detection, the dispatch table and STP, **and the whole parse of every inner flow**: on a VXLAN packet, the inner Ethernet, IP and TCP are counted in the outer `l7_ns`. It stays at 0 for an anomalous TCP segment, which leaves before L7.
+- `total_ns`: the whole call.
+
+Measuring does not change the path: the pipeline is written once, over a `TimingSink` that does nothing for `parse` and reads the clock for `parse_timed`. `parse_timed` takes no `ParseConfig`, so a timed parse has no Decode As ports.
 
 ## Known limitations
 
