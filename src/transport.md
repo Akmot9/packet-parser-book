@@ -45,20 +45,9 @@ Same philosophy as the internet layer: the protocol number decides, there is no 
 
 ## TCP validations
 
-```text
-packet-beta
-0-15: "Source port"
-16-31: "Destination port"
-32-63: "Sequence number"
-64-95: "Acknowledgment number"
-96-99: "Data offset"
-100-102: "Reserved"
-103-111: "Flags (NS CWR ECE URG ACK PSH RST SYN FIN)"
-112-127: "Window size"
-128-143: "Checksum"
-144-159: "Urgent pointer"
-160-191: "Options (if data offset > 5)"
-```
+![The 40-byte TCP SYN carried by the IPv4 packet of the internet chapter: the two port fields become source_port and destination_port, the Flags byte is reached through details, the payload after the 40-byte header is empty](images/transport/tcp_struct.svg)
+
+These are the 40 bytes the [internet chapter](./network.md#ipv4-validations) handed up as `payload`. Unlike the IPv4 Protocol byte, nothing in a TCP header names the protocol above it: the ports, in orange, are only a hint, which the [application table](./application.md) confirms against the content. `protocol` does not come from these bytes either, it is the internet layer's `payload_protocol`. The data offset `A` says the header is 10 words long, options included, so `payload` starts at byte 40: a SYN carries no data, and `payload` is `Some` of an empty slice.
 
 `TcpPacket` holds the decoded `header: TcpHeader` and the `payload`, everything after `data_offset × 4` bytes. The header exposes every field: `data_offset` in 32-bit words, `reserved` as the three raw bits, one `bool` per flag from `ns` to `fin`. Options are not decoded: `options` is the raw slice between byte 20 and the end of the header.
 
