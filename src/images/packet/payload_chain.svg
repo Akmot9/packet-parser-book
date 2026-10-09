@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 472" width="900" height="472" role="img" aria-labelledby="t d">
+<title id="t">Each layer is parsed from the payload of the previous one</title>
+<desc id="d">The link layer has a network payload and announces the network protocol: the internet layer is parsed from them. The internet layer has a payload and announces the transport protocol: the transport layer is parsed from them. The transport payload and its ports go to the application probes.</desc>
+<rect x="12" y="12" width="876" height="448" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">Each layer is parsed from the payload of the previous one</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">and each layer announces what the next one is</text>
+<rect x="330" y="112" width="240" height="316" rx="10" fill="#1E1E1E"/>
+<text x="450.0" y="151.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">PacketFlow</text>
+<rect x="334" y="172" width="232" height="60" rx="6" fill="#757575"/>
+<text x="450.0" y="208.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">data_link</text>
+<rect x="334" y="236" width="232" height="60" rx="6" fill="#3DADFF"/>
+<text x="450.0" y="272.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">internet</text>
+<rect x="334" y="300" width="232" height="60" rx="6" fill="#66D575"/>
+<text x="450.0" y="336.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">transport</text>
+<rect x="334" y="364" width="232" height="60" rx="6" fill="#FFC943"/>
+<text x="450.0" y="400.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">application</text>
+<rect x="650" y="172.0" width="210" height="60" rx="8" fill="#B3B3B3" stroke="#757575" stroke-width="3"/>
+<text x="755.0" y="198.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" font-weight="600" fill="#1E1E1E" text-anchor="middle">network_payload()</text>
+<text x="755.0" y="218.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">+ network_protocol</text>
+<path d="M 576 202.0 L 640 202.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="631,193.0 640,202.0 631,211.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="610.0" y="192.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">has</text>
+<path d="M 755.0 238.0 L 755.0 252.0 Q 755.0 266.0 741.0 266.0 L 580 266.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="589,275.0 580,266.0 589,257.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="40" y="236.0" width="210" height="60" rx="8" fill="#C2E5FF" stroke="#3DADFF" stroke-width="3"/>
+<text x="145.0" y="262.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" font-weight="600" fill="#1E1E1E" text-anchor="middle">payload</text>
+<text x="145.0" y="282.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">+ payload_protocol</text>
+<path d="M 324 266.0 L 260 266.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="269,275.0 260,266.0 269,257.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="290.0" y="256.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">has</text>
+<path d="M 145.0 302.0 L 145.0 316.0 Q 145.0 330.0 159.0 330.0 L 320 330.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="311,321.0 320,330.0 311,339.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="650" y="300.0" width="210" height="60" rx="8" fill="#CDF4D3" stroke="#66D575" stroke-width="3"/>
+<text x="755.0" y="326.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" font-weight="600" fill="#1E1E1E" text-anchor="middle">payload</text>
+<text x="755.0" y="346.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">+ ports, to the probes</text>
+<path d="M 576 330.0 L 640 330.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="631,321.0 640,330.0 631,339.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="610.0" y="320.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">has</text>
+<path d="M 755.0 366.0 L 755.0 380.0 Q 755.0 394.0 741.0 394.0 L 580 394.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="589,403.0 580,394.0 589,385.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

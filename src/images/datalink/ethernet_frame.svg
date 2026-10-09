@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 508" width="900" height="508" role="img" aria-labelledby="t d">
+<title id="t">The Ethernet II frame</title>
+<desc id="d">An Ethernet II frame: the destination MAC address (bytes 0 to 5), the source MAC address (6 to 11), the EtherType (12 and 13), then the payload from byte 14. Each 802.1Q VLAN tag inserts 4 bytes before the EtherType, which shifts it and the payload.</desc>
+<rect x="12" y="12" width="876" height="484" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="60" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">The Ethernet II frame</text>
+<text x="60" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">destination first; each VLAN tag adds 4 bytes before the EtherType</text>
+<text x="220" y="120" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="end">size</text>
+<text x="680" y="120" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="start">bytes, untagged</text>
+<rect x="250" y="132" width="400" height="54" rx="8" fill="#1E1E1E"/>
+<text x="450.0" y="165.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Destination MAC</text>
+<text x="220" y="165.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="end">6 bytes</text>
+<text x="680" y="165.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">0 – 5</text>
+<rect x="250" y="194" width="400" height="54" rx="8" fill="#1E1E1E"/>
+<text x="450.0" y="227.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Source MAC</text>
+<text x="220" y="227.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="end">6 bytes</text>
+<text x="680" y="227.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">6 – 11</text>
+<rect x="250" y="256" width="400" height="54" rx="8" fill="none" stroke="#EB7500" stroke-width="2.5" stroke-dasharray="7 6"/>
+<text x="450.0" y="289.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#1E1E1E" fill-opacity="0.75" text-anchor="middle">VLAN tag (802.1Q), optional</text>
+<text x="220" y="289.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="end">4 bytes each</text>
+<rect x="250" y="318" width="400" height="54" rx="8" fill="#FF9E42"/>
+<text x="450.0" y="351.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#1E1E1E" text-anchor="middle">EtherType</text>
+<text x="220" y="351.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="end">2 bytes</text>
+<text x="680" y="351.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">12 – 13</text>
+<rect x="250" y="380" width="400" height="54" rx="8" fill="#757575"/>
+<text x="450.0" y="413.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Payload</text>
+<text x="220" y="413.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="end">variable</text>
+<text x="680" y="413.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">14 –</text>
+</svg>

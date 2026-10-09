@@ -1,12 +1,12 @@
 # Data validation procedure
 
-![data_validation](images/TryFrom_algo.png)
+![The 20 bytes of an IPv4 header go through Ipv4Packet::try_from: a validation, then Ok(Ipv4Packet) or Err(Ipv4Error)](images/data_validation/tryfrom.svg)
 
 When we receive a packet, we use `TryFrom` to apply several validation steps to it.  
 If the validations succeed, the function returns a structured representation of the packet or a part of it.  
 If the validations fail, it returns a custom error, implemented using the [thiserror crate](https://crates.io/crates/thiserror).
 
-> In the diagram the error is called `ParsedPacketError`. It is now `ParseError` for the top-level API, and each layer and each protocol has its own error type (`DataLinkError`, `Ipv4Error`, `TcpError`, `NtpPacketParseError`...).
+The top-level API returns `ParseError`; each layer and each protocol has its own error type (`DataLinkError`, `Ipv4Error`, `TcpError`, `NtpPacketParseError`...).
 
 ## Every struct is a `TryFrom<&[u8]>`
 

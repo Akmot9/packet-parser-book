@@ -3,13 +3,13 @@
 ## What is a Packet?
 A network packet is a sequence of bytes transmitted over a network. Here's an example of a raw packet in hexadecimal format:
 
-![Table](images/table.png)
+![The 71 bytes of a DNS query, twelve per row](images/packet/raw_packet.svg)
 
 A **packet** is essentially a **list of bytes** representing network data.  
 For example:
 
 ```rust
-let packet: &[u8] = &[0x00, 0x11, 0x22, 0x33, 0x44, 0x55, /* other bytes */];
+let packet: &[u8] = &[0x02, 0x42, 0xc0, 0xa8, 0x00, 0x01, /* 65 more bytes */];
 ```
 
 It is preferable to **reference** the packet (`&[u8]`) rather than copying it to avoid unnecessary memory usage and improve performance. This is the founding rule of the crate: **the parsed structures borrow the packet, they never copy it**. Every parsed struct carries a lifetime `'a` tied to the input buffer.
@@ -19,21 +19,19 @@ It is preferable to **reference** the packet (`&[u8]`) rather than copying it to
 
 Each protocol occupies a specific part of the packet. By analyzing the bytes, we can identify different layers.
 
-![Table](images/table_color.png)
+![The same bytes coloured by layer: 14 of Ethernet, 20 of IPv4, 8 of UDP, 29 of DNS](images/packet/layered_packet.svg)
 
 ---
 
 ## 🪆 Protocols are Nested (Like Russian Dolls)  
 A network packet is structured as a series of encapsulated layers: each layer contains a protocol that encapsulates the next.
-![Table](images/packetstruct.png)
+![Nested boxes: the Ethernet frame carries the IPv4 packet, which carries the UDP datagram, which carries the DNS message](images/packet/nesting.svg)
 
 ---
 
 ## `PacketFlow` Layered Structure
 Once parsed, a packet is structured into **four layers**, following the OSI model:
-![Table](images/PacketParser_proto.png)
-
-> The diagrams in this book still say `ParsedPacket`: that was the name of the struct when they were drawn. The struct is now called **`PacketFlow`**.
+![The PacketFlow stack, data_link, internet, transport, application, inner, corrupted, with the formats and protocols each layer can hold](images/packet/packetflow_layers.svg)
 
 The **Data Link Layer** is always present, while the others depend on the packet type.
 
@@ -65,7 +63,7 @@ Two fields were not in the original design and deserve a word:
 
 ## 🔗 How Layers Interact with Addresses and Entry/Exit Points  
 Each layer contains specific information to identify **source and destination addresses**.
-![Table](images/PacketParser_endpoint.png)
+![The flow identity of the DNS query: source and destination MAC, IP and port, the protocol of each layer and the application label](images/packet/flow_identity.svg)
 
 This is what I call the **flow identity**: MAC addresses, IP addresses, protocols, ports. `PacketFlow` implements `PartialEq`, `Eq` and `Hash` on this identity only, **not on the raw bytes**: payloads are deliberately ignored. Two packets of the same conversation carrying different data compare equal and hash identically, which is exactly what you want to build a flow table with a `HashMap<PacketFlowOwned, Stats>`.
 
@@ -74,7 +72,7 @@ This is what I call the **flow identity**: MAC addresses, IP addresses, protocol
 ## 🧐 Detailed Breakdown of Parsed Structures  
 Each layer has its own structure with unique fields.
 
-![Table](images/PacketParser_struct.png)
+![The structs behind each layer: LinkLayer, Internet, Transport and Application, with the fields that are not part of the identity hatched](images/packet/layer_structs.svg)
 
 Each layer exposes two levels of information:
 
@@ -88,7 +86,7 @@ The data link layer is the exception: `LinkLayer` is *format-neutral* (Ethernet,
  
 Parsing is determined by the payloads extracted at each stage.
 
-![Table](images/PacketParser_parsing.png)
+![Each layer has a payload and announces the next protocol: network_payload and network_protocol for the internet layer, payload and payload_protocol for the transport layer, payload and ports for the application probes](images/packet/payload_chain.svg)
 
 The pipeline is **layered and progressive**: each layer is parsed from the payload of the previous one, and each layer announces what the next one is.
 

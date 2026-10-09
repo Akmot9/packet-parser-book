@@ -104,6 +104,22 @@ _handshake = b"\x01" + struct.pack("!I", len(_hello))[1:] + _hello
 TLS_RECORD = b"\x16\x03\x01" + struct.pack("!H", len(_handshake)) + _handshake
 
 
+
+def udp(src, dst, sport, dport, data):
+    hdr = struct.pack("!HHHH", sport, dport, 8 + len(data), 0)
+    pseudo = addr(src) + addr(dst) + struct.pack("!BBH", 0, 17, 8 + len(data))
+    return hdr[:6] + struct.pack("!H", checksum(pseudo + hdr + data)) + data
+
+
+# A DNS query for example.com (A, IN), from the host of the SYN to its resolver: the packet of
+# the first diagrams of the book, small enough to be drawn byte by byte
+DNS_QUERY = bytes.fromhex("1a2b01000001000000000000") + b"\x07example\x03com\x00" + bytes.fromhex("00010001")
+DNS_FRAME = ethernet("02:42:c0:a8:00:01", "02:42:c0:a8:00:68",
+                     ipv4("192.168.0.104", "192.168.0.1", 17, udp("192.168.0.104", "192.168.0.1", 51000, 53, DNS_QUERY),
+                          ident=0x3c1d))
+# A MAC address whose OUI is in the crate's table (Siemens)
+SIEMENS_MAC = bytes.fromhex("e0dca04d2e91")
+
 # The book's other examples, already used in the getting started chapter and by examples/
 ACK_FRAME = bytes.fromhex(
     "feaa81e86d1efeaa818ec864080045500034000000003d06206b36e6700d"
@@ -898,6 +914,417 @@ def engine_diagram():
     svg.save("packet/parsing_engine.svg")
 
 
+
+# --------------------------------------------------------------------------- the first chapters
+# These replace the original FigJam PNGs: same compositions, current names, real bytes.
+
+LAYER = {  # strong, light, ink on strong
+    "link": (GREY, GREY_LIGHT, WHITE), "internet": (BLUE, BLUE_LIGHT, WHITE),
+    "transport": (GREEN, GREEN_LIGHT, DARK), "application": (YELLOW, YELLOW_LIGHT, DARK),
+    "inner": (ORANGE, "#FFE0C2", DARK), "corrupted": (RED, "#F2C9C9", WHITE),
+}
+DNS_SPANS = [("link", "Ethernet", 14), ("internet", "IPv4", 20), ("transport", "UDP", 8), ("application", "DNS", 29)]
+
+
+def frame_layers(spans):
+    """Layer key of each byte, from (key, name, length) spans."""
+    return [key for key, _, n in spans for _ in range(n)]
+
+
+def hex_grid(svg, x0, y0, data, cols, cw, ch, fill_of, ink_of, size=17, clip="h", rows=None, text_y=None):
+    """A grid of bytes, one per cell; `fill_of(i)`/`ink_of(i)` colour byte i. Returns the bottom y."""
+    rows = rows or -(-len(data) // cols)
+    w, h = cols * cw, rows * ch
+    svg.add(f'<clipPath id="{clip}"><rect x="{x0}" y="{y0}" width="{w}" height="{h}" rx="12"/></clipPath>')
+    svg.add(f'<g clip-path="url(#{clip})">')
+    for i in range(rows * cols):
+        x, y = x0 + (i % cols) * cw, y0 + (i // cols) * ch
+        if i < len(data):
+            svg.rect(x, y, cw, ch, fill_of(i), stroke="#00000026", sw=1)
+            svg.text(x + cw / 2, y + (text_y or ch / 2 + 6), f"{data[i]:02X}", size, fill=ink_of(i), weight=500)
+        else:
+            svg.rect(x, y, cw, ch, "#F4DCC4", stroke="#00000014", sw=1)
+    svg.add("</g>")
+    svg.rect(x0, y0, w, h, "none", rx=12, stroke=DARK, sw=3.5)
+    return y0 + h
+
+
+def flow_stack(svg, x, y, w, rows, title="PacketFlow", rh=52, sub_size=12.5):
+    """The black PacketFlow stack: rows = [(label, layer key, sublabel or None)]. Returns row centers, bottom."""
+    h = TITLE_H + len(rows) * (rh + GAP) + GAP
+    svg.rect(x, y, w, h, DARK, rx=10)
+    svg.text(x + w / 2, y + GAP + TITLE_H / 2 + 7, title, 20, fill=WHITE, weight=600)
+    centers, fy = [], y + GAP + TITLE_H
+    for label, key, sub in rows:
+        strong, _, ink = LAYER[key]
+        svg.rect(x + 4, fy, w - 8, rh, strong, rx=6)
+        if sub:
+            svg.text(x + w / 2, fy + rh / 2 - 3, label, 16, fill=ink, weight=600)
+            svg.text(x + w / 2, fy + rh / 2 + 16, sub, sub_size, fill=ink, family=MONO, opacity=0.85)
+        else:
+            svg.text(x + w / 2, fy + rh / 2 + 6, label, 16, fill=ink, weight=600)
+        centers.append(fy + rh / 2)
+        fy += rh + GAP
+    return centers, y + h
+
+
+def chip(svg, x, cy, w, fill, ink, text_, sub=None, h=40, mono_sub=True):
+    svg.rect(x, cy - h / 2, w, h, fill, rx=6)
+    if sub:
+        svg.text(x + w / 2, cy - 4, text_, 12, fill=ink, weight=600, opacity=0.85)
+        svg.text(x + w / 2, cy + 13, sub, 13, fill=ink, family=MONO if mono_sub else SANS)
+    else:
+        svg.text(x + w / 2, cy + 5, text_, 14.5, fill=ink, weight=600)
+
+
+def raw_packet_diagram():
+    data = DNS_FRAME
+    x0, y0, cols, cw, ch = 60, 112, 12, 65, 46
+    height = y0 + 6 * ch + 44
+    svg = Svg(height, "A packet, as captured",
+              f"The {len(data)} bytes of a DNS query for example.com, as a capture stores them, one byte per "
+              "cell and twelve per row: nothing in the bytes themselves says where a protocol starts.")
+    svg.text(x0, 62, "A packet, as captured", 22, weight=600, anchor="start")
+    svg.text(x0, 88, f"{len(data)} bytes: a DNS query for example.com, one byte per cell", 14, anchor="start",
+             opacity=0.6)
+    hex_grid(svg, x0, y0, data, cols, cw, ch, lambda i: GREY, lambda i: WHITE)
+    svg.save("packet/raw_packet.svg")
+
+
+def layered_packet_diagram():
+    data = DNS_FRAME
+    keys = frame_layers(DNS_SPANS)
+    assert len(keys) == len(data)
+    x0, y0, cols, cw, ch = 60, 112, 12, 65, 46
+    bottom = y0 + 6 * ch
+    height = bottom + 110
+    svg = Svg(height, "Each protocol owns a span of bytes",
+              "The same DNS query, each byte coloured by the protocol it belongs to: 14 bytes of Ethernet, 20 of "
+              "IPv4, 8 of UDP, then the 29 bytes of the DNS message.")
+    svg.text(x0, 62, "Each protocol owns a span of bytes", 22, weight=600, anchor="start")
+    svg.text(x0, 88, "the same packet, coloured by layer", 14, anchor="start", opacity=0.6)
+    hex_grid(svg, x0, y0, data, cols, cw, ch, lambda i: LAYER[keys[i]][0], lambda i: LAYER[keys[i]][2])
+    cx = x0
+    for key, name, n in DNS_SPANS:
+        strong, _, ink = LAYER[key]
+        chip(svg, cx, bottom + 50, 180, strong, ink, f"{name} · {n} bytes")
+        cx += 200
+    svg.save("packet/layered_packet.svg")
+
+
+def nesting_diagram():
+    height = 400
+    svg = Svg(height, "Protocols are nested",
+              "The DNS query as nested boxes: the Ethernet frame carries an IPv4 packet, which carries a UDP "
+              "datagram, which carries the DNS message. Each layer is a header followed by the next layer.")
+    svg.text(40, 62, "Protocols are nested", 22, weight=600, anchor="start")
+    svg.text(40, 88, "each layer is a header, then the layer it carries", 14, anchor="start", opacity=0.6)
+    boxes = [("link", "DATA LINK", "Ethernet · 14 bytes", 40, 860, 120, 360),
+             ("internet", "INTERNET", "IPv4 · 20 bytes", 210, 840, 145, 335),
+             ("transport", "TRANSPORT", "UDP · 8 bytes", 380, 820, 170, 310),
+             ("application", "APPLICATION", "DNS · 29 bytes", 545, 800, 195, 285)]
+    for i, (key, name, sub, x1, x2, y1, y2) in enumerate(boxes):
+        strong, light, _ = LAYER[key]
+        svg.rect(x1, y1, x2 - x1, y2 - y1, light if i < 3 else strong, rx=12, stroke=strong if i < 3 else "#E0AE2E",
+                 sw=4)
+        right = boxes[i + 1][3] if i < 3 else x2
+        cxl = (x1 + right) / 2
+        svg.text(cxl, (y1 + y2) / 2 - 2, name, 16, weight=600)
+        svg.text(cxl, (y1 + y2) / 2 + 18, sub, 13, opacity=0.7)
+    svg.save("packet/nesting.svg")
+
+
+def packetflow_layers_diagram():
+    rows = [("data_link", "link", None), ("internet", "internet", None), ("transport", "transport", None),
+            ("application", "application", None), ("inner", "inner", None), ("corrupted", "corrupted", None)]
+    chips = [["Ethernet", "Linux SLL", "RAW IP", "…"], ["IPv4", "IPv6", "ARP", "Profinet"],
+             ["TCP", "UDP", "ICMP", "ICMPv6"], ["DNS", "TLS", "S7Comm", "…"], ["GRE", "VXLAN", "GTP-U", "…"],
+             ["Internet", "Transport"]]
+    sy, rh = 112, 52
+    height = sy + TITLE_H + len(rows) * (rh + GAP) + GAP + 40
+    svg = Svg(height, "The layers of a PacketFlow",
+              "PacketFlow has one field per layer: data_link, always present, then internet, transport and "
+              "application, each optional, and the formats or protocols each can hold. inner holds the packet a "
+              "tunnel carries (GRE, VXLAN, GTP-U...), corrupted names the layer whose bytes were invalid.")
+    svg.text(60, 62, "The layers of a PacketFlow", 22, weight=600, anchor="start")
+    svg.text(60, 88, "data_link is always there; every other field is an Option", 14, anchor="start", opacity=0.6)
+    centers, _ = flow_stack(svg, 60, sy, 240, rows, rh=rh)
+    for cy, (_, key, _), names in zip(centers, rows, chips):
+        strong, _, ink = LAYER[key]
+        for k, name in enumerate(names):
+            chip(svg, 340 + k * 128, cy, 116, strong, ink, name, h=38)
+    svg.save("packet/packetflow_layers.svg")
+
+
+def flow_identity_diagram():
+    rows = [("data_link", "link", None), ("internet", "internet", None), ("transport", "transport", None),
+            ("application", "application", None)]
+    cells = [(("source_mac", "02:42:c0:a8:00:68"), "Ethernet", ("destination_mac", "02:42:c0:a8:00:01")),
+             (("source", "192.168.0.104"), "IPv4", ("destination", "192.168.0.1")),
+             (("source_port", "51000"), "UDP", ("destination_port", "53")),
+             (None, "DNS", None)]
+    sy, rh = 112, 60
+    bottom = sy + TITLE_H + len(rows) * (rh + GAP) + GAP
+    height = bottom + 70
+    svg = Svg(height, "The flow identity",
+              "What PartialEq, Eq and Hash compare, on the DNS query: the source and destination of each layer and "
+              "its protocol, MAC addresses, IP addresses, ports, and the application label. Payloads and details "
+              "are left out, so two packets of the same conversation compare equal.")
+    svg.text(60, 62, "The flow identity", 22, weight=600, anchor="start")
+    svg.text(60, 88, "what PartialEq, Eq and Hash compare, on the DNS query", 14, anchor="start", opacity=0.6)
+    centers, _ = flow_stack(svg, 60, sy, 220, rows, rh=rh)
+    for cy, (_, key, _), (src, proto, dst) in zip(centers, rows, cells):
+        strong, light, ink = LAYER[key]
+        if src:
+            chip(svg, 320, cy, 190, light, DARK, *src, h=48)
+        chip(svg, 530, cy, 110, strong, ink, proto, h=48)
+        if dst:
+            chip(svg, 660, cy, 190, light, DARK, *dst, h=48)
+    svg.text(60, bottom + 30, "Payloads and details are left out: two packets of the same conversation compare "
+             "equal.", 13.5, anchor="start", opacity=0.7)
+    svg.text(60, bottom + 50, "inner and corrupted take part too.", 13.5, anchor="start", opacity=0.7)
+    svg.save("packet/flow_identity.svg")
+
+
+def layer_structs_diagram():
+    rows = [("data_link", "link", "LinkLayer"), ("internet", "internet", "Option&lt;Internet&gt;"),
+            ("transport", "transport", "Option&lt;Transport&gt;"),
+            ("application", "application", "Option&lt;Application&gt;"),
+            ("inner", "inner", "Option&lt;Box&lt;PacketFlow&gt;&gt;"),
+            ("corrupted", "corrupted", "Option&lt;CorruptedLayer&gt;")]
+    structs = [("LinkLayer", "link", [("link_type()", True), ("network_protocol()", True), ("kind() / as_ethernet()", True),
+                                      ("network_payload()", False)]),
+               ("Internet", "internet", [("source, destination", True), ("source_type, …", True),
+                                         ("protocol_name", True), ("payload_protocol", True), ("payload", False),
+                                         ("details", False)]),
+               ("Transport", "transport", [("protocol", True), ("source_port", True), ("destination_port", True),
+                                           ("payload", False), ("details", False)]),
+               ("Application", "application", [("application_protocol", True)])]
+    sx, sw, sy, rh = 300, 300, 112, 44
+    by = sy + TITLE_H + len(rows) * (rh + GAP) + GAP + 80
+    bw, bgap, bx0, frh = 196, 12, 40, 34
+    tallest = max(len(f) for _, _, f in structs)
+    height = by + TITLE_H + tallest * (frh + GAP) + GAP + 70
+    svg = Svg(height, "The structs behind each layer",
+              "Each field of PacketFlow is a struct of its own. LinkLayer exposes the LINKTYPE, the announced "
+              "network protocol, the format-specific view and the L3 bytes; Internet the addresses, their type, "
+              "the protocol name and the announced transport protocol; Transport the protocol and the ports; "
+              "Application the label. payload, network_payload and details are not part of the flow identity.")
+    svg.define_hatch()
+    svg.text(40, 62, "The structs behind each layer", 22, weight=600, anchor="start")
+    svg.text(40, 88, "the summary each layer exposes; details holds the full parsed header", 14, anchor="start",
+             opacity=0.6)
+    centers, sbottom = flow_stack(svg, sx, sy, sw, rows, rh=rh, sub_size=12)
+    tops = []
+    for i, (title, key, fields) in enumerate(structs):
+        x = bx0 + i * (bw + bgap)
+        strong, light, ink = LAYER[key]
+        h = TITLE_H + len(fields) * (frh + GAP) + GAP
+        svg.rect(x, by, bw, h, DARK, rx=10)
+        svg.text(x + bw / 2, by + GAP + TITLE_H / 2 + 7, title, 18, fill=WHITE, weight=600)
+        fy = by + GAP + TITLE_H
+        for name, identity in fields:
+            svg.rect(x + 4, fy, bw - 8, frh, light if identity else HATCH, rx=5)
+            svg.text(x + bw / 2, fy + frh / 2 + 5, name, 13, family=MONO, opacity=1 if identity else 0.6)
+            fy += frh + GAP
+        tops.append(x + bw / 2)
+    # from the bottom of the stack to each struct, on two lanes so that no line crosses another
+    starts = [sx + 60, sx + 120, sx + 180, sx + 240]
+    lanes = [sbottom + 26, sbottom + 50, sbottom + 50, sbottom + 26]
+    for x_start, lane, x_end in zip(starts, lanes, tops):
+        svg.arrow([(x_start, sbottom + 6), (x_start, lane), (x_end, lane), (x_end, by - 8)], GREY)
+    ly = by + TITLE_H + tallest * (frh + GAP) + GAP + 36
+    svg.rect(40, ly - 15, 30, 20, HATCH, rx=4, stroke="#E9CF86")
+    svg.text(80, ly, "not part of the flow identity, not serialized", 13.5, anchor="start", opacity=0.7)
+    svg.save("packet/layer_structs.svg")
+
+
+def payload_chain_diagram():
+    rows = [("data_link", "link", None), ("internet", "internet", None), ("transport", "transport", None),
+            ("application", "application", None)]
+    sx, sw, sy, rh = 330, 240, 112, 60
+    height = sy + TITLE_H + len(rows) * (rh + GAP) + GAP + 44
+    svg = Svg(height, "Each layer is parsed from the payload of the previous one",
+              "The link layer has a network payload and announces the network protocol: the internet layer is "
+              "parsed from them. The internet layer has a payload and announces the transport protocol: the "
+              "transport layer is parsed from them. The transport payload and its ports go to the application "
+              "probes.")
+    svg.text(40, 62, "Each layer is parsed from the payload of the previous one", 22, weight=600, anchor="start")
+    svg.text(40, 88, "and each layer announces what the next one is", 14, anchor="start", opacity=0.6)
+    centers, bottom = flow_stack(svg, sx, sy, sw, rows, rh=rh)
+    boxes = [(1, "network_payload()", "+ network_protocol", "link"), (-1, "payload", "+ payload_protocol", "internet"),
+             (1, "payload", "+ ports, to the probes", "transport")]
+    for i, (side_, name, sub, key) in enumerate(boxes):
+        _, light, _ = LAYER[key]
+        strong = LAYER[key][0]
+        y = centers[i]
+        w = 210
+        x = sx + sw + 80 if side_ > 0 else sx - 80 - w
+        svg.rect(x, y - 30, w, 60, light, rx=8, stroke=strong, sw=3)
+        svg.text(x + w / 2, y - 4, name, 15, family=MONO, weight=600)
+        svg.text(x + w / 2, y + 16, sub, 12.5, family=MONO, opacity=0.75)
+        # the layer has it...
+        if side_ > 0:
+            svg.arrow([(sx + sw + 6, y), (x - 10, y)], ARROW_DARK)
+            svg.text((sx + sw + x) / 2, y - 10, "has", 13, weight=600, opacity=0.7)
+            # ...and the next layer is parsed from it
+            svg.arrow([(x + w / 2, y + 36), (x + w / 2, centers[i + 1]), (sx + sw + 10, centers[i + 1])], GREY)
+        else:
+            svg.arrow([(sx - 6, y), (x + w + 10, y)], ARROW_DARK)
+            svg.text((sx + x + w) / 2, y - 10, "has", 13, weight=600, opacity=0.7)
+            svg.arrow([(x + w / 2, y + 36), (x + w / 2, centers[i + 1]), (sx - 10, centers[i + 1])], GREY)
+    svg.save("packet/payload_chain.svg")
+
+
+def tryfrom_card(name, title, subtitle, data, cols, ok_label, err_label, notes, desc):
+    x0, y0, cw, ch = 60, 112, 65, 46
+    rows = -(-len(data) // cols)
+    gbottom = y0 + rows * ch
+    cy = gbottom + 120
+    height = cy + 210
+    svg = Svg(height, title, desc)
+    svg.text(x0, 62, title, 22, weight=600, anchor="start")
+    svg.text(x0, 88, subtitle, 14, anchor="start", opacity=0.6)
+    hex_grid(svg, x0, y0, data, cols, cw, ch, lambda i: GREY, lambda i: WHITE)
+    bx, bw, bh = 60, 170, 90
+    svg.rect(bx, cy - bh / 2, bw, bh, GREY, rx=8)
+    svg.text(bx + bw / 2, cy + 6, "&amp;[u8]", 18, fill=WHITE, weight=600, family=MONO)
+    # the grid is the input
+    svg.arrow([(x0 - 6, gbottom - ch), (x0 - 26, gbottom - ch), (x0 - 26, cy), (bx - 8, cy)], GREY, radius=12)
+    dx, r = 450, 66
+    svg.arrow([(bx + bw + 6, cy), (dx - r - 12, cy)], GREY)
+    svg.text((bx + bw + dx - r) / 2, cy - 12, "TryFrom", 14, weight=600, opacity=0.8)
+    svg.add(f'<path d="M {dx} {cy - r} L {dx + r} {cy} L {dx} {cy + r} L {dx - r} {cy} Z" fill="{BLUE}" '
+            f'stroke="{BLUE}" stroke-width="8" stroke-linejoin="round"/>')
+    svg.text(dx, cy + 6, "validation", 16, fill=WHITE, weight=600)
+    for k, note in enumerate(notes):
+        svg.text(dx, cy - r - 34 + 18 * k, note, 12.5, opacity=0.7)
+    ox, ow = 620, 240
+    svg.arrow([(dx + r + 10, cy), (ox - 10, cy)], SUCCESS)
+    svg.rect(ox, cy - bh / 2, ow, bh, GREEN, rx=8)
+    svg.text(ox + ow / 2, cy + 6, ok_label, 16, weight=700, family=MONO)
+    ey = cy + r + 50
+    svg.arrow([(dx, cy + r + 10), (dx, ey - 10)], RED)
+    svg.rect(dx - 150, ey, 300, 56, RED, rx=8)
+    svg.text(dx, ey + 34, err_label, 15, fill=WHITE, weight=700, family=MONO)
+    svg.save(name)
+
+
+def tryfrom_diagrams():
+    tryfrom_card("data_validation/tryfrom.svg", "Every struct is a TryFrom&lt;&amp;[u8]&gt;",
+                 "the 20 bytes of an IPv4 header in, a typed struct or a typed error out", SYN_IP[:20], 10,
+                 "Ok(Ipv4Packet)", "Err(Ipv4Error)", ["length, then each field in wire order,", "then the cross-field checks"],
+                 "The 20 bytes of the IPv4 header of the book's SYN go through Ipv4Packet::try_from: a validation "
+                 "of the length, then of each field in wire order, then of the fields together. It returns an "
+                 "Ipv4Packet or a typed Ipv4Error.")
+    tryfrom_card("datalink/validation.svg", "DataLink::try_from",
+                 "the first bytes of an Ethernet frame in, a DataLink or a DataLinkError out", SYN_FRAME[:24], 12,
+                 "Ok(DataLink)", "Err(DataLinkError)", ["at least 14 bytes,", "+ 4 per VLAN tag consumed"],
+                 "The first bytes of the Ethernet frame carrying the book's SYN go through DataLink::try_from: at "
+                 "least 14 bytes, re-checked for each VLAN tag. It returns a DataLink or a DataLinkError.")
+
+
+def ethernet_frame_diagram():
+    rows = [("Destination MAC", "6 bytes", "0 – 5", DARK, WHITE, False),
+            ("Source MAC", "6 bytes", "6 – 11", DARK, WHITE, False),
+            ("VLAN tag (802.1Q), optional", "4 bytes each", "", "none", DARK, True),
+            ("EtherType", "2 bytes", "12 – 13", ORANGE, DARK, False),
+            ("Payload", "variable", "14 –", GREY, WHITE, False)]
+    x, w, y0, rh = 250, 400, 128, 62
+    height = y0 + len(rows) * rh + 70
+    svg = Svg(height, "The Ethernet II frame",
+              "An Ethernet II frame: the destination MAC address (bytes 0 to 5), the source MAC address (6 to 11), "
+              "the EtherType (12 and 13), then the payload from byte 14. Each 802.1Q VLAN tag inserts 4 bytes "
+              "before the EtherType, which shifts it and the payload.")
+    svg.text(60, 62, "The Ethernet II frame", 22, weight=600, anchor="start")
+    svg.text(60, 88, "destination first; each VLAN tag adds 4 bytes before the EtherType", 14, anchor="start",
+             opacity=0.6)
+    svg.text(x - 30, y0 - 8, "size", 12.5, anchor="end", opacity=0.55)
+    svg.text(x + w + 30, y0 - 8, "bytes, untagged", 12.5, anchor="start", opacity=0.55)
+    for k, (name, size, offs, fill, ink, dashed) in enumerate(rows):
+        y = y0 + k * rh
+        if dashed:
+            svg.rect(x, y + 4, w, rh - 8, "none", rx=8, stroke=ORANGE_DARK, sw=2.5, dash="7 6")
+        else:
+            svg.rect(x, y + 4, w, rh - 8, fill, rx=8)
+        svg.text(x + w / 2, y + rh / 2 + 6, name, 17, fill=ink, weight=600, opacity=0.75 if dashed else None)
+        svg.text(x - 30, y + rh / 2 + 6, size, 15, anchor="end", opacity=0.8)
+        if offs:
+            svg.text(x + w + 30, y + rh / 2 + 6, offs, 15, anchor="start", family=MONO, opacity=0.8)
+    svg.save("datalink/ethernet_frame.svg")
+
+
+def mac_address_diagram():
+    mac = SIEMENS_MAC
+    height = 470
+    svg = Svg(height, "A MAC address",
+              "The 6 bytes of a MAC address, e0:dc:a0:4d:2e:91: the first three are the Organizationally Unique "
+              "Identifier (OUI) of the manufacturer, here Siemens, the last three the NIC-specific part. Bit 0 of "
+              "the first byte is the I/G bit: 0, so the address is unicast. display_with_oui() gives "
+              "Siemens:4d:2e:91.")
+    svg.text(60, 62, "A MAC address", 22, weight=600, anchor="start")
+    svg.text(60, 88, "6 bytes: who made the interface, then which interface", 14, anchor="start", opacity=0.6)
+    x0, y0, cw, chh = 210, 130, 80, 70
+    for i, b in enumerate(mac):
+        fill, ink = (ORANGE, DARK) if i < 3 else (DARK, WHITE)
+        svg.rect(x0 + i * (cw + 4), y0, cw, chh, fill, rx=8)
+        svg.text(x0 + i * (cw + 4) + cw / 2, y0 + chh / 2 + 8, f"{b:02X}", 24, fill=ink, weight=600)
+    left_c, right_c = x0 + 1.5 * cw + 4, x0 + 4.5 * cw + 12
+    for cx, l1, l2, l3 in ((left_c, "3 bytes", "Organizationally Unique Identifier", "(OUI): the manufacturer"),
+                           (right_c, "3 bytes", "NIC-specific part,", "assigned by the manufacturer")):
+        svg.text(cx, y0 + chh + 34, l1, 15, weight=600)
+        svg.text(cx, y0 + chh + 58, l2, 14, opacity=0.8)
+        svg.text(cx, y0 + chh + 78, l3, 14, opacity=0.8)
+    # the I/G bit of the first byte
+    by = y0 + chh + 120
+    bits = f"{mac[0]:08b}"
+    svg.text(60, by + 22, f"byte 0x{mac[0]:02X}", 14, anchor="start", family=MONO, opacity=0.7)
+    for k, bit in enumerate(bits):
+        fill = ORANGE if k == 7 else "#F4DCC4"
+        svg.rect(210 + k * 38, by, 34, 34, fill, rx=5)
+        svg.text(210 + k * 38 + 17, by + 23, bit, 16, family=MONO, weight=600)
+    svg.text(210 + 8 * 38 + 14, by + 22, "bit 0, I/G: 0 → unicast, is_multicast() is false", 14, anchor="start",
+             opacity=0.8)
+    svg.text(60, by + 84, 'display_with_oui()  →  "Siemens:4d:2e:91"', 16, anchor="start", family=MONO,
+             weight=600)
+    svg.save("datalink/mac_address.svg")
+
+
+def ethernet_struct_diagram():
+    data = SYN_FRAME[:48]
+    x0, y0, cols, cw, ch = 60, 150, 12, 45, 52
+    def fill_of(i):
+        return GREY_LIGHT if i < 12 else ORANGE if i < 14 else GREY
+    def ink_of(i):
+        return DARK if i < 14 else WHITE
+    height = 470
+    svg = Svg(height, "From the frame to the DataLink struct",
+              "The first 48 bytes of the Ethernet frame carrying the book's SYN, twelve per row. Bytes 0 to 5 "
+              "become destination_mac 02:42:c0:a8:00:01, bytes 6 to 11 source_mac 02:42:c0:a8:00:68, bytes 12 and "
+              "13 the EtherType 0x0800 (IPv4), and everything from byte 14 the 60-byte payload.")
+    svg.text(x0, 70, "From the frame to the DataLink struct", 22, weight=600, anchor="start")
+    svg.text(x0, 96, "the frame of the book's SYN, twelve bytes per row", 14, anchor="start", opacity=0.6)
+    bottom = hex_grid(svg, x0, y0, data, cols, cw, ch, fill_of, ink_of, size=15, text_y=38)
+    svg.outline(x0, y0, 6 * cw, ch)
+    svg.outline(x0 + 6 * cw, y0, 6 * cw, ch)
+    svg.outline(x0, y0 + ch, 2 * cw, ch)
+    svg.text(x0 + 6 * cw, bottom + 26, "… 26 more bytes of payload", 13, opacity=0.6)
+    sx, sw = 676, 190
+    fields = [("destination_mac", "02:42:c0:a8:00:01", GREY_LIGHT, DARK, 200),
+              ("source_mac", "02:42:c0:a8:00:68", GREY_LIGHT, DARK, 260),
+              ("ethertype", "IPv4 (0x0800)", ORANGE, DARK, 320),
+              ("payload", "&amp;[u8] · 60 bytes", GREY, WHITE, 380)]
+    struct_box(svg, sx, sw, "DataLink", fields)
+    right = x0 + cols * cw
+    # the EtherType arrow runs in the upper part of row 1, above the bytes
+    svg.arrow([(sx - 8, 200), (sx - 22, 200), (sx - 22, 126), (x0 + 3 * cw, 126), (x0 + 3 * cw, y0 - 8)], GREY)
+    svg.arrow([(sx - 8, 260), (sx - 36, 260), (sx - 36, y0 + ch / 2), (right + 8, y0 + ch / 2)], GREY)
+    svg.arrow([(sx - 8, 320), (sx - 50, 320), (sx - 50, y0 + ch + 14), (x0 + 2 * cw + 8, y0 + ch + 14)], ORANGE_DARK)
+    svg.arrow([(sx - 8, 380), (sx - 64, 380), (sx - 64, y0 + 3 * ch + ch / 2), (right + 8, y0 + 3 * ch + ch / 2)],
+              ARROW_DARK)
+    svg.save("datalink/ethernet_struct.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -908,3 +1335,14 @@ if __name__ == "__main__":
     giop_cdr_diagram()
     tryfrom_diagram()
     engine_diagram()
+    raw_packet_diagram()
+    layered_packet_diagram()
+    nesting_diagram()
+    packetflow_layers_diagram()
+    flow_identity_diagram()
+    layer_structs_diagram()
+    payload_chain_diagram()
+    tryfrom_diagrams()
+    ethernet_frame_diagram()
+    mac_address_diagram()
+    ethernet_struct_diagram()

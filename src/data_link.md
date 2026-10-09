@@ -8,7 +8,7 @@ Understanding how to parse the **Data Link Layer** from raw packets is a crucial
 ## **🧩 Understanding the Ethernet Frame**
 The Data Link Layer is responsible for **frame-level communication** between devices on the same network segment. In an **Ethernet frame**, the structure is as follows:
 
-![Packet Parser Overview](images/datalink/packet_parser.png)
+![The Ethernet II frame: destination MAC, source MAC, optional VLAN tags, EtherType, payload](images/datalink/ethernet_frame.svg)
 
 The main components are:
 1. **Destination MAC Address** (6 bytes) - the unique physical identifier of the receiving network hardware.
@@ -25,7 +25,7 @@ To parse MAC addresses correctly, we need to ensure that:
 - We extract **Organizationally Unique Identifiers (OUI)** to identify the manufacturer.
 
 **MAC Address Structure:**
-![Mac Struct Overview](images/datalink/mac_struct.png)
+![A MAC address: a 3-byte OUI, here Siemens, then the 3-byte NIC-specific part; bit 0 of the first byte is the I/G bit](images/datalink/mac_address.svg)
 
 ```rust
 pub struct MacAddress(pub [u8; 6]);
@@ -105,7 +105,7 @@ The untagged case is the hot path and stays a straight line; the stack is unroll
 ## **📌 Steps Taken to Parse the Ethernet Frame**
 To correctly extract this information, I followed these key steps:
 
-![validation](images/datalink/validations.png)
+![The first bytes of an Ethernet frame go through DataLink::try_from: Ok(DataLink) or Err(DataLinkError)](images/datalink/validation.svg)
 
 ### **Validations**
 While parsing, I implemented **validations** to ensure the raw packet is coherent.
@@ -155,7 +155,7 @@ Called directly, `DataLink::try_from` **assumes Ethernet**: it checks lengths, n
 ### **Structuring the Parsed Frame**
 After extracting all components, I structured the parsed frame in a clear format. This makes it easier to **analyze, debug, and process packets** dynamically.
 
-![Tram Struct Overview](images/datalink/tram_struct.png)
+![The frame of the book's SYN, bytes 0 to 5 into destination_mac, 6 to 11 into source_mac, 12 and 13 into ethertype, the rest into payload](images/datalink/ethernet_struct.svg)
 
 ---
 
