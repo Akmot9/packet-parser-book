@@ -776,6 +776,128 @@ def tryfrom_diagram():
     svg.save("adding_a_protocol/tryfrom_line.svg")
 
 
+def engine_diagram():
+    cx, bw = 405, 330
+    bx = cx - bw / 2
+    ox, ow = 626, 244
+    loop_x = 196
+    gap = 30
+    # (key, height) of each stage, top to bottom
+    layout = [("parse", 48), ("select", 48), ("decode", 56), ("decoded", 56), ("l3", 56), ("l4", 56),
+              ("anomaly", 76), ("l7", 146), ("flow", 78)]
+    ys, y = {}, 112
+    for key, h in layout:
+        ys[key] = (y, h)
+        y += h + gap
+    height = y - gap + 40
+    svg = Svg(height, "The parsing engine",
+              "parse selects a link decoder from the LINKTYPE, and returns Err only when there is none or when "
+              "it fails. The decoder produces a DecodedLink: the link layer, the announced network protocol and "
+              "the L3 bytes. From there one pipeline runs for every format: the internet layer, then the "
+              "transport layer, each of them None when nothing is announced and reported in corrupted when its "
+              "bytes are invalid. An anomalous TCP segment leaves on a cold path: transport kept, reported, no "
+              "application. Otherwise the application stage looks for an IP-level tunnel, then a UDP tunnel, "
+              "then runs the dispatch table, and labels STP from the link layer last. A tunnel sends its inner "
+              "packet back to DecodedLink one level deeper, at most four levels. The timing counters l2_ns to "
+              "l7_ns cover the stages they are drawn on.")
+    svg.text(40, 62, "The parsing engine", 22, weight=600, anchor="start")
+    svg.text(40, 88, "One pipeline for every LINKTYPE, run again for each tunnel level.", 14, anchor="start",
+             opacity=0.6)
+
+    def box(key, fill, ink, title, sub=None, badge=None, mono=False):
+        y, h = ys[key]
+        svg.rect(bx, y, bw, h, fill, rx=8)
+        ty = y + h / 2 - 4 if sub else y + h / 2 + 6
+        svg.text(cx, ty, title, 16, fill=ink, weight=600, family=MONO if mono else SANS)
+        if sub:
+            svg.text(cx, y + h / 2 + 16, sub, 13, fill=ink, opacity=0.85)
+        if badge:
+            svg.text(bx + bw - 10, y + 15, badge, 11.5, fill=ink, family=MONO, anchor="end", opacity=0.65)
+
+    def mid(key):
+        y, h = ys[key]
+        return y + h / 2
+
+    def down(a, b, color=GREY, label=None):
+        ya = ys[a][0] + ys[a][1]
+        svg.arrow([(cx, ya + 6), (cx, ys[b][0] - 8)], color)
+        if label:
+            svg.text(cx + 10, ya + 21, label, 12.5, fill=color, weight=600, anchor="start")
+
+    def side(key, fill, ink, lines, label=None, color=GREY):
+        y = mid(key)
+        h = 22 + 20 * len(lines)
+        svg.rect(ox, y - h / 2, ow, h, fill, rx=8, stroke=None if fill != WHITE else "#E9C9A6")
+        for k, (text_, tint) in enumerate(lines):
+            # a coloured card has a title line; a white one lists equal cases
+            svg.text(ox + ow / 2, y - h / 2 + 26 + 20 * k, text_, 12.5 if fill != WHITE else 11.5, fill=tint or ink,
+                     weight=600 if k == 0 and fill != WHITE else 400,
+                     family=MONO if text_.startswith("Err") else SANS)
+        svg.arrow([(bx + bw + 6, y), (ox - 10, y)], color)
+        if label:
+            svg.text((bx + bw + ox) / 2 - 4, y - 14, label, 12, fill=color, weight=600)
+
+    box("parse", GREY, WHITE, "parse(link_type, bytes)", mono=True)
+    box("select", GREY_LIGHT, DARK, "decoder_for(link_type)", mono=True)
+    box("decode", GREY, WHITE, "link decoder", "Ethernet · NULL · RAW · SLL · SLL2 · 802.3br", "l2_ns")
+    box("decoded", DARK, WHITE, "DecodedLink", "LinkLayer · NetworkProtocol · L3 bytes")
+    box("l3", BLUE, WHITE, "internet layer", "Internet::try_from_network_parts", "l3_ns")
+    box("l4", GREEN, DARK, "transport layer", "Transport::try_from_parts", "l4_ns")
+    # anomaly test, a diamond like the other decisions of the book
+    ay, ah = ys["anomaly"]
+    r = ah / 2
+    svg.add(f'<path d="M {cx} {ay} L {cx + r + 30} {ay + r} L {cx} {ay + ah} L {cx - r - 30} {ay + r} Z" '
+            f'fill="{BLUE}" stroke="{BLUE}" stroke-width="6" stroke-linejoin="round"/>')
+    svg.text(cx, ay + r - 2, "TCP", 13.5, fill=WHITE, weight=600)
+    svg.text(cx, ay + r + 15, "anomaly?", 13.5, fill=WHITE, weight=600)
+    ly, lh = ys["l7"]
+    svg.rect(bx, ly, bw, lh, YELLOW, rx=8)
+    svg.text(cx, ly + 25, "application, in this order", 16, weight=600)
+    svg.text(bx + bw - 10, ly + 15, "l7_ns", 11.5, family=MONO, anchor="end", opacity=0.65)
+    steps = ["1   IP tunnel: GRE, IP-in-IP", "2   UDP tunnel: CAPWAP, VXLAN, Geneve, GTP-U",
+             "3   Decode As, then RULES, else \"Unknown\"", "4   still no label: STP, from the link layer"]
+    for k, line in enumerate(steps):
+        svg.text(bx + 16, ly + 54 + 23 * k, line, 12.5, anchor="start", opacity=0.9)
+    fy, fh = ys["flow"]
+    svg.rect(bx, fy, bw, fh, DARK, rx=10)
+    svg.text(cx, fy + 27, "PacketFlow", 18, fill=WHITE, weight=600)
+    svg.text(cx, fy + 49, "data_link · internet · transport", 13, fill=WHITE, family=MONO, opacity=0.8)
+    svg.text(cx, fy + 67, "application · inner · corrupted", 13, fill=WHITE, family=MONO, opacity=0.8)
+
+    for a, b in (("parse", "select"), ("select", "decode"), ("decode", "decoded"), ("decoded", "l3"),
+                 ("l3", "l4"), ("l4", "anomaly")):
+        down(a, b)
+    down("anomaly", "l7", label="no")
+    down("l7", "flow")
+
+    side("select", RED, WHITE, [("Err(UnsupportedLinkType)", None), ("no decoder: no byte is read", None)],
+         color=RED)
+    side("decode", RED, WHITE, [("Err(InvalidLinkLayer)", None), ("truncated, bad version…", None)], color=RED)
+    side("l3", WHITE, DARK, [("unknown protocol → internet: None", None),
+                             ("invalid bytes → corrupted: Internet", RED)])
+    side("l4", WHITE, DARK, [("nothing announced → transport: None", None),
+                             ("invalid bytes → corrupted: Transport", RED)])
+    side("anomaly", ORANGE, DARK, [("cold path", None), ("transport kept, reported", None),
+                                   ("application: None", None)], "yes", ORANGE_DARK)
+    # the cold path returns its PacketFlow directly
+    cold_bottom = mid("anomaly") + (22 + 60) / 2
+    svg.arrow([(ox + ow / 2, cold_bottom + 6), (ox + ow / 2, mid("flow")), (bx + bw + 10, mid("flow"))],
+              ORANGE_DARK)
+    # a tunnel runs the same pipeline on the inner packet, one level deeper
+    tun_y = ly + 54 + 23 * 0.5
+    svg.arrow([(bx - 6, tun_y), (loop_x, tun_y), (loop_x, mid("decoded")), (bx - 10, mid("decoded"))],
+              ORANGE_DARK)
+    lx = loop_x - 16
+    lyc = (tun_y + mid("decoded")) / 2
+    svg.add(f'<text x="{lx}" y="{lyc}" font-family="{SANS}" font-size="13.5" font-weight="600" fill="{ORANGE_DARK}" '
+            f'text-anchor="middle" transform="rotate(-90 {lx} {lyc})">tunnel: inner = the same pipeline, '
+            f'one level deeper</text>')
+    svg.add(f'<text x="{lx - 20}" y="{lyc}" font-family="{SANS}" font-size="12.5" fill="{DARK}" fill-opacity="0.6" '
+            f'text-anchor="middle" transform="rotate(-90 {lx - 20} {lyc})">at most 4 levels, then classified as '
+            f'an ordinary payload</text>')
+    svg.save("packet/parsing_engine.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -785,3 +907,4 @@ if __name__ == "__main__":
     giop_header_diagram()
     giop_cdr_diagram()
     tryfrom_diagram()
+    engine_diagram()

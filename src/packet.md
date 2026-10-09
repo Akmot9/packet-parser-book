@@ -99,6 +99,45 @@ The pipeline is **layered and progressive**: each layer is parsed from the paylo
 | Transport | `TransportProtocol` + L4 payload | IP protocol number / next header | `Transport` + ports + L7 payload |
 | Application | `Transport` (ports + payload) | **content probes**, guarded by transport and sometimes by port | `Application { application_protocol }` |
 
+### The engine, end to end
+
+The table gives the principle. Here is how `parse` chains it:
+
+![The parsing engine: parse selects a link decoder, which yields a DecodedLink; then the internet layer, the transport layer, the TCP anomaly test, the application stage in a fixed order, and the PacketFlow; a tunnel sends its inner packet back to DecodedLink](images/packet/parsing_engine.svg)
+
+Everything above `DecodedLink` depends on the capture format, and is the only part that can return `Err` ([data link chapter](./data_link.md)). Everything below it is one pipeline, shared by every LINKTYPE and by every tunnel level. It is a single function, `parse_decoded_into`, quoted here with its comments removed:
+
+```rust
+let (data_link, network_protocol, network_payload) = decoded.into_parts();
+let (internet, l3_corruption) = sink.time(Stage::L3, || {
+    Self::parse_l3(network_protocol, network_payload)
+});
+let (transport, l4_corruption) = sink.time(Stage::L4, || Self::parse_l4(internet.as_ref()));
+let transport = match transport {
+    Some(transport) if transport.is_anomalous_tcp() => {
+        return Ok(Self::anomalous_tcp_flow(data_link, internet, transport, l3_corruption));
+    }
+    transport => transport,
+};
+let (application, inner) = sink.time(Stage::L7, || {
+    let (application, inner) =
+        Self::parse_l7_and_inner(internet.as_ref(), transport.as_ref(), depth, decode_as);
+    (application.or_else(|| Self::detect_stp(&data_link)), inner)
+});
+Ok(PacketFlow {
+    data_link, internet, transport, application, inner,
+    corrupted: l3_corruption.or(l4_corruption),
+})
+```
+
+Read from top to bottom:
+
+- **Each stage turns its error into data.** `parse_l3` and `parse_l4` map `UnsupportedProtocol` to `None` and every other error to a `CorruptedLayer`, whose `error` is the error's `Display`. A layer that is `None` leaves nothing for the next one, so `corrupted` holds at most one report: `l3_corruption.or(l4_corruption)` is the first failure, and the only one.
+- **An anomalous TCP segment leaves before L7**, in a `#[cold]` function: transport kept, anomaly reported, no application. Weaving that case into the common stages cost about 10 ns on every TCP segment ([transport chapter](./transport.md#tcp-validations)).
+- **L7 has a fixed order.** First an IP-level tunnel (GRE, IP-in-IP), then a UDP tunnel (CAPWAP, VXLAN, Geneve, GTP-U), then the [dispatch table](./application.md), Decode As ports first. STP comes last, from the link layer, and only when nothing gave a label: a BPDU has no network layer to reach the table.
+- **A tunnel re-enters at `DecodedLink`**, one level deeper, with the same Decode As ports ([tunnels chapter](./tunnels.md)). That recursion runs inside the L7 stage, which is where its time is counted.
+- **`sink` is the timing**: a no-op for `parse`, a clock for `parse_timed`, so the measured path is the parsed path ([getting started](./getting_started.md#timing-benchmarks)).
+
 ## Independent Layer Parsing
 
 Each layer must be **parsed independently** from the others.  
