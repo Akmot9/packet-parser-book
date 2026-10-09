@@ -2,13 +2,13 @@
 
 This chapter is the "how do I use it" part. The rest of the book is the "how is it built" part.
 
-> **Reference version: `packet_parser` 11.2.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 11.4.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "11.2.0"
+packet_parser = "11.4.0"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 

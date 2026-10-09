@@ -216,9 +216,9 @@ dependencies = [
 
 [[package]]
 name = "packet_parser"
-version = "11.2.0"
+version = "11.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edf86c55c97585882c93182ff6c9a14682afc8f2e648ce0e202d796132469b7d"
+checksum = "9c5d2434157705ef64ea181285cacf28817af09c8565b54e700ebe5c4f4d2be6"
 dependencies = [
  "chrono",
  "hex",
