@@ -143,6 +143,14 @@ IPV6_SRC, IPV6_DST = "2001:db8::1", "2001:db8::2"
 HOP_BY_HOP = bytes.fromhex("0600010400000000")
 IPV6_SYN = ipv6(IPV6_SRC, IPV6_DST, 0, HOP_BY_HOP + tcp6(IPV6_SRC, IPV6_DST, SYN_TCP))
 
+
+# pcaps_exemple/protocols/arp (Chris Sanders' public captures): arp_resolution.pcapng frames 1 and 2,
+# arp_gratuitous.pcapng frame 1
+ARP_REQUEST_FRAME = bytes.fromhex("ffffffffffff0016ce6e8b24080600010800060400010016ce6e8b24c0a80072000000000000c0a80001")
+ARP_REPLY_FRAME = bytes.fromhex("0016ce6e8b240013460b22ba080600010800060400020013460b22bac0a800010016ce6e8b24c0a80072c0a80072")
+ARP_GRATUITOUS_FRAME = bytes.fromhex("ffffffffffff000347b7f2f508060001080006040001000347b7f2f518067d1300000000000018067d13"
+                                     "000000000000000000000000000000000000")
+
 # The book's other examples, already used in the getting started chapter and by examples/
 ACK_FRAME = bytes.fromhex(
     "feaa81e86d1efeaa818ec864080045500034000000003d06206b36e6700d"
@@ -1443,6 +1451,101 @@ def ipv6_extensions_diagram():
     svg.save("network/ipv6_extensions.svg")
 
 
+
+def arp_diagram():
+    arp = ARP_REQUEST_FRAME[14:]
+    fields = [("Hardware type", 0, 2, "1: Ethernet"), ("Protocol type", 2, 2, "0x0800: IPv4"),
+              ("Hardware length", 4, 1, "6"), ("Protocol length", 5, 1, "4"), ("Operation", 6, 2, "1: request"),
+              ("Sender hardware address", 8, 6, "00:16:ce:6e:8b:24"), ("Sender protocol address", 14, 4, "192.168.0.114"),
+              ("Target hardware address", 18, 6, "not known yet"), ("Target protocol address", 24, 4, "192.168.0.1")]
+    y0, pitch, ch, cw, x0 = 112, 52, 44, 40, 250
+    height = y0 + len(fields) * pitch + 30
+    svg = Svg(height, "From ARP bytes to the Internet struct",
+              "The 28 bytes of an ARP request, field by field: hardware type 1, protocol type 0x0800, lengths 6 and "
+              "4, operation 1, then the sender and target hardware and protocol addresses. The Internet struct "
+              "takes the two protocol addresses as source 192.168.0.114 and destination 192.168.0.1, has no "
+              "payload_protocol and an empty payload, and keeps the whole ArpPacket in details.")
+    svg.text(40, 62, "ARP request", 22, weight=600, anchor="start")
+    svg.text(40, 88, "frame 1 of arp_resolution.pcapng, the 28 bytes after the Ethernet header", 14,
+             anchor="start", opacity=0.6)
+    rows = {}
+    for k, (name, off, n, meaning) in enumerate(fields):
+        y = y0 + k * pitch
+        rows[name] = y + ch / 2
+        svg.text(x0 - 14, y + ch / 2 + 5, name, 13.5, anchor="end", opacity=0.75)
+        addr = "address" in name and "protocol" in name
+        for i in range(n):
+            b = arp[off + i]
+            fill = BLUE_LIGHT if addr else "#D5E9F6"
+            svg.rect(x0 + i * cw, y, cw, ch, fill, rx=5, stroke="#8EC6EE", sw=1.5)
+            svg.text(x0 + i * cw + cw / 2, y + ch / 2 + 6, f"{b:02X}", 16, weight=500)
+        if addr:
+            svg.outline(x0, y, n * cw, ch)
+        svg.text(x0 + n * cw + 12, y + ch / 2 + 5, meaning, 12.5, anchor="start", family=MONO, opacity=0.6)
+    sx, sw = 640, 236
+    struct_box(svg, sx, sw, "Internet", [
+        ("protocol_name", '"ARP"', BLUE_LIGHT, DARK, rows["Hardware type"] + 8),
+        ("payload_protocol", "None, payload empty", GREY_LIGHT, DARK, rows["Hardware length"] + 4),
+        ("details", "Some(Arp(ArpPacket))", BLUE_LIGHT, DARK, rows["Operation"]),
+        ("source", "192.168.0.114", BLUE_LIGHT, DARK, rows["Sender protocol address"]),
+        ("destination", "192.168.0.1", BLUE_LIGHT, DARK, rows["Target protocol address"]),
+    ])
+    svg.arrow([(sx - 12, rows["Operation"]), (x0 + 2 * cw + 110, rows["Operation"])], GREY)
+    svg.arrow([(sx - 12, rows["Sender protocol address"]), (x0 + 4 * cw + 118, rows["Sender protocol address"])], GREY)
+    svg.arrow([(sx - 12, rows["Target protocol address"]), (x0 + 4 * cw + 118, rows["Target protocol address"])], GREY)
+    svg.save("network/arp_struct.svg")
+
+
+def arp_exchange_diagram():
+    cards = [("Request", "frame 1, 42 bytes", ARP_REQUEST_FRAME, "broadcast: who has 192.168.0.1?"),
+             ("Reply", "frame 2, 46 bytes", ARP_REPLY_FRAME, "unicast: 192.168.0.1 is at 00:13:46:0b:22:ba"),
+             ("Gratuitous", "arp_gratuitous.pcapng, 60 bytes", ARP_GRATUITOUS_FRAME, "sender and target are the same host")]
+    cw, gap, x0, ctop = 266, 20, 40, 112
+    rh, th = 62, 54
+    height = ctop + th + 4 * (rh + GAP) + GAP + 80
+    svg = Svg(height, "Three ARP frames, three flow identities",
+              "The request, broadcast from 00:16:ce:6e:8b:24 asking for 192.168.0.1, its reply, sent back unicast "
+              "from 00:13:46:0b:22:ba, and a gratuitous ARP whose sender and target protocol addresses are the "
+              "same host. Each is a PacketFlow with a data link and an internet layer, and nothing above: the "
+              "reply has the source and destination of the request swapped.")
+    svg.text(x0, 62, "Three ARP frames, three flow identities", 22, weight=600, anchor="start")
+    svg.text(x0, 88, "the reply swaps source and destination; a gratuitous ARP names itself", 14, anchor="start",
+             opacity=0.6)
+
+    def mac(b):
+        return ":".join(f"{x:02x}" for x in b)
+
+    def ip(b):
+        return ".".join(str(x) for x in b)
+
+    for i, (title, sub, frame, note) in enumerate(cards):
+        x = x0 + i * (cw + gap)
+        arp = frame[14:]
+        rows = [("data_link", "link", mac(frame[6:12]), "→ " + mac(frame[:6])),
+                ("internet", "internet", "ARP " + ip(arp[14:18]), "→ " + ip(arp[24:28])),
+                ("transport", None, "None", ""), ("application", None, "None", "")]
+        h = th + len(rows) * (rh + GAP) + GAP
+        svg.rect(x, ctop, cw, h, DARK, rx=10)
+        svg.text(x + cw / 2, ctop + 24, title, 17, fill=WHITE, weight=600)
+        svg.text(x + cw / 2, ctop + 43, sub, 12.5, fill=WHITE, opacity=0.7)
+        fy = ctop + th
+        for name, key, l1, l2 in rows:
+            if key:
+                fill, ink = LAYER[key][1], DARK
+            else:
+                fill, ink = NONE_FILL, "#E6E6E6"
+            svg.rect(x + 4, fy, cw - 8, rh, fill, rx=6)
+            svg.text(x + cw / 2, fy + 17, name, 12.5, fill=ink, weight=600, opacity=0.75)
+            if l2:
+                svg.text(x + cw / 2, fy + 36, l1, 12.5, fill=ink, family=MONO)
+                svg.text(x + cw / 2, fy + 53, l2, 12.5, fill=ink, family=MONO)
+            else:
+                svg.text(x + cw / 2, fy + 44, l1, 13, fill=ink, family=MONO)
+            fy += rh + GAP
+        svg.text(x + cw / 2, ctop + h + 24, note, 12.5, opacity=0.7)
+    svg.save("network/arp_exchange.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -1466,3 +1569,5 @@ if __name__ == "__main__":
     ethernet_struct_diagram()
     ipv6_diagram()
     ipv6_extensions_diagram()
+    arp_diagram()
+    arp_exchange_diagram()
