@@ -1,0 +1,252 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 914" width="900" height="914" role="img" aria-labelledby="t d">
+<title id="t">A CAT 048 record, cut along its UAP</title>
+<desc id="d">The 52-byte record of the first data block: a three-octet FSPEC, ff ff 02, whose bits name the Field Reference Numbers present, 1 to 14 and 21, then the fifteen items in that order, each with the format the UAP of CAT 048 gives it: fixed, variable, compound or repetitive. The decoded values are those of cat048::TargetReport on this record: flight THY9TX, address 4BAACD, 194.82 NM at 128.76 degrees, flight level 360, 457 knots heading 263.6 degrees, track 482.</desc>
+<rect x="12" y="12" width="876" height="890" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">A CAT 048 record, cut along its UAP</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">the first data block of the same datagram: FSPEC, then 15 items in FRN order</text>
+<text x="40" y="132" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">FSPEC</text>
+<text x="102" y="154" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="end">ff</text>
+<rect x="110" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="122.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="122.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">1</text>
+<rect x="135" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="147.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="147.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">2</text>
+<rect x="160" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="172.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="172.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">3</text>
+<rect x="185" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="197.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="197.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">4</text>
+<rect x="210" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="222.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="222.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">5</text>
+<rect x="235" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="247.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="247.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">6</text>
+<rect x="260" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="272.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="272.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">7</text>
+<rect x="285" y="132" width="25" height="32" rx="4" fill="#B3B3B3" stroke="#00000022" stroke-width="1"/>
+<text x="297.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="297.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">FX</text>
+<text x="210" y="202" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="middle">FX 1: one more octet</text>
+<text x="348" y="154" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="end">ff</text>
+<rect x="356" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="368.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="368.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">8</text>
+<rect x="381" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="393.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="393.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">9</text>
+<rect x="406" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="418.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="418.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">10</text>
+<rect x="431" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="443.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="443.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">11</text>
+<rect x="456" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="468.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="468.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">12</text>
+<rect x="481" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="493.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="493.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">13</text>
+<rect x="506" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="518.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="518.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">14</text>
+<rect x="531" y="132" width="25" height="32" rx="4" fill="#B3B3B3" stroke="#00000022" stroke-width="1"/>
+<text x="543.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="543.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">FX</text>
+<text x="456" y="202" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="middle">FX 1: one more octet</text>
+<text x="594" y="154" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="end">02</text>
+<rect x="602" y="132" width="25" height="32" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="614.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.5" text-anchor="middle">0</text>
+<text x="614.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">15</text>
+<rect x="627" y="132" width="25" height="32" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="639.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.5" text-anchor="middle">0</text>
+<text x="639.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">16</text>
+<rect x="652" y="132" width="25" height="32" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="664.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.5" text-anchor="middle">0</text>
+<text x="664.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">17</text>
+<rect x="677" y="132" width="25" height="32" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="689.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.5" text-anchor="middle">0</text>
+<text x="689.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">18</text>
+<rect x="702" y="132" width="25" height="32" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="714.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.5" text-anchor="middle">0</text>
+<text x="714.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">19</text>
+<rect x="727" y="132" width="25" height="32" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="739.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.5" text-anchor="middle">0</text>
+<text x="739.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">20</text>
+<rect x="752" y="132" width="25" height="32" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="764.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1E1E1E" fill-opacity="1" text-anchor="middle">1</text>
+<text x="764.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">21</text>
+<rect x="777" y="132" width="25" height="32" rx="4" fill="#B3B3B3" stroke="#00000022" stroke-width="1"/>
+<text x="789.5" y="154" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.5" text-anchor="middle">0</text>
+<text x="789.5" y="180" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">FX</text>
+<text x="702" y="202" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="middle">FX 0: last octet</text>
+<text x="40" y="230" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">bit n of octet k is FRN 7k + n; a set bit means the item is present, in this order</text>
+<text x="58" y="264" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.6" text-anchor="middle">FRN</text>
+<text x="86" y="264" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">item</text>
+<text x="170" y="264" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">format (UAP)</text>
+<text x="268" y="264" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">bytes</text>
+<text x="528" y="264" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">cat048::TargetReport</text>
+<text x="58" y="299" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">1</text>
+<text x="86" y="299" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/010</text>
+<text x="170" y="299" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(2)</text>
+<rect x="268" y="280" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="301" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">19</text>
+<rect x="295" y="280" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="301" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">0d</text>
+<text x="528" y="299" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">SAC 25 · SIC 13</text>
+<text x="58" y="339" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">2</text>
+<text x="86" y="339" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/140</text>
+<text x="170" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(3)</text>
+<rect x="268" y="320" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="341" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">35</text>
+<rect x="295" y="320" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="341" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">6d</text>
+<rect x="322" y="320" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="341" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">ee</text>
+<text x="528" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">27 355.86 s: 07:35:55 UTC</text>
+<text x="58" y="379" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">3</text>
+<text x="86" y="379" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/020</text>
+<text x="170" y="379" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Variable</text>
+<rect x="268" y="360" width="27" height="30" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="381" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">a0</text>
+<text x="528" y="379" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">Mode S roll-call, FX = 0</text>
+<text x="58" y="419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">4</text>
+<text x="86" y="419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/040</text>
+<text x="170" y="419" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(4)</text>
+<rect x="268" y="400" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">c2</text>
+<rect x="295" y="400" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">d3</text>
+<rect x="322" y="400" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">5b</text>
+<rect x="349" y="400" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="362.5" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">90</text>
+<text x="528" y="419" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">ρ 194.82 NM · θ 128.76°</text>
+<text x="58" y="459" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">5</text>
+<text x="86" y="459" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/070</text>
+<text x="170" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(2)</text>
+<rect x="268" y="440" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="461" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">04</text>
+<rect x="295" y="440" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="461" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">c3</text>
+<text x="528" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">Mode 3/A 2303</text>
+<text x="58" y="499" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">6</text>
+<text x="86" y="499" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/090</text>
+<text x="170" y="499" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(2)</text>
+<rect x="268" y="480" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="501" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">05</text>
+<rect x="295" y="480" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="501" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">a0</text>
+<text x="528" y="499" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">FL 360</text>
+<text x="58" y="539" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">7</text>
+<text x="86" y="539" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/130</text>
+<text x="170" y="539" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Compound</text>
+<rect x="268" y="520" width="27" height="30" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="541" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">e0</text>
+<rect x="295" y="520" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="541" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">56</text>
+<rect x="322" y="520" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="541" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">0b</text>
+<rect x="349" y="520" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="362.5" y="541" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">b8</text>
+<text x="528" y="539" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">e0: SRL, SRR 11, SAM −72 dBm</text>
+<text x="58" y="579" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">8</text>
+<text x="86" y="579" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/220</text>
+<text x="170" y="579" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(3)</text>
+<rect x="268" y="560" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="581" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">4b</text>
+<rect x="295" y="560" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="581" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">aa</text>
+<rect x="322" y="560" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="581" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">cd</text>
+<text x="528" y="579" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">4BAACD</text>
+<text x="58" y="619" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">9</text>
+<text x="86" y="619" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/240</text>
+<text x="170" y="619" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(6)</text>
+<rect x="268" y="600" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="621" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">50</text>
+<rect x="295" y="600" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="621" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">86</text>
+<rect x="322" y="600" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="621" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">79</text>
+<rect x="349" y="600" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="362.5" y="621" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">51</text>
+<rect x="376" y="600" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="389.5" y="621" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">88</text>
+<rect x="403" y="600" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="416.5" y="621" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">20</text>
+<text x="528" y="619" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">THY9TX</text>
+<text x="58" y="659" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">10</text>
+<text x="86" y="659" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/250</text>
+<text x="170" y="659" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Repetitive(8)</text>
+<rect x="268" y="640" width="27" height="30" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="295" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">c6</text>
+<rect x="322" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">56</text>
+<rect x="349" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="362.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">32</text>
+<rect x="376" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="389.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">b0</text>
+<rect x="403" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="416.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">a8</text>
+<rect x="430" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="443.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="457" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="470.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="484" y="640" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="497.5" y="661" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">40</text>
+<text x="528" y="659" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">REP 1: one BDS register</text>
+<text x="58" y="699" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">11</text>
+<text x="86" y="699" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/161</text>
+<text x="170" y="699" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(2)</text>
+<rect x="268" y="680" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="701" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="295" y="680" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="701" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">e2</text>
+<text x="528" y="699" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">track 482</text>
+<text x="58" y="739" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">12</text>
+<text x="86" y="739" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/042</text>
+<text x="170" y="739" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(4)</text>
+<rect x="268" y="720" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="741" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">4b</text>
+<rect x="295" y="720" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="741" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">f6</text>
+<rect x="322" y="720" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="741" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">c3</text>
+<rect x="349" y="720" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="362.5" y="741" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">04</text>
+<text x="528" y="739" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">x 19 446 · y −15 612 (¹⁄₁₂₈ NM)</text>
+<text x="58" y="779" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">13</text>
+<text x="86" y="779" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/200</text>
+<text x="170" y="779" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(4)</text>
+<rect x="268" y="760" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="781" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">08</text>
+<rect x="295" y="760" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="781" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">1e</text>
+<rect x="322" y="760" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="335.5" y="781" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">bb</text>
+<rect x="349" y="760" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="362.5" y="781" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">73</text>
+<text x="528" y="779" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">457 kt · 263.6°</text>
+<text x="58" y="819" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">14</text>
+<text x="86" y="819" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/170</text>
+<text x="170" y="819" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Variable</text>
+<rect x="268" y="800" width="27" height="30" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="821" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">40</text>
+<text x="528" y="819" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">confirmed, SSR/Mode S</text>
+<text x="58" y="859" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="600" fill="#1E1E1E" text-anchor="middle">21</text>
+<text x="86" y="859" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13.5" font-weight="600" fill="#1E1E1E" text-anchor="start">I048/230</text>
+<text x="170" y="859" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">Fixed(2)</text>
+<rect x="268" y="840" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="281.5" y="861" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">20</text>
+<rect x="295" y="840" width="27" height="30" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="308.5" y="861" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="500" fill="#1E1E1E" text-anchor="middle">f5</text>
+<text x="528" y="859" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="start">ACAS capability · flight status</text>
+<rect x="268" y="880" width="22" height="16" rx="3" fill="#FF9E42"/>
+<text x="298" y="893" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">the byte that decides the item's length (REP, primary subfield, FX octet)</text>
+</svg>
