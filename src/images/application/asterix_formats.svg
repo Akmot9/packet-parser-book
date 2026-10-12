@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 524" width="900" height="524" role="img" aria-labelledby="t d">
+<title id="t">Five item formats, five ways to know an item's length</title>
+<desc id="d">Each item format of the UAP tells the parser how long the item is: a fixed item has its length in the UAP; a variable item extends while bit 1 of its octets, FX, is set; a repetitive item starts with a count; a compound item starts with a primary subfield whose bits say which subfields follow; an explicit item starts with its own length. Real bytes from the corpus for each.</desc>
+<rect x="12" y="12" width="876" height="500" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">Five formats, five ways to know an item's length</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">the UAP names the format; the format says where the item ends · bytes from the corpus</text>
+<rect x="40" y="124" width="290" height="58" rx="8" fill="#FFC943"/>
+<text x="54" y="148" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1E1E" text-anchor="start">Fixed(n)</text>
+<text x="54" y="168" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">I048/010</text>
+<rect x="350" y="132" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="365.0" y="155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">19</text>
+<rect x="380" y="132" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="395.0" y="155" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">0d</text>
+<text x="424" y="155" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">→ 2 bytes</text>
+<text x="350" y="180" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">n comes from the UAP</text>
+<rect x="40" y="198" width="290" height="58" rx="8" fill="#FFC943"/>
+<text x="54" y="222" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1E1E" text-anchor="start">Variable</text>
+<text x="54" y="242" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">I048/020</text>
+<rect x="350" y="206" width="30" height="34" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="365.0" y="229" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="380" y="206" width="30" height="34" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="395.0" y="229" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">60</text>
+<text x="424" y="229" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">→ 2 bytes (a0 alone: 1)</text>
+<text x="350" y="254" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">bit 1 of each octet is FX: 1, one more octet; 0, stop</text>
+<rect x="40" y="272" width="290" height="58" rx="8" fill="#FFC943"/>
+<text x="54" y="296" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1E1E" text-anchor="start">Repetitive(n)</text>
+<text x="54" y="316" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">I048/250</text>
+<rect x="350" y="280" width="30" height="34" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="365.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="380" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="395.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">c6</text>
+<rect x="410" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="425.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">56</text>
+<rect x="440" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="455.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">32</text>
+<rect x="470" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="485.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">b0</text>
+<rect x="500" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="515.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">a8</text>
+<rect x="530" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="545.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="560" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="575.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="590" y="280" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="605.0" y="303" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">40</text>
+<text x="634" y="303" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">→ 1 + 1 × 8 = 9 bytes</text>
+<text x="350" y="328" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">a REP count, then REP × n bytes</text>
+<rect x="40" y="346" width="290" height="58" rx="8" fill="#FFC943"/>
+<text x="54" y="370" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1E1E" text-anchor="start">Compound</text>
+<text x="54" y="390" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">I048/130</text>
+<rect x="350" y="354" width="30" height="34" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="365.0" y="377" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">e0</text>
+<rect x="380" y="354" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="395.0" y="377" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">56</text>
+<rect x="410" y="354" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="425.0" y="377" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">0b</text>
+<rect x="440" y="354" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="455.0" y="377" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">b8</text>
+<text x="484" y="377" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">→ e0: SRL, SRR, SAM, 1 byte each: 4</text>
+<text x="350" y="402" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">a primary subfield (FX octets) says which subfields follow</text>
+<rect x="40" y="420" width="290" height="58" rx="8" fill="#FFC943"/>
+<text x="54" y="444" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1E1E" text-anchor="start">Explicit</text>
+<text x="54" y="464" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="start">I021/RE</text>
+<rect x="350" y="428" width="30" height="34" rx="4" fill="#FF9E42" stroke="#00000022" stroke-width="1"/>
+<text x="365.0" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">05</text>
+<rect x="380" y="428" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="395.0" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">08</text>
+<rect x="410" y="428" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="425.0" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">f0</text>
+<rect x="440" y="428" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="455.0" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="470" y="428" width="30" height="34" rx="4" fill="#FFECBD" stroke="#00000022" stroke-width="1"/>
+<text x="485.0" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="500" fill="#1E1E1E" text-anchor="middle">62</text>
+<text x="514" y="451" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#1E1E1E" fill-opacity="0.8" text-anchor="start">→ 5 bytes</text>
+<text x="350" y="476" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">the first byte is the length, itself included</text>
+</svg>

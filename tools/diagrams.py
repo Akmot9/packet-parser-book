@@ -128,6 +128,13 @@ _dcp_block = bytes([2, 2]) + struct.pack("!H", 4) + b"plc1"
 _dcp = bytes.fromhex("fefe") + bytes([5, 0]) + struct.pack("!IHH", 0x01000001, 0x0080, len(_dcp_block)) + _dcp_block
 PROFINET_DCP_FRAME = ethernet("01:0e:cf:00:00:00", "02:42:00:00:aa:01", _dcp, ethertype=0x8892)
 PROFINET_DCP_FRAME += bytes(60 - len(PROFINET_DCP_FRAME))
+# ASTERIX, from pcaps_exemple/protocols/asterix/: frame 3 of cat_034_048.pcap (CroatiaControlLtd, GPL-2.0), the
+# UDP payload: a CAT 048 data block of 55 bytes then a CAT 034 one of 11; frame 129 of cat048_multicast.pcap
+# (the maintainer's anonymized capture), a short CAT 048 datagram; and the RE item of the first block of cat21_re.ast
+ASTERIX_TWO_BLOCKS = bytes.fromhex("300037ffff02190d356deea0c2d35b9004c305a0e0560bb84baacd50867951882001c65632b0a800004001e2"
+                                   "4bf6c304081ebb734020f522000bf0190d02356dfa60")
+ASTERIX_SHORT_CAT048 = bytes.fromhex("300023f7c30e0000020000016040de382a000000000000c00820820820000124005b80")
+ASTERIX_CAT021_RE = bytes.fromhex("0508f00162")
 # A MAC address whose OUI is in the crate's table (Siemens)
 SIEMENS_MAC = bytes.fromhex("e0dca04d2e91")
 
@@ -1751,6 +1758,199 @@ def profinet_frame_ids_diagram():
     svg.save("network/profinet_frame_ids.svg")
 
 
+
+def _bits(octet):
+    return [(octet >> (7 - i)) & 1 for i in range(8)]
+
+
+def asterix_datagram_diagram():
+    pl = ASTERIX_TWO_BLOCKS
+    assert len(pl) == 66 and pl[0] == 48 and pl[55] == 34
+    height = 640
+    svg = Svg(height, "A UDP datagram of two ASTERIX data blocks",
+              "The 66-byte UDP payload of frame 3 of cat_034_048.pcap: a CAT 048 data block of 55 bytes, one byte "
+              "of category, two of length, a three-octet FSPEC and 15 items, then a CAT 034 block of 11 bytes with a "
+              "one-octet FSPEC and 4 items. The two lengths add up to the payload exactly, so AsterixPacket has two "
+              "blocks and the flow is labelled ASTERIX. A block of category 62, a length one byte too long, or one "
+              "trailing byte each fail the whole datagram.")
+    svg.text(40, 62, "One datagram, two data blocks", 22, weight=600, anchor="start")
+    svg.text(40, 88, "frame 3 of cat_034_048.pcap · UDP 21154 → 22113 · 66 bytes of payload", 14, anchor="start",
+             opacity=0.6)
+    x0, x1, by, bh = 60, 840, 118, 60
+    segs = [("CAT", "30", 44, YELLOW), ("LEN", "00 37", 60, YELLOW), ("FSPEC", "ff ff 02", 76, ORANGE),
+            ("15 items", "49 bytes", 0, YELLOW_LIGHT), ("CAT", "22", 44, YELLOW), ("LEN", "00 0b", 60, YELLOW),
+            ("FSPEC", "f0", 52, ORANGE), ("4 items", "7 B", 0, YELLOW_LIGHT)]
+    fixed = sum(w for _, _, w, _ in segs)
+    free = x1 - x0 - fixed
+    widths = [w if w else (free * (49 if n == "15 items" else 7) // 56) for n, _, w, _ in segs]
+    widths[-1] = x1 - x0 - sum(widths[:-1])
+    svg.add(f'<clipPath id="ab"><rect x="{x0}" y="{by}" width="{x1 - x0}" height="{bh}" rx="10"/></clipPath>')
+    svg.add('<g clip-path="url(#ab)">')
+    x, edges = x0, [x0]
+    for (name, val, _, fill), w in zip(segs, widths):
+        svg.rect(x, by, w, bh, fill, stroke="#00000026", sw=1)
+        svg.text(x + w / 2, by + 25, name, 12.5, weight=600)
+        svg.text(x + w / 2, by + 45, val, 12.5, family=MONO, opacity=0.8)
+        x += w
+        edges.append(x)
+    svg.add("</g>")
+    svg.rect(x0, by, x1 - x0, bh, "none", rx=10, stroke=DARK, sw=3.5)
+    split = edges[4]
+    svg.line(split, by - 8, split, by + bh + 8, DARK, sw=3)
+
+    def bracket(a, b, y, l1, l2, color):
+        svg.add(f'<path d="M {a + 3} {y} v 10 H {b - 3} v -10" fill="none" stroke="{color}" stroke-width="3" '
+                f'stroke-linecap="round" stroke-linejoin="round"/>')
+        svg.text((a + b) / 2, y + 30, l1, 13.5, fill=color, weight=600)
+        svg.text((a + b) / 2, y + 48, l2, 12.5, family=MONO, opacity=0.8)
+    bracket(x0, split, by + bh + 14, "data block 1 · CAT 048", "LEN 55 = 3 + 3 + 49", "#E0AE2E")
+    bracket(split, x1, by + bh + 14, "data block 2 · CAT 034", "LEN 11 = 3 + 1 + 7", "#E0AE2E")
+    bracket(x0, x1, by + bh + 84, "55 + 11 = 66 bytes = UDP length − 8", "no byte left over, no category unknown: ASTERIX",
+            SUCCESS)
+
+    # the struct, and the label
+    sx, sy, sw = 60, 320, 520
+    svg.rect(sx, sy, sw, TITLE_H + 2 * 48 + 8, DARK, rx=10)
+    svg.text(sx + sw / 2, sy + 36, "AsterixPacket", 20, fill=WHITE, weight=600)
+    for k, (c, l, items) in enumerate(((48, 55, "1 record · 15 items"), (34, 11, "1 record · 4 items"))):
+        y = sy + TITLE_H + 4 + k * 48
+        svg.rect(sx + 4, y, sw - 8, 44, YELLOW_LIGHT, rx=6)
+        svg.text(sx + 18, y + 27, f"blocks[{k}]", 14, family=MONO, weight=600, anchor="start")
+        svg.text(sx + sw - 18, y + 27, f"category {c} · length {l} · {items}", 13, family=MONO, anchor="end",
+                 opacity=0.85)
+    lx, lw = 650, 190
+    svg.rect(lx, sy + 30, lw, 60, GREEN, rx=8)
+    svg.text(lx + lw / 2, sy + 55, "application", 13, opacity=0.7)
+    svg.text(lx + lw / 2, sy + 77, '"ASTERIX"', 18, weight=700, family=MONO)
+    svg.arrow([(sx + sw + 6, sy + 60), (lx - 10, sy + 60)], SUCCESS)
+
+    # three ways to fail, each checked with the crate
+    fy = sy + TITLE_H + 2 * 48 + 8 + 40
+    svg.text(40, fy, "One failure anywhere, and the datagram is not ASTERIX (it goes on to the next rule):", 14,
+             weight=600, anchor="start")
+    cards = [("CAT 62 (0x3e) in place of 34", "UnsupportedCategory(62)"),
+             ("LEN 56 in place of 55", "the extra byte opens a record:", "I048/020 truncated"),
+             ("one trailing byte", "payload too small:", "needed 3 bytes, got 1")]
+    for k, card in enumerate(cards):
+        x = 40 + k * 274
+        svg.rect(x, fy + 16, 260, 70, "#F2C9C9", rx=8)
+        svg.text(x + 130, fy + 38, card[0], 13.5, weight=600)
+        svg.text(x + 130, fy + 57, card[1], 12, family=MONO, opacity=0.8)
+        if len(card) > 2:
+            svg.text(x + 130, fy + 74, card[2], 12, family=MONO, opacity=0.8)
+    svg.save("application/asterix_datagram.svg")
+
+
+def asterix_record_diagram():
+    pl = ASTERIX_TWO_BLOCKS
+    body = pl[3:55]
+    fspec = body[:3]
+    assert fspec == bytes.fromhex("ffff02")
+    # (frn, id, format, start, length, value) along the UAP of CAT 048, checked with the crate
+    items = [(1, "I048/010", "Fixed(2)", 3, 2, "SAC 25 · SIC 13"), (2, "I048/140", "Fixed(3)", 5, 3, "27 355.86 s: 07:35:55 UTC"),
+             (3, "I048/020", "Variable", 8, 1, "Mode S roll-call, FX = 0"), (4, "I048/040", "Fixed(4)", 9, 4, "ρ 194.82 NM · θ 128.76°"),
+             (5, "I048/070", "Fixed(2)", 13, 2, "Mode 3/A 2303"), (6, "I048/090", "Fixed(2)", 15, 2, "FL 360"),
+             (7, "I048/130", "Compound", 17, 4, "e0: SRL, SRR 11, SAM −72 dBm"), (8, "I048/220", "Fixed(3)", 21, 3, "4BAACD"),
+             (9, "I048/240", "Fixed(6)", 24, 6, "THY9TX"), (10, "I048/250", "Repetitive(8)", 30, 9, "REP 1: one BDS register"),
+             (11, "I048/161", "Fixed(2)", 39, 2, "track 482"), (12, "I048/042", "Fixed(4)", 41, 4, "x 19 446 · y −15 612 (¹⁄₁₂₈ NM)"),
+             (13, "I048/200", "Fixed(4)", 45, 4, "457 kt · 263.6°"), (14, "I048/170", "Variable", 49, 1, "confirmed, SSR/Mode S"),
+             (21, "I048/230", "Fixed(2)", 50, 2, "ACAS capability · flight status")]
+    assert items[-1][3] + items[-1][4] == 52 == len(body)
+    present = {frn for frn, *_ in items}
+    fy0, cw, pitch = 118, 25, 40
+    ty0 = fy0 + 156
+    height = ty0 + len(items) * pitch + 40
+    svg = Svg(height, "A CAT 048 record, cut along its UAP",
+              "The 52-byte record of the first data block: a three-octet FSPEC, ff ff 02, whose bits name the Field "
+              "Reference Numbers present, 1 to 14 and 21, then the fifteen items in that order, each with the "
+              "format the UAP of CAT 048 gives it: fixed, variable, compound or repetitive. The decoded values are "
+              "those of cat048::TargetReport on this record: flight THY9TX, address 4BAACD, 194.82 NM at 128.76 "
+              "degrees, flight level 360, 457 knots heading 263.6 degrees, track 482.")
+    svg.text(40, 62, "A CAT 048 record, cut along its UAP", 22, weight=600, anchor="start")
+    svg.text(40, 88, "the first data block of the same datagram: FSPEC, then 15 items in FRN order", 14,
+             anchor="start", opacity=0.6)
+    # FSPEC: three octets, 7 presence bits + FX each
+    svg.text(40, fy0 + 14, "FSPEC", 13.5, weight=600, anchor="start")
+    gx = 110
+    for oi, octet in enumerate(fspec):
+        x = gx + oi * (8 * cw + 46)
+        svg.text(x - 8, fy0 + 36, f"{octet:02x}", 13, family=MONO, anchor="end", opacity=0.7)
+        for bi, bit in enumerate(_bits(octet)):
+            cx = x + bi * cw
+            if bi == 7:
+                fill = GREY_LIGHT
+                label = "FX"
+            else:
+                frn = oi * 7 + bi + 1
+                fill = ORANGE if bit else YELLOW_LIGHT
+                label = str(frn)
+            svg.rect(cx, fy0 + 14, cw, 32, fill, rx=4, stroke="#00000022", sw=1)
+            svg.text(cx + cw / 2, fy0 + 36, str(bit), 14, weight=600 if bit else 400, opacity=1 if bit else 0.5)
+            svg.text(cx + cw / 2, fy0 + 62, label, 10.5, family=MONO, opacity=0.7)
+        fx = octet & 1
+        svg.text(x + 4 * cw, fy0 + 84, "FX 1: one more octet" if fx else "FX 0: last octet", 11.5, opacity=0.6)
+    svg.text(40, fy0 + 112, "bit n of octet k is FRN 7k + n; a set bit means the item is present, in this order",
+             12.5, anchor="start", opacity=0.65)
+    # table
+    cols = {"frn": 58, "id": 86, "fmt": 170, "bytes": 268, "val": 528}
+    y = ty0
+    svg.text(cols["frn"], y - 10, "FRN", 11.5, weight=600, opacity=0.6)
+    for key, label in (("id", "item"), ("fmt", "format (UAP)"), ("bytes", "bytes"), ("val", "cat048::TargetReport")):
+        svg.text(cols[key], y - 10, label, 11.5, weight=600, anchor="start", opacity=0.6)
+    bcw = 27
+    for frn, iid, fmt, start, length, value in items:
+        data = body[start:start + length]
+        svg.text(cols["frn"], y + 25, str(frn), 13, family=MONO, weight=600)
+        svg.text(cols["id"], y + 25, iid, 13.5, family=MONO, weight=600, anchor="start")
+        svg.text(cols["fmt"], y + 25, fmt, 12.5, anchor="start", opacity=0.75)
+        for i, b in enumerate(data):
+            decides = (fmt == "Repetitive(8)" and i == 0) or (fmt == "Compound" and i == 0) or fmt == "Variable"
+            svg.rect(cols["bytes"] + i * bcw, y + 6, bcw, 30, ORANGE if decides else YELLOW_LIGHT, rx=4,
+                     stroke="#00000022", sw=1)
+            svg.text(cols["bytes"] + i * bcw + bcw / 2, y + 27, f"{b:02x}", 12.5, family=MONO, weight=500)
+        svg.text(cols["val"], y + 25, value, 12.5, anchor="start", opacity=0.85)
+        y += pitch
+    svg.rect(cols["bytes"], y + 6, 22, 16, ORANGE, rx=3)
+    svg.text(cols["bytes"] + 30, y + 19, "the byte that decides the item's length (REP, primary subfield, FX octet)",
+             12, anchor="start", opacity=0.65)
+    svg.save("application/asterix_record.svg")
+
+
+def asterix_formats_diagram():
+    body = ASTERIX_TWO_BLOCKS[3:55]
+    short = ASTERIX_SHORT_CAT048
+    rows = [("Fixed(n)", "n comes from the UAP", "I048/010", body[3:5], [], "2 bytes"),
+            ("Variable", "bit 1 of each octet is FX: 1, one more octet; 0, stop", "I048/020", short[11:13], [0, 1],
+             "2 bytes (a0 alone: 1)"),
+            ("Repetitive(n)", "a REP count, then REP × n bytes", "I048/250", body[30:39], [0], "1 + 1 × 8 = 9 bytes"),
+            ("Compound", "a primary subfield (FX octets) says which subfields follow", "I048/130", body[17:21], [0],
+             "e0: SRL, SRR, SAM, 1 byte each: 4"),
+            ("Explicit", "the first byte is the length, itself included", "I021/RE", ASTERIX_CAT021_RE, [0], "5 bytes")]
+    y0, pitch = 124, 74
+    height = y0 + len(rows) * pitch + 30
+    svg = Svg(height, "Five item formats, five ways to know an item's length",
+              "Each item format of the UAP tells the parser how long the item is: a fixed item has its length in "
+              "the UAP; a variable item extends while bit 1 of its octets, FX, is set; a repetitive item starts "
+              "with a count; a compound item starts with a primary subfield whose bits say which subfields follow; "
+              "an explicit item starts with its own length. Real bytes from the corpus for each.")
+    svg.text(40, 62, "Five formats, five ways to know an item's length", 22, weight=600, anchor="start")
+    svg.text(40, 88, "the UAP names the format; the format says where the item ends · bytes from the corpus", 14,
+             anchor="start", opacity=0.6)
+    bx, bcw = 350, 30
+    for k, (name, rule, iid, data, decides, total) in enumerate(rows):
+        y = y0 + k * pitch
+        svg.rect(40, y, 290, 58, YELLOW, rx=8)
+        svg.text(54, y + 24, name, 15, weight=700, anchor="start")
+        svg.text(54, y + 44, iid, 12.5, family=MONO, anchor="start", opacity=0.75)
+        for i, b in enumerate(data):
+            svg.rect(bx + i * bcw, y + 8, bcw, 34, ORANGE if i in decides else YELLOW_LIGHT, rx=4,
+                     stroke="#00000022", sw=1)
+            svg.text(bx + i * bcw + bcw / 2, y + 31, f"{b:02x}", 13, family=MONO, weight=500)
+        svg.text(bx + len(data) * bcw + 14, y + 31, "→ " + total, 13, anchor="start", weight=600, opacity=0.8)
+        svg.text(bx, y + 56, rule, 12, anchor="start", opacity=0.65)
+    svg.save("application/asterix_formats.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -1780,3 +1980,6 @@ if __name__ == "__main__":
     udp_lengths_diagram()
     profinet_dcp_diagram()
     profinet_frame_ids_diagram()
+    asterix_datagram_diagram()
+    asterix_record_diagram()
+    asterix_formats_diagram()
