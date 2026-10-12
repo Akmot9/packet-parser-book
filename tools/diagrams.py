@@ -1730,13 +1730,13 @@ def profinet_frame_ids_diagram():
     rh, gap = 40, 8
     top = 150
     height = top + 6 * (rh + gap) + 110
-    svg = Svg(height, "Which Frame IDs the 11.4.0 validator accepts",
+    svg = Svg(height, "Which Frame IDs the 11.5.0 validator accepts",
               "The validator accepts five Frame ID ranges and values: 0xC000 to 0xF7FF, 0xF800 to 0xFBFF, 0xFEFD, "
               "0xFEFE and 0xFEFF; those frames give an Internet layer named Profinet. Every other Frame ID is an "
               "UnknownFrameId reported in corrupted although the frame is healthy: RT_CLASS_3 and RT_CLASS_1 "
               "cyclic data, alarms, DCP Hello, PTCP, fragments. Issue 133 tracks it.")
     svg.text(40, 62, "Which Frame IDs the validator accepts", 22, weight=600, anchor="start")
-    svg.text(40, 88, "packet_parser 11.4.0, checked against tshark 4.6.6 on built frames", 14, anchor="start",
+    svg.text(40, 88, "packet_parser 11.5.0, checked against tshark 4.6.6 on built frames", 14, anchor="start",
              opacity=0.6)
     cols = [(40, 400, GREEN, DARK, "accepted → internet: Profinet", accepted),
             (460, 400, RED, WHITE, "rejected → corrupted, although healthy (#133)", rejected)]
@@ -1951,6 +1951,130 @@ def asterix_formats_diagram():
     svg.save("application/asterix_formats.svg")
 
 
+# PTP: frames 25 and 1 of pcaps_exemple/protocols/ptp/ptpv2.pcap (a Hirschmann clock, Wireshark wiki)
+PTP_SYNC_FRAME = bytes.fromhex("01005e0001810080630009ba08004500004845a900000111cfccc0a80206e0000181013f013f003400001002002c00000000000000000000000000000000008063ffff0009ba000100730000000045b111590a657725")
+PTP_PDELAY_REQ_FRAME = bytes.fromhex("0180c200000e0080630009ba88f70202003600000000000000000000000000000000008063ffff0009ba0002045e050f000045b111491c4178f400000000000000000000")
+
+
+def ptp_header_diagram():
+    gx, gy = 60, 230
+    msg = PTP_SYNC_FRAME[42:]  # after Ethernet, IPv4 and UDP
+    assert len(PTP_SYNC_FRAME) == 86 and len(msg) == 44 and msg[2:4] == b"\x00\x2c" and msg[30:32] == b"\x00\x73"
+    h = lambda a, b: hexs(msg[a:b])  # noqa: E731
+    body = YELLOW
+    rows = [
+        ("fields", [(0, 2, "messageType · versionPTP", h(0, 2), True), (2, 2, "messageLength", h(2, 4), False)]),
+        ("fields", [(0, 1, "domain", h(4, 5), False), (1, 1, "minorSdoId", h(5, 6), False),
+                    (2, 2, "flags", h(6, 8), False)]),
+        ("fields", [(0, 4, "correctionField (8 bytes), first half", h(8, 12), False)]),
+        ("ellipsis", "… 8 zero bytes: rest of correction, typeSpecific", YELLOW_LIGHT, 40),
+        ("fields", [(0, 4, "sourcePortIdentity · clockIdentity", h(20, 24), False)]),
+        ("fields", [(0, 4, "clockIdentity, continued", h(24, 28), False)]),
+        ("fields", [(0, 2, "portNumber", h(28, 30), False), (2, 2, "sequenceId", h(30, 32), False)]),
+        ("fields", [(0, 1, "control", h(32, 33), False), (1, 1, "logInterval", h(33, 34), False),
+                    (2, 2, "originTimestamp · seconds", h(34, 36), body)]),
+        ("fields", [(0, 4, "seconds, continued (48 bits in all)", h(36, 40), body)]),
+        ("fields", [(0, 4, "nanoseconds", h(40, 44), body)]),
+    ]
+    height = gy + 9 * RH + 40 + 80
+    svg = Svg(height, "From PTP bytes to PtpV2Message",
+              "The 44-byte PTPv2 Sync message of frame 25 of ptpv2.pcap, 32 bits per row: the 34-byte common "
+              "header, majorSdoId 1 and messageType 0 in the first byte, versionPTP 2 in the second, "
+              "messageLength 44, domain 0, flags 0, correctionField 0, clockIdentity 00:80:63:ff:ff:00:09:ba, "
+              "portNumber 1, sequenceId 115, controlField 0, logMessageInterval 0; then the Sync body, an "
+              "originTimestamp of 1169232217 seconds and 174421797 nanoseconds. PtpV2Message holds the header, "
+              "the body Sync, an empty TLV area and no trailing byte.")
+    svg.text(gx, 84, "PTPv2 Sync message", 22, weight=600, anchor="start")
+    svg.text(gx, 110, "frame 25 of ptpv2.pcap, UDP 319 → 319 · 44 bytes, 32 bits per row", 14, anchor="start",
+             opacity=0.55)
+    ys, bottom = byte_grid(svg, gx, gy, rows, YELLOW_LIGHT, YELLOW)
+    right = gx + 4 * CW
+    svg.outline(gx, ys[0], 2 * CW, RH)
+    sx, sw = 610, 250
+    struct_box(svg, sx, sw, "PtpV2Header", [
+        ("message_type", "0 → Sync", ORANGE, DARK, 200),
+        ("version_ptp", "2 → PtpPacket::V2", ORANGE, DARK, 260),
+        ("message_length", "44", YELLOW_LIGHT, DARK, 320),
+        ("sequence_id", "115", YELLOW_LIGHT, DARK, 380),
+        ("source_port_identity", "…:00:09:ba · port 1", YELLOW_LIGHT, DARK, 440),
+    ])
+    struct_box(svg, sx, sw, "PtpV2Message", [
+        ("header", "the 34 bytes above", YELLOW_LIGHT, DARK, 574),
+        ("body", "Sync { origin_timestamp }", YELLOW, DARK, 634),
+        ("tlvs", "PtpTlvs · empty", YELLOW_LIGHT, DARK, 694),
+        ("trailing", "&amp;[] · nothing after 44", YELLOW_LIGHT, DARK, 754),
+    ])
+    svg.arrow([(sx - 12, 200), (gx + CW / 2, 200), (gx + CW / 2, gy - 8)], ORANGE_DARK)
+    svg.arrow([(sx - 12, 260), (right + 10, 260)], ORANGE_DARK)
+    svg.arrow([(sx - 12, 380), (right + 70, 380), (right + 70, ys[6] + RH / 2), (right + 10, ys[6] + RH / 2)], GREY)
+    svg.arrow([(sx - 12, 634), (right + 40, 634), (right + 40, ys[8] + RH / 2), (right + 10, ys[8] + RH / 2)],
+              ORANGE_DARK)
+    svg.text(gx, bottom + 26, "PtpV2Header: bytes 0–33 · Sync body: originTimestamp, bytes 34–43", 13,
+             anchor="start", opacity=0.65)
+    svg.text(gx, bottom + 44, "messageLength 44 covers the whole datagram: no TLV, no trailing byte", 13,
+             anchor="start", opacity=0.65)
+    svg.save("application/ptp_header.svg")
+
+
+def ptp_carriers_diagram():
+    sy, sw, rh = 150, 360, 56
+    none_ink = "#E6E6E6"
+    assert PTP_PDELAY_REQ_FRAME[12:14] == b"\x88\xf7" and PTP_PDELAY_REQ_FRAME[44:46] == b"\x04\x5e"
+    height = 680
+    svg = Svg(height, "The two carriers of PTP, two places in PacketFlow",
+              "Two frames of ptpv2.pcap. Frame 25 is a PTPv2 Sync on UDP 319 to 319 inside IPv4: the flow has a "
+              "link, an internet and a transport layer, and the application label PTP, given by the port-guarded "
+              "rule of the dispatch table; the decode is PtpPacket::try_from_udp on the transport payload. Frame 1 "
+              "is a PTPv2 Pdelay_Req straight over Ethernet, EtherType 0x88F7: the internet layer is named PTP "
+              "and holds the decoded message in InternetDetails::Ptp; the transport and application layers are "
+              "None.")
+    svg.text(40, 62, "The two carriers of PTP, two places in PacketFlow", 22, weight=600, anchor="start")
+    svg.text(40, 88, "frames 25 and 1 of ptpv2.pcap · one parser, PtpPacket, behind both", 14, anchor="start",
+             opacity=0.6)
+
+    def stack(x, title, rows):
+        h = TITLE_H + len(rows) * (rh + GAP) + GAP
+        svg.rect(x, sy, sw, h, DARK, rx=10)
+        svg.text(x + sw / 2, sy + GAP + TITLE_H / 2 + 7, title, 20, fill=WHITE, weight=600)
+        fy = sy + GAP + TITLE_H
+        for label, fill, ink, sub in rows:
+            svg.rect(x + 4, fy, sw - 8, rh, fill, rx=6)
+            svg.text(x + sw / 2, fy + rh / 2 - 3, label, 16, fill=ink, weight=600)
+            svg.text(x + sw / 2, fy + rh / 2 + 16, sub, 12.5, fill=ink, family=MONO, opacity=0.85)
+            fy += rh + GAP
+        return sy + h
+
+    sides = [
+        (60, "UDP 319 / 320 · annexes D and E", "PacketFlow · frame 25", [
+            ("data_link", GREY, WHITE, "Ethernet · EtherType 0x0800"),
+            ("internet", BLUE, WHITE, "IPv4 192.168.2.6 → 224.0.1.129"),
+            ("transport", GREEN, DARK, "UDP 319 → 319 · payload 44 bytes"),
+            ("application", YELLOW, DARK, '"PTP"'),
+        ], YELLOW_LIGHT, [
+            ("the rule, in the dispatch table", 'port_rule("PTP", Guard::Udp, 319 | 320)'),
+            ("the decode, on the transport payload", "PtpPacket::try_from_udp(payload)"),
+            ("what it returns", "V2(Sync, sequence_id 115)"),
+        ]),
+        (480, "EtherType 0x88F7 · annex F", "PacketFlow · frame 1", [
+            ("data_link", GREY, WHITE, "Ethernet · EtherType 0x88F7"),
+            ("internet", BLUE, WHITE, '"PTP" · no addresses'),
+            ("transport", NONE_FILL, none_ink, "None"),
+            ("application", NONE_FILL, none_ink, "None"),
+        ], BLUE_LIGHT, [
+            ("the arm, in the internet dispatch", "NetworkProtocol::Ptp → from_ptp(..)"),
+            ("the decode, already done", "InternetDetails::Ptp(PtpPacket)"),
+            ("what it holds", "V2(PdelayReq, sequence_id 1118)"),
+        ]),
+    ]
+    for x, carrier, title, rows, fill, chips in sides:
+        svg.text(x + sw / 2, sy - 16, carrier, 15, weight=700)
+        bottom = stack(x, title, rows)
+        svg.arrow([(x + sw / 2, bottom + 4), (x + sw / 2, bottom + 24)], ARROW_DARK)
+        for k, (label, sub) in enumerate(chips):
+            chip(svg, x, bottom + 52 + k * 58, sw, fill, DARK, label, sub, h=48)
+    svg.save("application/ptp_carriers.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -1983,3 +2107,5 @@ if __name__ == "__main__":
     asterix_datagram_diagram()
     asterix_record_diagram()
     asterix_formats_diagram()
+    ptp_header_diagram()
+    ptp_carriers_diagram()

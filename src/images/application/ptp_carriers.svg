@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 680" width="900" height="680" role="img" aria-labelledby="t d">
+<title id="t">The two carriers of PTP, two places in PacketFlow</title>
+<desc id="d">Two frames of ptpv2.pcap. Frame 25 is a PTPv2 Sync on UDP 319 to 319 inside IPv4: the flow has a link, an internet and a transport layer, and the application label PTP, given by the port-guarded rule of the dispatch table; the decode is PtpPacket::try_from_udp on the transport payload. Frame 1 is a PTPv2 Pdelay_Req straight over Ethernet, EtherType 0x88F7: the internet layer is named PTP and holds the decoded message in InternetDetails::Ptp; the transport and application layers are None.</desc>
+<rect x="12" y="12" width="876" height="656" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">The two carriers of PTP, two places in PacketFlow</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">frames 25 and 1 of ptpv2.pcap · one parser, PtpPacket, behind both</text>
+<text x="240.0" y="134" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1E1E" text-anchor="middle">UDP 319 / 320 · annexes D and E</text>
+<rect x="60" y="150" width="360" height="300" rx="10" fill="#1E1E1E"/>
+<text x="240.0" y="189.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">PacketFlow · frame 25</text>
+<rect x="64" y="210" width="352" height="56" rx="6" fill="#757575"/>
+<text x="240.0" y="235.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">data_link</text>
+<text x="240.0" y="254.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.85" text-anchor="middle">Ethernet · EtherType 0x0800</text>
+<rect x="64" y="270" width="352" height="56" rx="6" fill="#3DADFF"/>
+<text x="240.0" y="295.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">internet</text>
+<text x="240.0" y="314.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.85" text-anchor="middle">IPv4 192.168.2.6 → 224.0.1.129</text>
+<rect x="64" y="330" width="352" height="56" rx="6" fill="#66D575"/>
+<text x="240.0" y="355.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">transport</text>
+<text x="240.0" y="374.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">UDP 319 → 319 · payload 44 bytes</text>
+<rect x="64" y="390" width="352" height="56" rx="6" fill="#FFC943"/>
+<text x="240.0" y="415.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">application</text>
+<text x="240.0" y="434.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">"PTP"</text>
+<path d="M 240.0 454 L 240.0 474" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="231.0,465 240.0,474 249.0,465" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="60" y="478.0" width="360" height="48" rx="6" fill="#FFECBD"/>
+<text x="240.0" y="498" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">the rule, in the dispatch table</text>
+<text x="240.0" y="515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">port_rule("PTP", Guard::Udp, 319 | 320)</text>
+<rect x="60" y="536.0" width="360" height="48" rx="6" fill="#FFECBD"/>
+<text x="240.0" y="556" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">the decode, on the transport payload</text>
+<text x="240.0" y="573" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">PtpPacket::try_from_udp(payload)</text>
+<rect x="60" y="594.0" width="360" height="48" rx="6" fill="#FFECBD"/>
+<text x="240.0" y="614" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">what it returns</text>
+<text x="240.0" y="631" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">V2(Sync, sequence_id 115)</text>
+<text x="660.0" y="134" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1E1E1E" text-anchor="middle">EtherType 0x88F7 · annex F</text>
+<rect x="480" y="150" width="360" height="300" rx="10" fill="#1E1E1E"/>
+<text x="660.0" y="189.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">PacketFlow · frame 1</text>
+<rect x="484" y="210" width="352" height="56" rx="6" fill="#757575"/>
+<text x="660.0" y="235.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">data_link</text>
+<text x="660.0" y="254.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.85" text-anchor="middle">Ethernet · EtherType 0x88F7</text>
+<rect x="484" y="270" width="352" height="56" rx="6" fill="#3DADFF"/>
+<text x="660.0" y="295.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#FFFFFF" text-anchor="middle">internet</text>
+<text x="660.0" y="314.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#FFFFFF" fill-opacity="0.85" text-anchor="middle">"PTP" · no addresses</text>
+<rect x="484" y="330" width="352" height="56" rx="6" fill="#4A4A4A"/>
+<text x="660.0" y="355.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#E6E6E6" text-anchor="middle">transport</text>
+<text x="660.0" y="374.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#E6E6E6" fill-opacity="0.85" text-anchor="middle">None</text>
+<rect x="484" y="390" width="352" height="56" rx="6" fill="#4A4A4A"/>
+<text x="660.0" y="415.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#E6E6E6" text-anchor="middle">application</text>
+<text x="660.0" y="434.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#E6E6E6" fill-opacity="0.85" text-anchor="middle">None</text>
+<path d="M 660.0 454 L 660.0 474" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="651.0,465 660.0,474 669.0,465" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="480" y="478.0" width="360" height="48" rx="6" fill="#C2E5FF"/>
+<text x="660.0" y="498" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">the arm, in the internet dispatch</text>
+<text x="660.0" y="515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">NetworkProtocol::Ptp → from_ptp(..)</text>
+<rect x="480" y="536.0" width="360" height="48" rx="6" fill="#C2E5FF"/>
+<text x="660.0" y="556" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">the decode, already done</text>
+<text x="660.0" y="573" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">InternetDetails::Ptp(PtpPacket)</text>
+<rect x="480" y="594.0" width="360" height="48" rx="6" fill="#C2E5FF"/>
+<text x="660.0" y="614" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1E1E1E" fill-opacity="0.85" text-anchor="middle">what it holds</text>
+<text x="660.0" y="631" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" font-weight="400" fill="#1E1E1E" text-anchor="middle">V2(PdelayReq, sequence_id 1118)</text>
+</svg>

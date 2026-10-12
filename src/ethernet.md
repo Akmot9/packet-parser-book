@@ -95,6 +95,8 @@ pub struct VlanTag {
 
 `vlan_stack.outer()` gives the S-VLAN, `vlan_stack.inner()` the same tag as `vlan`, and `vlan_stack.iter()` walks the stack from outer to inner. `VlanStack` is a zero-copy view over the tag bytes of the frame: no allocation, whatever the depth ([#82](https://github.com/Akmot9/Packet-parser/issues/82)). It takes part in equality and hashing, so two frames that differ only by their S-tag are two flows, and it is serialized only when at least two tags are stacked, so the JSON of untagged and single-tagged frames did not change when it appeared in 11.0.0.
 
+The `Display` of a `VlanTag` prints its ID and PCP in decimal since 11.5.0 ([#134](https://github.com/Akmot9/Packet-parser/issues/134)): `ID: 100, PCP: 0, DEI: false`, where VLAN 100 used to print as `ID: 64`, hexadecimal without a prefix. The `Display` of `DataLink` carries the same text.
+
 The untagged case is the hot path and stays a straight line; the stack is unrolled in a separate `#[inline(never)]` function, because unrolling it inline cost about 13 ns on every frame, tagged or not (measured on the reference packet).
 
 ---

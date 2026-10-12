@@ -29,9 +29,9 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 ## Supported protocols
 
-DNS (plus mDNS and LLMNR forms), TLS, SNMP, NTP, DHCP, DHCPv6, HTTP, MQTT, PostgreSQL, FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, Modbus TCP, UMAS, EtherNet/IP, OPC UA, S7Comm, COTP, AMS, GIOP, SRVLOC, ASTERIX (CAT 021, 034 and 048), QUIC, Bitcoin, and STP from the link layer.
+DNS (plus mDNS and LLMNR forms), TLS, SNMP, NTP, DHCP, DHCPv6, HTTP, MQTT, PostgreSQL, FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, Modbus TCP, UMAS, EtherNet/IP, OPC UA, S7Comm, COTP, AMS, GIOP, SRVLOC, ASTERIX (CAT 021, 034 and 048), QUIC, Bitcoin, PTP (IEEE 1588, on UDP 319/320; the same parser serves the link layer for EtherType `0x88F7`), and STP from the link layer.
 
-Some have a page of their own: [ASTERIX](./asterix.md) and [GIOP](./giop.md).
+Some have a page of their own: [ASTERIX](./asterix.md), [GIOP](./giop.md) and [PTP](./ptp.md).
 
 A probed payload that matches nothing is labelled `"Unknown"`. An empty payload (a pure ACK) is not probed at all and `application` stays `None`.
 
@@ -94,6 +94,7 @@ static RULES: &[Rule] = &[
     port_rule("OPC UA",  Guard::Tcp, is_opcua_tcp_port, ProbeId::Opcua),    // 4840: priority, not sufficiency
     port_rule("DNS",     Guard::Tcp, is_dns_port, ProbeId::DnsTcp),         // 53: length-prefixed form
     port_rule("DNS",     Guard::Udp, is_dns_port, ProbeId::Dns),            // 53: datagram form
+    port_rule("PTP",     Guard::Udp, is_ptp_port, ProbeId::Ptp),            // 319, 320: a Delay_Req has the shape of an SLPv1 header
     // --- blind cascade, with the transport guards the RFCs impose ---
     rule("NTP",         Guard::Udp, ProbeId::Ntp),
     rule("ASTERIX",     Guard::Udp, ProbeId::Asterix),     // structure only: no magic, no port; before DNS
@@ -139,9 +140,11 @@ A blind probe is only as good as the captures it has been confronted with. The d
 
 In both cases the rule kept its place in the table; what changed is what the probe demands. Both corrections only remove labels: the 866 frames concerned now come out as `"Unknown"`, and the golden histogram moves on those frames and nowhere else.
 
+The reverse defect exists too, a parser refusing its own traffic, and 11.5.0 fixed one in SRVLOC ([#131](https://github.com/Akmot9/Packet-parser/issues/131)): the Char Encoding field of an SLPv1 header was read on one byte instead of two (RFC 2165 §7), which shifted everything after it, the XID and, in a `DAAdvert`, the error code, URL and scope list; the 26 SLPv1 `DAAdvert` of a real capture came out `"Unknown"`. The header now has `SrvlocHeaderV1::char_encoding` (`u16`, the IANA MIBenum, 106 for UTF-8); the old single-byte `encoding` is deprecated, which is what made 11.5.0 a minor and not a patch.
+
 ## "Decode As"
 
-Port guards mean a server on a non-standard port is invisible to a port-guarded rule. `ParseConfig::decode_as(port, DecodeAsProtocol::Xxx)` declares extra ports. Declared ports are evaluated **before** the table, with the same three constraints: port *and* content, the protocol's transport guard, and failures memoized like the table's. Ports the table marks terminal (mDNS 5353, LLMNR 5355) cannot be overridden: the caller extends the guards, never replaces them.
+Port guards mean a server on a non-standard port is invisible to a port-guarded rule. `ParseConfig::decode_as(port, DecodeAsProtocol::Xxx)` declares extra ports (`DecodeAsProtocol::Ptp`, for PTP on a port other than 319 and 320, is the variant added in 11.5.0). Declared ports are evaluated **before** the table, with the same three constraints: port *and* content, the protocol's transport guard, and failures memoized like the table's. Ports the table marks terminal (mDNS 5353, LLMNR 5355) cannot be overridden: the caller extends the guards, never replaces them.
 
 ## STP: the one label without a transport
 

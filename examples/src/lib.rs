@@ -28,14 +28,31 @@ pub const ETHERNET_IPV4_TCP_GIOP_REQUEST_HEX: &str = concat!(
     "00000000000000"
 );
 
+/// Frame 25 of `pcaps_exemple/protocols/ptp/ptpv2.pcap` (Wireshark wiki, a
+/// Hirschmann clock): Ethernet / IPv4 / UDP 319 -> 319 carrying a PTPv2 Sync.
+pub const ETHERNET_IPV4_UDP_PTP_SYNC_HEX: &str = concat!(
+    "01005e0001810080630009ba08004500004845a900000111cfccc0a80206e000",
+    "0181013f013f003400001002002c000000000000000000000000000000000080",
+    "63ffff0009ba000100730000000045b111590a657725"
+);
+
+/// Frame 1 of the same capture: the same clock sending a PTPv2 Pdelay_Req
+/// straight over Ethernet, EtherType 0x88F7, without IP or UDP.
+pub const ETHERNET_PTP_PDELAY_REQ_HEX: &str = concat!(
+    "0180c200000e0080630009ba88f7020200360000000000000000000000000000",
+    "0000008063ffff0009ba0002045e050f000045b111491c4178f4000000000000",
+    "00000000"
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use packet_parser::parse::application::protocols::giop::{
         GiopMessage, GiopMessageType, GiopPacket, TargetAddress,
     };
+    use packet_parser::parse::application::protocols::ptp::{PtpPacket, PtpV2Body};
     use packet_parser::{
-        CorruptedLayerKind, LinkType, ParseError, PacketFlow, is_supported, parse,
+        CorruptedLayerKind, InternetDetails, LinkType, PacketFlow, ParseError, is_supported, parse,
     };
 
     // ANCHOR: parse_valid_frame
@@ -161,6 +178,53 @@ mod tests {
         assert_eq!(key.len(), 60);
     }
     // ANCHOR_END: classification_vs_decode
+
+    // ANCHOR: ptp_two_carriers
+    #[test]
+    fn ptp_is_a_label_on_udp_and_an_internet_layer_on_ethertype_88f7() {
+        // Frame 25 of ptpv2.pcap: UDP 319 -> 319. The pipeline labels the
+        // datagram; the protocol parser decodes it from the transport payload.
+        let raw = hex::decode(ETHERNET_IPV4_UDP_PTP_SYNC_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "PTP");
+
+        let payload = flow.transport.as_ref().unwrap().payload.unwrap();
+        let PtpPacket::V2(sync) = PtpPacket::try_from_udp(payload).unwrap() else {
+            panic!("expected a PTPv2 message");
+        };
+        assert_eq!(sync.header.message_type, 0); // Sync
+        assert_eq!(sync.header.message_length, 44);
+        assert_eq!(sync.header.sequence_id, 115);
+        assert_eq!(sync.header.source_port_identity.port_number, 1);
+        let PtpV2Body::Sync { origin_timestamp } = sync.body else {
+            panic!("expected a Sync body, got {:?}", sync.body);
+        };
+        assert_eq!(origin_timestamp.seconds, 1_169_232_217);
+        assert_eq!(origin_timestamp.nanoseconds, 174_421_797);
+        assert_eq!(sync.tlvs.iter().count(), 0);
+        assert!(sync.trailing.is_empty());
+
+        // Frame 1 of the same capture: EtherType 0x88F7. No IP, no UDP: the
+        // message is the internet layer, already decoded, and the flow has
+        // neither a transport layer nor an application label.
+        let raw = hex::decode(ETHERNET_PTP_PDELAY_REQ_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        let internet = flow.internet.as_ref().unwrap();
+        assert_eq!(internet.protocol_name, "PTP");
+        assert!(internet.source.is_none() && internet.destination.is_none());
+        assert!(flow.transport.is_none() && flow.application.is_none());
+        assert!(flow.corrupted.is_none());
+
+        let Some(InternetDetails::Ptp(PtpPacket::V2(pdelay_req))) = &internet.details
+        else {
+            panic!("expected a decoded PTPv2 message in details");
+        };
+        assert_eq!(pdelay_req.header.message_type, 2); // Pdelay_Req
+        assert_eq!(pdelay_req.header.sequence_id, 1118);
+        assert!(matches!(pdelay_req.body, PtpV2Body::PdelayReq { .. }));
+        assert!(pdelay_req.trailing.is_empty());
+    }
+    // ANCHOR_END: ptp_two_carriers
 
     // ANCHOR: owned_and_json
     #[test]
