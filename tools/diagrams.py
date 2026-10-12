@@ -122,6 +122,12 @@ TINY_UDP_FRAME = ethernet("02:42:c0:a8:00:01", "02:42:c0:a8:00:68",
                           ipv4("192.168.0.104", "192.168.0.1", 17, udp("192.168.0.104", "192.168.0.1", 51001, 9, b"hi"),
                                ident=0x3c1e))
 TINY_UDP_FRAME += bytes(60 - len(TINY_UDP_FRAME))
+# A PROFINET DCP Identify Request, multicast to the PROFINET group address, filtered on NameOfStation "plc1";
+# no capture in the repository carries PROFINET, so the frame is built, padded to 60 bytes
+_dcp_block = bytes([2, 2]) + struct.pack("!H", 4) + b"plc1"
+_dcp = bytes.fromhex("fefe") + bytes([5, 0]) + struct.pack("!IHH", 0x01000001, 0x0080, len(_dcp_block)) + _dcp_block
+PROFINET_DCP_FRAME = ethernet("01:0e:cf:00:00:00", "02:42:00:00:aa:01", _dcp, ethertype=0x8892)
+PROFINET_DCP_FRAME += bytes(60 - len(PROFINET_DCP_FRAME))
 # A MAC address whose OUI is in the crate's table (Siemens)
 SIEMENS_MAC = bytes.fromhex("e0dca04d2e91")
 
@@ -1646,6 +1652,105 @@ def udp_lengths_diagram():
     svg.save("transport/udp_lengths.svg")
 
 
+
+def profinet_dcp_diagram():
+    dcp = PROFINET_DCP_FRAME[14:34]
+    fields = [("Frame ID", 0, 2, "0xFEFE: DCP Identify request", True), ("Service ID", 2, 1, "5: Identify", False),
+              ("Service type", 3, 1, "0: request", False), ("Xid", 4, 4, "transaction id", False),
+              ("Response delay", 8, 2, "128", False), ("DCP data length", 10, 2, "8: one block follows", False),
+              ("Option · Suboption", 12, 2, "2 · 2: NameOfStation", False), ("Block length", 14, 2, "4", False),
+              ("Block data", 16, 4, '"plc1"', False)]
+    y0, pitch, ch, cw, x0 = 112, 52, 44, 40, 250
+    height = 700  # the two struct boxes on the right are taller than the field stack
+    svg = Svg(height, "A PROFINET DCP frame, and what the crate keeps of it",
+              "The 20 bytes of a DCP Identify request, field by field: Frame ID 0xFEFE, service 5 Identify, type 0 "
+              "request, a transaction id, a response delay, the DCP data length, then one block: option 2 "
+              "suboption 2 NameOfStation, length 4, plc1. The Internet struct keeps only the name Profinet: no "
+              "addresses, no payload, details None. ProfinetPacket::try_from on the link payload gives the fields.")
+    svg.text(40, 62, "PROFINET DCP Identify request", 22, weight=600, anchor="start")
+    svg.text(40, 88, "EtherType 0x8892, to the PROFINET multicast address 01:0e:cf:00:00:00", 14, anchor="start",
+             opacity=0.6)
+    rows = {}
+    for k, (name, off, n, meaning, hl) in enumerate(fields):
+        y = y0 + k * pitch
+        rows[name] = y + ch / 2
+        svg.text(x0 - 14, y + ch / 2 + 5, name, 13.5, anchor="end", opacity=0.75)
+        for i in range(n):
+            svg.rect(x0 + i * cw, y, cw, ch, ORANGE if hl else BLUE_LIGHT, rx=5, stroke="#8EC6EE", sw=1.5)
+            svg.text(x0 + i * cw + cw / 2, y + ch / 2 + 6, f"{dcp[off + i]:02X}", 16, weight=500)
+        if hl:
+            svg.outline(x0, y, n * cw, ch)
+        svg.text(x0 + n * cw + 12, y + ch / 2 + 5, meaning, 12.5, anchor="start", family=MONO, opacity=0.6)
+    # what the pipeline keeps, and what a caller can get
+    sx, sw = 640, 236
+    top = y0 - 4
+    svg.rect(sx, top, sw, 4 * 48 + TITLE_H + 8, DARK, rx=10)
+    svg.text(sx + sw / 2, top + 36, "Internet", 20, fill=WHITE, weight=600)
+    fy = top + TITLE_H + 4
+    for name, value, fill, ink in (("protocol_name", '"Profinet"', BLUE_LIGHT, DARK),
+                                   ("source · destination", "None · None", NONE_FILL, "#E6E6E6"),
+                                   ("payload_protocol · payload", "None · empty", NONE_FILL, "#E6E6E6"),
+                                   ("details", "None: the DCP fields are dropped", NONE_FILL, "#E6E6E6")):
+        svg.rect(sx + 4, fy, sw - 8, 44, fill, rx=6)
+        svg.text(sx + sw / 2, fy + 17, name, 12.5, fill=ink, weight=600)
+        svg.text(sx + sw / 2, fy + 35, value, 11.5, fill=ink, family=MONO)
+        fy += 48
+    svg.arrow([(x0 + 2 * cw + 230, rows["Frame ID"]), (sx - 10, rows["Frame ID"])], ORANGE_DARK)
+    svg.text(sx - 60, rows["Frame ID"] - 10, "valid", 12, fill=ORANGE_DARK, weight=600)
+    # the ProfinetPacket a caller builds itself
+    ptop = fy + 36
+    svg.rect(sx, ptop, sw, 4 * 48 + TITLE_H + 8, "#2E4A5C", rx=10)
+    svg.text(sx + sw / 2, ptop + 24, "ProfinetPacket", 17, fill=WHITE, weight=600)
+    svg.text(sx + sw / 2, ptop + 44, "try_from(network_payload()), by the caller", 10.5, fill=WHITE, opacity=0.75)
+    fy = ptop + TITLE_H + 4
+    for name, value in (("frame_id", "IdentifyReq"), ("service_id · service_type", "5 · 0"),
+                        ("xid · response_delay", "0x01000001 · 128"), ("name_of_station", '"plc1"')):
+        svg.rect(sx + 4, fy, sw - 8, 44, BLUE_LIGHT, rx=6)
+        svg.text(sx + sw / 2, fy + 17, name, 12.5, weight=600)
+        svg.text(sx + sw / 2, fy + 35, value, 11.5, family=MONO)
+        fy += 48
+    svg.arrow([(x0 + 4 * cw + 70, rows["Block data"]), (sx - 30, rows["Block data"]), (sx - 30, fy - 26),
+               (sx - 10, fy - 26)], GREY)
+    svg.save("network/profinet_dcp.svg")
+
+
+def profinet_frame_ids_diagram():
+    accepted = [("0xC000 – 0xF7FF", "FrameId::Unicast"), ("0xF800 – 0xFBFF", "FrameId::Multicast"),
+                ("0xFEFD", "DCP Get / Set"), ("0xFEFE", "DCP Identify request"), ("0xFEFF", "DCP Identify response")]
+    rejected = [("0x0100", "RT_CLASS_3 cyclic data"), ("0x8000", "RT_CLASS_1 cyclic data"),
+                ("0xFC01 · 0xFE01", "alarms, high and low"), ("0xFEFC", "DCP Hello"),
+                ("0xFF00 · 0xFF40", "PTCP sync and delay"), ("0xFF80", "fragment")]
+    rh, gap = 40, 8
+    top = 150
+    height = top + 6 * (rh + gap) + 110
+    svg = Svg(height, "Which Frame IDs the 11.4.0 validator accepts",
+              "The validator accepts five Frame ID ranges and values: 0xC000 to 0xF7FF, 0xF800 to 0xFBFF, 0xFEFD, "
+              "0xFEFE and 0xFEFF; those frames give an Internet layer named Profinet. Every other Frame ID is an "
+              "UnknownFrameId reported in corrupted although the frame is healthy: RT_CLASS_3 and RT_CLASS_1 "
+              "cyclic data, alarms, DCP Hello, PTCP, fragments. Issue 133 tracks it.")
+    svg.text(40, 62, "Which Frame IDs the validator accepts", 22, weight=600, anchor="start")
+    svg.text(40, 88, "packet_parser 11.4.0, checked against tshark 4.6.6 on built frames", 14, anchor="start",
+             opacity=0.6)
+    cols = [(40, 400, GREEN, DARK, "accepted → internet: Profinet", accepted),
+            (460, 400, RED, WHITE, "rejected → corrupted, although healthy (#133)", rejected)]
+    for x, w, fill, ink, title, items in cols:
+        svg.rect(x, top - 40, w, 32, fill, rx=6)
+        svg.text(x + w / 2, top - 18, title, 14, fill=ink, weight=600)
+        for k, (fid, what) in enumerate(items):
+            y = top + k * (rh + gap)
+            svg.rect(x, y, w, rh, GREEN_LIGHT if fill == GREEN else "#F2C9C9", rx=6)
+            svg.text(x + 14, y + 25, fid, 14, family=MONO, weight=600, anchor="start")
+            svg.text(x + w - 14, y + 25, what, 13, anchor="end", opacity=0.75)
+    ny = top + 6 * (rh + gap) + 16
+    svg.text(40, ny, "In the accepted ranges, the DCP structure is applied to any frame:", 13.5, weight=600,
+             anchor="start")
+    svg.text(40, ny + 22, "cyclic data made of 0x00 passes with meaningless DCP fields, data made of 0xFF fails as "
+             "an invalid DCP block length.", 13, anchor="start", opacity=0.75)
+    svg.text(40, ny + 54, "DCP Identify and Get/Set, the frames the crate was written for, are read correctly.", 13,
+             anchor="start", opacity=0.75)
+    svg.save("network/profinet_frame_ids.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -1673,3 +1778,5 @@ if __name__ == "__main__":
     arp_exchange_diagram()
     udp_diagram()
     udp_lengths_diagram()
+    profinet_dcp_diagram()
+    profinet_frame_ids_diagram()
