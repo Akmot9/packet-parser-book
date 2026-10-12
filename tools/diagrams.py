@@ -117,6 +117,11 @@ DNS_QUERY = bytes.fromhex("1a2b01000001000000000000") + b"\x07example\x03com\x00
 DNS_FRAME = ethernet("02:42:c0:a8:00:01", "02:42:c0:a8:00:68",
                      ipv4("192.168.0.104", "192.168.0.1", 17, udp("192.168.0.104", "192.168.0.1", 51000, 53, DNS_QUERY),
                           ident=0x3c1d))
+# A two-byte UDP datagram, whose 44-byte frame is padded to the 60-byte Ethernet minimum
+TINY_UDP_FRAME = ethernet("02:42:c0:a8:00:01", "02:42:c0:a8:00:68",
+                          ipv4("192.168.0.104", "192.168.0.1", 17, udp("192.168.0.104", "192.168.0.1", 51001, 9, b"hi"),
+                               ident=0x3c1e))
+TINY_UDP_FRAME += bytes(60 - len(TINY_UDP_FRAME))
 # A MAC address whose OUI is in the crate's table (Siemens)
 SIEMENS_MAC = bytes.fromhex("e0dca04d2e91")
 
@@ -1546,6 +1551,101 @@ def arp_exchange_diagram():
     svg.save("network/arp_exchange.svg")
 
 
+
+def udp_diagram():
+    gx, gy = 60, 230
+    dgram = DNS_FRAME[34:]
+    h = lambda a, b: hexs(dgram[a:b])  # noqa: E731
+    rows = [
+        ("fields", [(0, 2, "Source port", h(0, 2), True), (2, 2, "Destination port", h(2, 4), True)]),
+        ("fields", [(0, 2, "Length", h(4, 6), False), (2, 2, "Checksum", h(6, 8), False)]),
+        ("bytes", h(8, 12), "Payload · DNS query", GREEN), ("bytes", h(12, 16), None, GREEN),
+        ("ellipsis", f"… {len(dgram) - 16} more bytes, up to Length ({len(dgram)})", GREEN, 40),
+    ]
+    height = gy + 4 * RH + 40 + 34
+    svg = Svg(height, "From UDP bytes to the Transport struct",
+              "The 37-byte UDP datagram carrying the book's DNS query, 32 bits per row: source port 51000, "
+              "destination port 53, length 37, checksum, then the 29-byte DNS message. The Transport struct gets "
+              "protocol Udp from the IP header, both ports, the payload, and the UdpPacket in details.")
+    svg.text(gx, 84, "UDP datagram", 22, weight=600, anchor="start")
+    svg.text(gx, 110, "the DNS query of the packet chapter · 32 bits per row", 14, anchor="start", opacity=0.55)
+    ys, bottom = byte_grid(svg, gx, gy, rows, GREEN_LIGHT, GREEN)
+    right = gx + 4 * CW
+    svg.outline(gx, ys[0], 2 * CW, RH)
+    svg.outline(gx + 2 * CW, ys[0], 2 * CW, RH)
+    sx, sw = 610, 240
+    src_y = gy - 30
+    dst_y = ys[0] + RH / 2
+    det_y = ys[1] + RH / 2 + 10
+    pay_y = ys[2] + RH / 2 + 30
+    struct_box(svg, sx, sw, "Transport", [
+        ("protocol", "Udp, from the IP header", GREEN_LIGHT, DARK, src_y - 60),
+        ("source_port", "Some(51000)", ORANGE, DARK, src_y),
+        ("destination_port", "Some(53)", ORANGE, DARK, dst_y),
+        ("details", "Some(Udp(..)) · length 37", GREEN_LIGHT, DARK, det_y),
+        ("payload", "Some(&amp;[u8]) · 29 bytes", GREEN, DARK, pay_y),
+    ])
+    svg.arrow([(sx - 12, src_y), (gx + CW, src_y), (gx + CW, gy - 8)], ORANGE_DARK)
+    svg.arrow([(sx - 12, dst_y), (right + 10, dst_y)], ORANGE_DARK)
+    svg.arrow([(sx - 12, det_y), (right + 10, det_y)], GREY)
+    svg.arrow([(sx - 12, pay_y), (right + 10, pay_y)], ARROW_DARK)
+    svg.save("transport/udp_struct.svg")
+
+
+def udp_lengths_diagram():
+    frame = TINY_UDP_FRAME
+    x0, x1, sy, sh = 60, 840, 120, 58
+    spans = [("link", "Ethernet", 14, GREY, WHITE), ("internet", "IPv4", 20, BLUE, WHITE),
+             ("transport", "UDP", 8, GREEN, DARK), ("application", '"hi"', 2, YELLOW, DARK),
+             ("pad", "padding", 16, "#F4DCC4", DARK)]
+    assert sum(n for _, _, n, _, _ in spans) == len(frame)
+    height = 520
+    svg = Svg(height, "The three lengths of a UDP datagram",
+              "A 60-byte frame carrying a 2-byte UDP payload: Ethernet pads the frame to its 60-byte minimum. "
+              "The IPv4 Total length, 30, hands the transport layer exactly 10 bytes, padding excluded; the UDP "
+              "Length field says 10, so it must equal those 10 bytes: the datagram is parsed and the payload is "
+              "2 bytes. A Length of 9 on the same bytes is a corrupt transport layer.")
+    svg.text(x0, 62, "The three lengths of a UDP datagram", 22, weight=600, anchor="start")
+    svg.text(x0, 88, "each layer hands the next one exactly what its own length says", 14, anchor="start",
+             opacity=0.6)
+    # widths: the 2-byte payload and the small headers get a floor so that their names fit
+    widths = {"link": 150, "internet": 190, "transport": 150, "application": 90}
+    total_fixed = sum(widths.values())
+    x, edges = x0, {}
+    svg.add(f'<clipPath id="s"><rect x="{x0}" y="{sy}" width="{x1 - x0}" height="{sh}" rx="10"/></clipPath>')
+    svg.add('<g clip-path="url(#s)">')
+    for key, name, n, fill, ink in spans:
+        w = widths.get(key, x1 - x0 - total_fixed)
+        svg.rect(x, sy, w, sh, fill, stroke="#00000026", sw=1)
+        svg.text(x + w / 2, sy + 25, name, 15, fill=ink, weight=600, opacity=0.6 if key == "pad" else None)
+        svg.text(x + w / 2, sy + 45, f"{n} bytes", 13, fill=ink, opacity=0.6 if key == "pad" else 0.85)
+        edges[key] = (x, x + w)
+        x += w
+    svg.add("</g>")
+    svg.rect(x0, sy, x1 - x0, sh, "none", rx=10, stroke=DARK, sw=3.5)
+    # brackets, one per length, each under the span it covers
+    def bracket(a, b, y, label, value, color):
+        svg.add(f'<path d="M {a + 3} {y} v 10 H {b - 3} v -10" fill="none" stroke="{color}" stroke-width="3" '
+                f'stroke-linecap="round" stroke-linejoin="round"/>')
+        svg.text((a + b) / 2, y + 30, label, 13.5, fill=color, weight=600)
+        svg.text((a + b) / 2, y + 48, value, 13, fill=DARK, family=MONO, opacity=0.8)
+    bracket(x0, x1, sy + sh + 14, "the capture", "60 bytes, padding included", GREY)
+    bracket(edges["internet"][0], edges["application"][1], sy + sh + 84, "IPv4 Total length",
+            "30: the padding is cut here", "#2F97E3")
+    bracket(edges["transport"][0], edges["application"][1], sy + sh + 154, "UDP Length",
+            "10 = the 10 bytes handed up ✓", "#3E9B4F")
+    # outcomes
+    oy = sy + sh + 230
+    svg.rect(x0, oy, 370, 56, GREEN, rx=8)
+    svg.text(x0 + 185, oy + 23, "Length == bytes handed up", 14.5, weight=700)
+    svg.text(x0 + 185, oy + 44, "Ok: ports 51001 → 9, payload 2 bytes", 13, family=MONO, opacity=0.8)
+    svg.rect(x0 + 400, oy, 380, 56, RED, rx=8)
+    svg.text(x0 + 590, oy + 23, "Length 9 on the same 10 bytes", 14.5, fill=WHITE, weight=700)
+    svg.text(x0 + 590, oy + 44, "corrupted: Transport, UdpError::InvalidLength", 12.5, fill=WHITE, family=MONO,
+             opacity=0.9)
+    svg.save("transport/udp_lengths.svg")
+
+
 if __name__ == "__main__":
     ipv4_diagram()
     tcp_diagram()
@@ -1571,3 +1671,5 @@ if __name__ == "__main__":
     ipv6_extensions_diagram()
     arp_diagram()
     arp_exchange_diagram()
+    udp_diagram()
+    udp_lengths_diagram()
