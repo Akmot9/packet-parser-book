@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 890" width="900" height="890" role="img" aria-labelledby="t d">
+<title id="t">From PTP bytes to PtpV2Message</title>
+<desc id="d">The 44-byte PTPv2 Sync message of frame 25 of ptpv2.pcap, 32 bits per row: the 34-byte common header, majorSdoId 1 and messageType 0 in the first byte, versionPTP 2 in the second, messageLength 44, domain 0, flags 0, correctionField 0, clockIdentity 00:80:63:ff:ff:00:09:ba, portNumber 1, sequenceId 115, controlField 0, logMessageInterval 0; then the Sync body, an originTimestamp of 1169232217 seconds and 174421797 nanoseconds. PtpV2Message holds the header, the body Sync, an empty TLV area and no trailing byte.</desc>
+<rect x="12" y="12" width="876" height="866" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="60" y="84" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">PTPv2 Sync message</text>
+<text x="60" y="110" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="start">frame 25 of ptpv2.pcap, UDP 319 → 319 · 44 bytes, 32 bits per row</text>
+<clipPath id="g"><rect x="60" y="230" width="384" height="580" rx="12"/></clipPath>
+<g clip-path="url(#g)">
+<rect x="60" y="230" width="192" height="60" fill="#FF9E42" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="256" x2="156" y2="290" stroke="#E9CF86" stroke-width="1"/>
+<text x="156.0" y="249" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">messageType · versionPTP</text>
+<text x="108.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">10</text>
+<text x="204.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">02</text>
+<rect x="252" y="230" width="192" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="348" y1="256" x2="348" y2="290" stroke="#E9CF86" stroke-width="1"/>
+<text x="348.0" y="249" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">messageLength</text>
+<text x="300.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="396.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">2C</text>
+<rect x="60" y="290" width="96" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="108.0" y="309" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">domain</text>
+<text x="108.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="156" y="290" width="96" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="204.0" y="309" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">minorSdoId</text>
+<text x="204.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="252" y="290" width="192" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="348" y1="316" x2="348" y2="350" stroke="#E9CF86" stroke-width="1"/>
+<text x="348.0" y="309" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">flags</text>
+<text x="300.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="396.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="60" y="350" width="384" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="376" x2="156" y2="410" stroke="#E9CF86" stroke-width="1"/>
+<line x1="252" y1="376" x2="252" y2="410" stroke="#E9CF86" stroke-width="1"/>
+<line x1="348" y1="376" x2="348" y2="410" stroke="#E9CF86" stroke-width="1"/>
+<text x="252.0" y="369" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">correctionField (8 bytes), first half</text>
+<text x="108.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="204.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="300.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="396.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="60" y="410" width="384" height="40" fill="#FFECBD"/>
+<line x1="60" y1="410" x2="444" y2="410" stroke="#E9CF86" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="252.0" y="435" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">… 8 zero bytes: rest of correction, typeSpecific</text>
+<rect x="60" y="450" width="384" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="476" x2="156" y2="510" stroke="#E9CF86" stroke-width="1"/>
+<line x1="252" y1="476" x2="252" y2="510" stroke="#E9CF86" stroke-width="1"/>
+<line x1="348" y1="476" x2="348" y2="510" stroke="#E9CF86" stroke-width="1"/>
+<text x="252.0" y="469" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">sourcePortIdentity · clockIdentity</text>
+<text x="108.0" y="499" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="204.0" y="499" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">80</text>
+<text x="300.0" y="499" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">63</text>
+<text x="396.0" y="499" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">FF</text>
+<rect x="60" y="510" width="384" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="536" x2="156" y2="570" stroke="#E9CF86" stroke-width="1"/>
+<line x1="252" y1="536" x2="252" y2="570" stroke="#E9CF86" stroke-width="1"/>
+<line x1="348" y1="536" x2="348" y2="570" stroke="#E9CF86" stroke-width="1"/>
+<text x="252.0" y="529" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">clockIdentity, continued</text>
+<text x="108.0" y="559" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">FF</text>
+<text x="204.0" y="559" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="300.0" y="559" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">09</text>
+<text x="396.0" y="559" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">BA</text>
+<rect x="60" y="570" width="192" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="596" x2="156" y2="630" stroke="#E9CF86" stroke-width="1"/>
+<text x="156.0" y="589" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">portNumber</text>
+<text x="108.0" y="619" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="204.0" y="619" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="252" y="570" width="192" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="348" y1="596" x2="348" y2="630" stroke="#E9CF86" stroke-width="1"/>
+<text x="348.0" y="589" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">sequenceId</text>
+<text x="300.0" y="619" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="396.0" y="619" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">73</text>
+<rect x="60" y="630" width="96" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="108.0" y="649" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">control</text>
+<text x="108.0" y="679" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="156" y="630" width="96" height="60" fill="#FFECBD" stroke="#E9CF86" stroke-width="1.5"/>
+<text x="204.0" y="649" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">logInterval</text>
+<text x="204.0" y="679" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="252" y="630" width="192" height="60" fill="#FFC943" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="348" y1="656" x2="348" y2="690" stroke="#E9CF86" stroke-width="1"/>
+<text x="348.0" y="649" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">originTimestamp · seconds</text>
+<text x="300.0" y="679" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="396.0" y="679" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="60" y="690" width="384" height="60" fill="#FFC943" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="716" x2="156" y2="750" stroke="#E9CF86" stroke-width="1"/>
+<line x1="252" y1="716" x2="252" y2="750" stroke="#E9CF86" stroke-width="1"/>
+<line x1="348" y1="716" x2="348" y2="750" stroke="#E9CF86" stroke-width="1"/>
+<text x="252.0" y="709" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">seconds, continued (48 bits in all)</text>
+<text x="108.0" y="739" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">45</text>
+<text x="204.0" y="739" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">B1</text>
+<text x="300.0" y="739" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">11</text>
+<text x="396.0" y="739" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">59</text>
+<rect x="60" y="750" width="384" height="60" fill="#FFC943" stroke="#E9CF86" stroke-width="1.5"/>
+<line x1="156" y1="776" x2="156" y2="810" stroke="#E9CF86" stroke-width="1"/>
+<line x1="252" y1="776" x2="252" y2="810" stroke="#E9CF86" stroke-width="1"/>
+<line x1="348" y1="776" x2="348" y2="810" stroke="#E9CF86" stroke-width="1"/>
+<text x="252.0" y="769" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">nanoseconds</text>
+<text x="108.0" y="799" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">0A</text>
+<text x="204.0" y="799" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">65</text>
+<text x="300.0" y="799" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">77</text>
+<text x="396.0" y="799" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">25</text>
+</g>
+<rect x="60" y="230" width="384" height="580" rx="12" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="60" y="230" width="192" height="60" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="610" y="108.0" width="250" height="364.0" rx="10" fill="#1E1E1E"/>
+<text x="735.0" y="147.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">PtpV2Header</text>
+<rect x="614" y="172.0" width="242" height="56.0" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="197" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">message_type</text>
+<text x="735.0" y="218" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0 → Sync</text>
+<rect x="614" y="232.0" width="242" height="56.0" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="257" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">version_ptp</text>
+<text x="735.0" y="278" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">2 → PtpPacket::V2</text>
+<rect x="614" y="292.0" width="242" height="56.0" rx="6" fill="#FFECBD"/>
+<text x="735.0" y="317" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">message_length</text>
+<text x="735.0" y="338" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">44</text>
+<rect x="614" y="352.0" width="242" height="56.0" rx="6" fill="#FFECBD"/>
+<text x="735.0" y="377" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">sequence_id</text>
+<text x="735.0" y="398" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">115</text>
+<rect x="614" y="412.0" width="242" height="56.0" rx="6" fill="#FFECBD"/>
+<text x="735.0" y="437" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">source_port_identity</text>
+<text x="735.0" y="458" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">…:00:09:ba · port 1</text>
+<rect x="610" y="482.0" width="250" height="304.0" rx="10" fill="#1E1E1E"/>
+<text x="735.0" y="521.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">PtpV2Message</text>
+<rect x="614" y="546.0" width="242" height="56.0" rx="6" fill="#FFECBD"/>
+<text x="735.0" y="571" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">header</text>
+<text x="735.0" y="592" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">the 34 bytes above</text>
+<rect x="614" y="606.0" width="242" height="56.0" rx="6" fill="#FFC943"/>
+<text x="735.0" y="631" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">body</text>
+<text x="735.0" y="652" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">Sync { origin_timestamp }</text>
+<rect x="614" y="666.0" width="242" height="56.0" rx="6" fill="#FFECBD"/>
+<text x="735.0" y="691" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">tlvs</text>
+<text x="735.0" y="712" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">PtpTlvs · empty</text>
+<rect x="614" y="726.0" width="242" height="56.0" rx="6" fill="#FFECBD"/>
+<text x="735.0" y="751" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">trailing</text>
+<text x="735.0" y="772" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">&amp;[] · nothing after 44</text>
+<path d="M 598 200 L 119.0 200.0 Q 108.0 200 108.0 211.0 L 108.0 222" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="99.0,213 108.0,222 117.0,213" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 260 L 454 260" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="463,269 454,260 463,251" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 380 L 528 380 Q 514 380 514 394 L 514 586.0 Q 514 600.0 500 600.0 L 454 600.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="463,609.0 454,600.0 463,591.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 634 L 498 634 Q 484 634 484 648 L 484 706.0 Q 484 720.0 470 720.0 L 454 720.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="463,729.0 454,720.0 463,711.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="60" y="836" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">PtpV2Header: bytes 0–33 · Sync body: originTimestamp, bytes 34–43</text>
+<text x="60" y="854" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1E1E1E" fill-opacity="0.65" text-anchor="start">messageLength 44 covers the whole datagram: no TLV, no trailing byte</text>
+</svg>

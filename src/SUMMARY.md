@@ -32,6 +32,7 @@
 - [Application](./application.md)
     - [ASTERIX](./asterix.md)
     - [GIOP](./giop.md)
+    - [PTP](./ptp.md)
 
 - [Tunnels](./tunnels.md)
 

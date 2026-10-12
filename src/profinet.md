@@ -34,7 +34,7 @@ A failure is reported in `corrupted` (`layer: Internet`), since the EtherType sa
 
 ## What it rejects, and should not
 
-The validator is a DCP parser applied to every PROFINET frame, and `FrameId` names only part of the Frame ID space. The consequence is drawn below, checked against tshark on built frames ([#133](https://github.com/Akmot9/Packet-parser/issues/133)):
+The validator is a DCP parser applied to every PROFINET frame, and `FrameId` names only part of the Frame ID space. The consequence is drawn below, checked against tshark on built frames ([#133](https://github.com/Akmot9/Packet-parser/issues/133)). This is the 11.5.0 behaviour: the fix is merged on the crate's `main` ([#142](https://github.com/Akmot9/Packet-parser/pull/142)) and ships with the next release, and this page will follow it:
 
 ![The Frame IDs the validator accepts, giving internet Profinet, and those it rejects as UnknownFrameId although the frames are healthy: cyclic data, alarms, DCP Hello, PTCP, fragments](images/network/profinet_frame_ids.svg)
 
