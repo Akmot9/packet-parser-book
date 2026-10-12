@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 610" width="900" height="610" role="img" aria-labelledby="t d">
+<title id="t">From ARP bytes to the Internet struct</title>
+<desc id="d">The 28 bytes of an ARP request, field by field: hardware type 1, protocol type 0x0800, lengths 6 and 4, operation 1, then the sender and target hardware and protocol addresses. The Internet struct takes the two protocol addresses as source 192.168.0.114 and destination 192.168.0.1, has no payload_protocol and an empty payload, and keeps the whole ArpPacket in details.</desc>
+<rect x="12" y="12" width="876" height="586" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="40" y="62" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">ARP request</text>
+<text x="40" y="88" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">frame 1 of arp_resolution.pcapng, the 28 bytes after the Ethernet header</text>
+<text x="236" y="139.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Hardware type</text>
+<rect x="250" y="112" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="140.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="290" y="112" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="310.0" y="140.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<text x="342" y="139.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">1: Ethernet</text>
+<text x="236" y="191.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Protocol type</text>
+<rect x="250" y="164" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="192.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">08</text>
+<rect x="290" y="164" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="310.0" y="192.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="342" y="191.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">0x0800: IPv4</text>
+<text x="236" y="243.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Hardware length</text>
+<rect x="250" y="216" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="244.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">06</text>
+<text x="302" y="243.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">6</text>
+<text x="236" y="295.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Protocol length</text>
+<rect x="250" y="268" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="296.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">04</text>
+<text x="302" y="295.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">4</text>
+<text x="236" y="347.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Operation</text>
+<rect x="250" y="320" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="348.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="290" y="320" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="310.0" y="348.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<text x="342" y="347.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">1: request</text>
+<text x="236" y="399.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Sender hardware address</text>
+<rect x="250" y="372" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="400.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="290" y="372" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="310.0" y="400.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">16</text>
+<rect x="330" y="372" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="350.0" y="400.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">CE</text>
+<rect x="370" y="372" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="390.0" y="400.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">6E</text>
+<rect x="410" y="372" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="430.0" y="400.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">8B</text>
+<rect x="450" y="372" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="470.0" y="400.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">24</text>
+<text x="502" y="399.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">00:16:ce:6e:8b:24</text>
+<text x="236" y="451.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Sender protocol address</text>
+<rect x="250" y="424" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="452.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">C0</text>
+<rect x="290" y="424" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="310.0" y="452.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">A8</text>
+<rect x="330" y="424" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="350.0" y="452.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="370" y="424" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="390.0" y="452.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">72</text>
+<rect x="250" y="424" width="160" height="44" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<text x="422" y="451.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">192.168.0.114</text>
+<text x="236" y="503.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Target hardware address</text>
+<rect x="250" y="476" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="504.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="290" y="476" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="310.0" y="504.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="330" y="476" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="350.0" y="504.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="370" y="476" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="390.0" y="504.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="410" y="476" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="430.0" y="504.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="450" y="476" width="40" height="44" rx="5" fill="#D5E9F6" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="470.0" y="504.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="502" y="503.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">not known yet</text>
+<text x="236" y="555.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.75" text-anchor="end">Target protocol address</text>
+<rect x="250" y="528" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="270.0" y="556.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">C0</text>
+<rect x="290" y="528" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="310.0" y="556.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">A8</text>
+<rect x="330" y="528" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="350.0" y="556.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="370" y="528" width="40" height="44" rx="5" fill="#C2E5FF" stroke="#8EC6EE" stroke-width="1.5"/>
+<text x="390.0" y="556.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<rect x="250" y="528" width="160" height="44" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<text x="422" y="555.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12.5" font-weight="400" fill="#1E1E1E" fill-opacity="0.6" text-anchor="start">192.168.0.1</text>
+<rect x="640" y="50.0" width="236" height="532.0" rx="10" fill="#1E1E1E"/>
+<text x="758.0" y="89.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">Internet</text>
+<rect x="644" y="114.0" width="228" height="56.0" rx="6" fill="#C2E5FF"/>
+<text x="758.0" y="139.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">protocol_name</text>
+<text x="758.0" y="160.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">"ARP"</text>
+<rect x="644" y="174.0" width="228" height="96.0" rx="6" fill="#B3B3B3"/>
+<text x="758.0" y="239.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">payload_protocol</text>
+<text x="758.0" y="260.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">None, payload empty</text>
+<rect x="644" y="274.0" width="228" height="96.0" rx="6" fill="#C2E5FF"/>
+<text x="758.0" y="339.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">details</text>
+<text x="758.0" y="360.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">Some(Arp(ArpPacket))</text>
+<rect x="644" y="374.0" width="228" height="100.0" rx="6" fill="#C2E5FF"/>
+<text x="758.0" y="443.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">source</text>
+<text x="758.0" y="464.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">192.168.0.114</text>
+<rect x="644" y="478.0" width="228" height="100.0" rx="6" fill="#C2E5FF"/>
+<text x="758.0" y="547.0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">destination</text>
+<text x="758.0" y="568.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">192.168.0.1</text>
+<path d="M 628 342.0 L 440 342.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="449,351.0 440,342.0 449,333.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 628 446.0 L 528 446.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="537,455.0 528,446.0 537,437.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 628 550.0 L 528 550.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="537,559.0 528,550.0 537,541.0" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
