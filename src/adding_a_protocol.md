@@ -114,7 +114,7 @@ Add a `ProbeId::Foo` and its `run_probe` arm in `src/parse/dispatch.rs`, then on
 - **port-guarded** `port_rule(..)` otherwise, with a comment explaining why;
 - always with the transport guard the RFC imposes.
 
-The position in the table matters: put the line where its priority belongs and say why in a comment. Then update the protocol lists of `README.md` and `README-fr.md`.
+The position in the table matters: put the line where its priority belongs and say why in a comment. A blind rule also takes the same place in `Application::try_from`: the unit test `blind_rules_mirror_the_public_cascade_order` of `dispatch.rs` lists, in order, the labels of every rule without a port guard. A port-guarded protocol usually gets a `DecodeAsProtocol` variant as well, at the end of the enum, which `DecodeAsProtocol::rule` resolves to the label and the probe of its port rule; `decode_as_protocols_resolve_to_table_rules` checks the pair ([Decode As](./application.md#decode-as)), and the `parse_packetflow` fuzz target lists every variant. Then update the protocol lists of `README.md` and `README-fr.md`.
 
 Do **not** add a variant to an exhaustive public enum in a minor version: that breaks users' `match`. The types the parser builds are `#[non_exhaustive]` so that new fields and variants stay additive.
 
@@ -127,7 +127,7 @@ Then, at `PacketFlow` level:
 - at least one golden test on a **real frame** (Ethernet + IP + transport + Foo) checking that the label comes out;
 - for a port-guarded protocol, the non-detection of the same bytes off the standard port;
 - for a blind probe, a scan of the other protocols' corpus with a **non-empty negative oracle**, keyed by expected frame numbers so that a false positive and a false negative cannot cancel each other out;
-- a structured valid seed in the relevant fuzz target: random bytes rarely get through Ethernet + IP + transport + Foo.
+- a structured valid seed in the relevant fuzz target: random bytes rarely get through Ethernet + IP + transport + Foo. A target of its own, `fuzz/fuzz_targets/parse_foo.rs`, needs its `[[bin]]` in `fuzz/Cargo.toml`: the CI refuses a target file without one, and the nightly matrix is drawn from these entries ([data validation](./data_validation.md#no-panic-on-hostile-bytes)).
 
 Extract a payload from a capture with:
 

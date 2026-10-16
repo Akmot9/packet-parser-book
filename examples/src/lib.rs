@@ -5,6 +5,16 @@
 
 #![allow(clippy::unwrap_used)]
 
+mod building_aaa;
+mod defense_a;
+mod defense_b;
+mod internet_layer;
+mod ipsec;
+mod link_layer;
+mod remote_vpn;
+mod scada;
+mod shared;
+
 /// Frame 1 of the crate's README example: Ethernet / IPv4 / TCP 443 -> 49416,
 /// a pure ACK with an empty payload.
 pub const ETHERNET_IPV4_TCP_ACK_HEX: &str = concat!(
@@ -131,10 +141,11 @@ mod tests {
     // ANCHOR: unsupported_upper_layer
     #[test]
     fn an_unsupported_upper_layer_leaves_the_layer_none_without_corruption() {
-        // Synthetic frame: two MAC addresses, EtherType 0x88CC (LLDP, not
-        // decoded by the crate) and a few payload bytes.
+        // Synthetic frame: two MAC addresses, EtherType 0x88B5 (the IEEE 802
+        // local experimental EtherType, decoded by no one) and a few payload
+        // bytes.
         let mut raw = hex::decode("0180c200000e001122334455").unwrap();
-        raw.extend_from_slice(&[0x88, 0xcc, 0x02, 0x07, 0x04, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
+        raw.extend_from_slice(&[0x88, 0xb5, 0x02, 0x07, 0x04, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
 
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
 

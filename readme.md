@@ -5,7 +5,7 @@ The design documentation of the [**`packet_parser`**](https://github.com/Akmot9/
 This is not the API reference (that is on [docs.rs](https://docs.rs/packet_parser)). The book explains how the crate is built: the `PacketFlow` structure, the `TryFrom` validation procedure, each layer's decoders, the application dispatch table, tunnels, a GIOP walkthrough, and how to add a protocol.
 
 - Read it online: **<https://akmot9.github.io/packet-parser-book/>**
-- Reference version: `packet_parser` **11.5.0** — [crates.io](https://crates.io/crates/packet_parser) · [docs.rs](https://docs.rs/packet_parser) · [sources](https://github.com/Akmot9/Packet-parser)
+- Reference version: `packet_parser` **11.6.0** — [crates.io](https://crates.io/crates/packet_parser) · [docs.rs](https://docs.rs/packet_parser) · [sources](https://github.com/Akmot9/Packet-parser)
 
 ## Layout
 
@@ -13,8 +13,9 @@ This is not the API reference (that is on [docs.rs](https://docs.rs/packet_parse
 src/            the chapters (SUMMARY.md is the table of contents)
 src/images/     diagrams
 examples/       a Cargo crate: every snippet marked "tested" in the book is
-                included from examples/src/lib.rs and run against the
-                reference version of packet_parser
+                included from examples/src/ (lib.rs and one module per group
+                of chapters) and run against the reference version of
+                packet_parser
 tools/          check_book.py, the pre-build checks
 .github/        CI: validation on pull requests, deployment to Pages on main
 ```

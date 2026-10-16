@@ -20,14 +20,14 @@ This book explains how I developed it and its internal architecture, so you can 
 
 ## Reference version
 
-This book describes **`packet_parser` 11.5.0** ([crates.io](https://crates.io/crates/packet_parser/11.5.0), tag `v11.5.0` in the [repository](https://github.com/Akmot9/Packet-parser)). Code excerpts of the crate's internals are quoted from that revision; the user-facing snippets marked *tested* are compiled and run against it by the book's `examples/` crate. When the crate moves, the book is updated with it and this line changes.
+This book describes **`packet_parser` 11.6.0** ([crates.io](https://crates.io/crates/packet_parser/11.6.0), tag `v11.6.0` in the [repository](https://github.com/Akmot9/Packet-parser)). Code excerpts of the crate's internals are quoted from that revision; the user-facing snippets marked *tested* are compiled and run against it by the book's `examples/` crate. When the crate moves, the book is updated with it and this line changes.
 
 ## Purpose of this crate
 
 The goal of this crate is to provide a function that transforms a packet, or a list of bytes to be more precise, into a typed structure, or into an error if you are getting fooled and receive incoherent bytes.
 
 - You can provide a **full network packet** with its LINKTYPE, and `parse` returns a `PacketFlow`: a structured representation containing the **data link, internet, transport and application layers**.
-- It is **not restricted to a specific layer**: every protocol struct implements `TryFrom<&[u8]>`. You can pass a TCP payload to `TlsPacket::try_from`, `DnsPacket::try_from`, `NtpPacket::try_from`... and get the detailed structure of that protocol.
+- It is **not restricted to a specific layer**: every protocol struct implements `TryFrom<&[u8]>`. You can pass a transport payload to `TlsPacket::try_from`, `DnsPacket::try_from`, `NtpPacket::try_from`... and get the detailed structure of that protocol.
 
 To explain how I made this crate, let's dive into packet parsing, my passion.
 

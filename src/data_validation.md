@@ -31,7 +31,10 @@ impl<'a> TryFrom<&'a [u8]> for Ipv4Packet<'a> {
 
         // ... every remaining field is read with from_be_bytes ...
 
-        Ok(Ipv4Packet { /* ... */, payload: &data[header_len..total_length as usize] })
+        // 0 is accepted: before TCP segmentation offload, the stack leaves the
+        // total length to the network card, and the payload runs to the end of the frame.
+        let end = if total_length == 0 { data.len() } else { usize::from(total_length) };
+        Ok(Ipv4Packet { /* ... */, payload: &data[header_len..end] })
     }
 }
 ```
@@ -104,8 +107,34 @@ A parser of hostile bytes must never bring its host down. What the crate does ab
 
 - **Lints.** `lib.rs` enables `clippy::unwrap_used`, `clippy::expect_used` and `clippy::panic` as *warnings* outside of tests, and the CI runs clippy with `-D warnings`, which makes them blocking. The rare justified sites carry a motivated `#[expect]`. Test code is free to `unwrap`.
 - **The indexing idiom.** `data[0]` after `validate_ipv4_min_length(data)` is the pattern everywhere: index after an explicit length check. The lints `indexing_slicing` and `arithmetic_side_effects` are deliberately *not* enabled: with more than a thousand such accesses, they would flag every one of them.
-- **Fuzzing.** The absence of panic on these accesses is exercised by the fuzz targets under `fuzz/` (`parse_packetflow`, `parse_linktype`, `parse_dns`, `parse_giop`, `parse_quic`, `parse_s7comm`, `parse_cotp`, `parse_asterix`, `parse_application`, `parse_ptp`), seeded with real frames and run nightly.
+- **Fuzzing.** The absence of panic on these accesses is exercised by the fuzz targets under `fuzz/`, the 24 `[[bin]]` entries of `fuzz/Cargo.toml`. Each one feeds hostile bytes to an entry point and, beyond the absence of panic, most check what an accepted input must satisfy:
+  - `parse_packetflow`: `PacketFlow::try_from`, then `parse_with` with one Decode As port chosen by the first three bytes among the 27 `DecodeAsProtocol`s; nothing else is checked, the policies are `policy_dispatch`'s;
+  - `parse_dns`: `DnsPacket::try_from`, name compression included: hostile pointers must create neither a loop nor a panic;
+  - `parse_application`: `Application::try_from`, the blind cascade without ports: every probe must reject hostile bytes cleanly;
+  - `parse_linktype`: `parse` with a LINKTYPE chosen by the first byte among all those `is_supported` announces, plus `u32::MAX` and the byte itself, then `to_owned_flow` and `flatten`;
+  - `parse_quic`: `QuicPacket::try_from`, the Long Header: varints, Connection IDs and the Length field;
+  - `parse_s7comm`: `S7CommPacket::try_from`: an accepted packet satisfies the TPKT + COTP-DT + S7 invariants, lengths included;
+  - `parse_cotp`: `CotpHeader::from_bytes` and `CotpHeader::try_from`: the two entry points agree, and LI, TPDU type and exposed fields are consistent;
+  - `parse_giop`: `find_giop_message` and `giop_messages`: CDR cursor, IORs and IIOP profiles, resynchronization; no message covers more bytes than the buffer;
+  - `parse_asterix`: `AsterixPacket::try_from` over the eleven categories: the data blocks tile the input, every item points into it, and every typed decoder is run on every record;
+  - `parse_ptp`: `PtpPacket::try_from` and `try_from_udp`: message, TLVs and trailing bytes tile the input, and the UDP form accepts a subset of the layer 2 one;
+  - `parse_profinet`: `validate_frame` and `ProfinetPacket::try_from`: DCP is decoded only for DCP Frame IDs, and its blocks and NameOfStation point into the buffer;
+  - `parse_rtps`: `RtpsPacket::try_from`: the submessages tile the message and borrow from the input;
+  - `parse_stanag5066`: `SisPdu::try_from` on chained S_PDUs: `consumed` stays within the input, the U_PDU borrows from it, and a cut S_PDU is the last one, running to the end of the input;
+  - `parse_dis`: `DisPacket::try_from` and `try_from_lenient`: the PDUs, then the trailing bytes of the lenient reading, tile the input, and the strict reading accepts exactly the lenient readings that leave no trailing bytes;
+  - `parse_ipsec`: `IkePacket::try_from`, `IkePacket::from_udp`, `UdpEncapsulation::classify` and `EspPacket::try_from`: the payloads tile the message, and the demultiplexing of UDP 4500 is a partition;
+  - `parse_dnp3`: `Dnp3Packet::try_from`: the link frames tile the input, and any single-byte change of a real seed is rejected, the CRCs being what makes the blind probe safe;
+  - `parse_radius`: `RadiusPacket::try_from`: the attributes tile the packet, whose declared length is the input's;
+  - `parse_rdp`: `RdpPacket::try_from`: the TPKTs tile the segment, the last one possibly cut;
+  - `parse_iec104`: `Iec104Packet::try_from`: the APDUs tile the segment, the last one possibly cut, and an ASDU in sequence numbers its objects one after the other;
+  - `parse_bacnet`: `BacnetPacket::try_from`: the BVLC length is the input's, and every borrow points into it;
+  - `parse_goose`: `GoosePacket::try_from`: the length is the input's, and the number of allData elements is bounded by it;
+  - `parse_lldp`: `LldpPacket::try_from`: the TLVs and the padding tile the input, and the blind probe of `Internet::try_from` never accepts an LLDPDU the decoder refuses;
+  - `parse_wireguard`: `WireGuardPacket::try_from`: the size is the one of the type, a keepalive is exactly 32 bytes, and what the blind cascade labels WireGuard has null reserved bytes;
+  - `policy_dispatch`: the oracles of the dispatch policy, moved out of `parse_packetflow` by [#108](https://github.com/Akmot9/Packet-parser/issues/108): FTP, SMTP and NNTP off their ports, S7Comm, COTP and Decode As, through `PacketFlow::try_from` and `parse_with`; its text oracle is shared with `tests/fuzz_policy_parity.rs`, which compares it with the dispatch table on every pull request.
 
-None of this is a proof. Lints catch the explicit panics, not an out-of-bounds index; fuzzing finds panics, it does not demonstrate their absence. What the crate can claim is that every parser follows the same length-checked discipline, that the tooling refuses the obvious deviations, and that the fuzzers have not found a panic on the published versions. The same honesty applies to the other properties described in this book: `TryFrom` and `corrupted` describe how the *supported* layers behave; a protocol the crate does not decode is simply `None`, and zero-copy holds for the L2/L3/L4 structs and most application parsers — a few (DNS, HTTP, SNMP, GIOP service contexts) allocate `Vec`s for lists whose length the packet dictates, always bounded first.
+  Most protocol targets also mutate seeds built from real frames of the corpus, named in their comments, so that hostile bytes reach the deep paths from the first run. The nightly workflow, `.github/workflows/fuzz.yml`, draws its matrix from these `[[bin]]` entries, so that a new target runs the very night it is added; it keeps each target's corpus from one night to the next, and a failed night opens or completes a `fuzz-failure` issue. On every pull request, the CI checks that each file of `fuzz/fuzz_targets/` has its `[[bin]]`, builds the targets and runs each one once (`-runs=1`), which also runs the fixed oracles of `policy_dispatch`.
+
+None of this is a proof. Lints catch the explicit panics, not an out-of-bounds index; fuzzing finds panics, it does not demonstrate their absence. What the crate can claim is that every parser follows the same length-checked discipline, that the tooling refuses the obvious deviations, and that the fuzzers have not found a panic on the published versions. The same honesty applies to the other properties described in this book: `TryFrom` and `corrupted` describe how the *supported* layers behave; a protocol the crate does not decode is simply `None`, and zero-copy holds for the L2/L3/L4 structs and for the bytes of most application parsers. Many of them do allocate a `Vec` for each list whose length the packet dictates (the records of DNS and ASTERIX, the messages of PostgreSQL and Modbus/TCP, the APDUs of IEC 104, the attributes of RADIUS, the TLVs of LLDP...), every pre-allocation bounded first by the bytes left; and two copy bytes: DNS, whose names are `String`s, and DNP3, whose user data are rebuilt without their CRCs.
 
 Now let's go layer by layer.

@@ -2,13 +2,13 @@
 
 This chapter is the "how do I use it" part. The rest of the book is the "how is it built" part.
 
-> **Reference version: `packet_parser` 11.5.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 11.6.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "11.5.0"
+packet_parser = "11.6.0"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 
@@ -108,7 +108,7 @@ Only the link layer can fail the parse. Above it, three outcomes are distinct an
 | `flow.internet` / `transport` | `flow.corrupted` | Meaning |
 | --- | --- | --- |
 | `Some(..)` | `None` | The layer was recognized and decoded. |
-| `None` | `None` | The protocol is **not supported** (e.g. LLDP EtherType), nothing above it can be reached. |
+| `None` | `None` | The protocol is **not supported** (e.g. the experimental EtherType `0x88B5`), nothing above it can be reached. |
 | `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why. |
 | `Some(..)` | `Some(..)` | Semantic anomaly: the header is readable but no conforming stack emits it (TCP SYN+FIN, reserved bits set). The layer is **kept** so its ports remain available for flow correlation; nothing is parsed above it. |
 
@@ -157,7 +157,7 @@ And the two link-layer failures, the only ones that return `Err` (*tested*):
 
 ## "Decode As": my FTP runs on port 2121
 
-Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports. The port never replaces the content check: it only gives the probe its chance before the rest of the table.
+Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 27 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)). The port never replaces the content check: it only gives the probe its chance before the rest of the table.
 
 ```rust
 use packet_parser::{DecodeAsProtocol, LinkType, ParseConfig, parse_with};
@@ -180,9 +180,9 @@ What `PacketFlowOwned` keeps, layer by layer:
 | `application` | `ApplicationOwned` | the label, as a `String` |
 | `inner`, `corrupted` | `Box<PacketFlowOwned>`, `CorruptedLayer` | both, `inner` converted recursively |
 
-Dropped: every payload, every `details`, and `Internet::payload_protocol`. Every owned type derives `PartialEq`, `Eq` and `Hash` over what it keeps, which makes `PacketFlowOwned` usable as the key of a flow table.
+Dropped: every payload, every `details`, `Internet::payload_protocol`, and the PPPoE session of an Ethernet frame (`DataLink::pppoe`, since 11.6.0). Every owned type derives `PartialEq`, `Eq` and `Hash` over what it keeps, which makes `PacketFlowOwned` usable as the key of a flow table. That key is coarser than the borrowed identity: without the session, two PPPoE sessions that agree on everything else are one owned flow ([PPPoE session](./pppoe.md#flow-identity)).
 
-`PacketFlow` and `PacketFlowOwned` both implement `serde::Serialize` and produce the **same JSON**: the link layer is nested and tagged, the upper layers are flattened, payloads and `details` are not serialized.
+`PacketFlow` and `PacketFlowOwned` both implement `serde::Serialize` and produce the **same JSON** object (its members may come in another order): the link layer is nested and tagged, the upper layers are flattened, payloads and `details` are not serialized.
 
 ```json
 {
