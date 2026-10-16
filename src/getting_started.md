@@ -2,13 +2,13 @@
 
 This chapter is the "how do I use it" part. The rest of the book is the "how is it built" part.
 
-> **Reference version: `packet_parser` 11.5.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 11.6.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "11.5.0"
+packet_parser = "11.6.0"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 
@@ -108,7 +108,7 @@ Only the link layer can fail the parse. Above it, three outcomes are distinct an
 | `flow.internet` / `transport` | `flow.corrupted` | Meaning |
 | --- | --- | --- |
 | `Some(..)` | `None` | The layer was recognized and decoded. |
-| `None` | `None` | The protocol is **not supported** (e.g. LLDP EtherType), nothing above it can be reached. |
+| `None` | `None` | The protocol is **not supported** (e.g. the experimental EtherType `0x88B5`), nothing above it can be reached. |
 | `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why. |
 | `Some(..)` | `Some(..)` | Semantic anomaly: the header is readable but no conforming stack emits it (TCP SYN+FIN, reserved bits set). The layer is **kept** so its ports remain available for flow correlation; nothing is parsed above it. |
 

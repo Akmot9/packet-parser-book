@@ -131,10 +131,11 @@ mod tests {
     // ANCHOR: unsupported_upper_layer
     #[test]
     fn an_unsupported_upper_layer_leaves_the_layer_none_without_corruption() {
-        // Synthetic frame: two MAC addresses, EtherType 0x88CC (LLDP, not
-        // decoded by the crate) and a few payload bytes.
+        // Synthetic frame: two MAC addresses, EtherType 0x88B5 (the IEEE 802
+        // local experimental EtherType, decoded by no one) and a few payload
+        // bytes.
         let mut raw = hex::decode("0180c200000e001122334455").unwrap();
-        raw.extend_from_slice(&[0x88, 0xcc, 0x02, 0x07, 0x04, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
+        raw.extend_from_slice(&[0x88, 0xb5, 0x02, 0x07, 0x04, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
 
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
 
