@@ -5,6 +5,16 @@
 
 #![allow(clippy::unwrap_used)]
 
+mod building_aaa;
+mod defense_a;
+mod defense_b;
+mod internet_layer;
+mod ipsec;
+mod link_layer;
+mod remote_vpn;
+mod scada;
+mod shared;
+
 /// Frame 1 of the crate's README example: Ethernet / IPv4 / TCP 443 -> 49416,
 /// a pure ACK with an empty payload.
 pub const ETHERNET_IPV4_TCP_ACK_HEX: &str = concat!(

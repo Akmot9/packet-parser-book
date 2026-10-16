@@ -41,7 +41,8 @@ Every decoder produces the same format-neutral output, consumed by the shared L3
 #[non_exhaustive]
 pub struct LinkLayer<'a> {
     link_type: LinkType,               // the LINKTYPE it was decoded as
-    network_protocol: NetworkProtocol, // what comes next: Ipv4, Ipv6, Arp, Profinet, Other(u16)
+    network_protocol: NetworkProtocol, // what comes next: Ipv4, Ipv6, Arp, Profinet,
+                                       // Ptp, Goose, Lldp, or Other(u16)
     network_payload: &'a [u8],         // the L3 bytes
     kind: LinkLayerKind<'a>,           // the format-specific view
 }
@@ -58,7 +59,7 @@ pub enum LinkLayerKind<'a> {
 
 The fields are private and every constructor is format-specific (`LinkLayer::ethernet` or `From<DataLink>`, `LinkLayer::ieee80211`, crate-internal ones for the other decoders), so `link_type`, `network_protocol` and `kind` cannot disagree. `LinkLayerKind` is `#[non_exhaustive]`: a new link format is a new variant, and a `match` on it needs a wildcard arm.
 
-`NetworkProtocol` is deliberately independent from Ethernet: RAW IP announces `Ipv4` or `Ipv6` without fabricating an EtherType, while Ethernet and SLL map their protocol field to the same value. The common accessors (`link_type()`, `network_protocol()`, `network_payload()`) never assume Ethernet; the format-specific views are explicit (`kind()` to match on, or `as_ethernet()`, `as_raw_ip()`, `as_linux_sll()`, `as_linux_sll2()` and `as_ieee80211()`, which each return an `Option`):
+`NetworkProtocol` is deliberately independent from Ethernet: RAW IP announces `Ipv4` or `Ipv6` without fabricating an EtherType, while Ethernet and SLL map their protocol field to the same value. Seven values are named, the protocols the [internet layer](./network.md) decodes; any other is `Other(u16)` and gives no internet layer. For a PPPoE session frame carrying IP, the Ethernet view maps the EtherType reached once the session is peeled: an IPv4 packet in a PPPoE session is announced `Ipv4`, like a bare one. The common accessors (`link_type()`, `network_protocol()`, `network_payload()`) never assume Ethernet; the format-specific views are explicit (`kind()` to match on, or `as_ethernet()`, `as_raw_ip()`, `as_linux_sll()`, `as_linux_sll2()` and `as_ieee80211()`, which each return an `Option`):
 
 ```rust
 println!("LINKTYPE={}", flow.data_link.link_type());
@@ -79,6 +80,7 @@ So a RAW or SLL capture **cannot silently manufacture MAC addresses**, which is 
 Each format has its page:
 
 - [Ethernet](./ethernet.md) (LINKTYPE 1), with its MAC addresses, EtherType and VLAN tags;
+- [PPPoE session](./pppoe.md) (EtherType `0x8864`), peeled inside an Ethernet frame like a VLAN tag since 11.6.0;
 - [Linux cooked capture](./linux_sll.md), SLL (113) and SLL2 (276);
 - [RAW IP](./raw_ip.md) (101, 228, 229);
 - [BSD loopback](./null_loopback.md) (NULL, 0);
@@ -97,14 +99,14 @@ Err(ParseError::InvalidLinkLayer(LinkLayerError::Truncated {
 }))
 ```
 
-`Truncated` is the only variant Ethernet produces: its decoder maps `DataLinkError::DataLinkTooShort` onto it, `required` counting the VLAN tags already met. The 802.3br decoder adds its preamble, SMD and mCRC to both sizes and the NULL decoder its four header bytes, so a consumer accounting for link failures never needs to know where a decoder slices the packet. The other variants name what is wrong instead of a size: `InvalidIpVersion`, `InvalidAddressFamily`, `InvalidPreamble`, `InvalidSmd` and `PreemptibleFragment`. An unsupported LINKTYPE is not among them: it is `ParseError::UnsupportedLinkType`.
+`Truncated` is the only variant Ethernet produces: its decoder maps `DataLinkError::DataLinkTooShort` onto it, `required` counting the VLAN tags already met. The 802.3br decoder adds its preamble, SMD and mCRC to both sizes and the NULL decoder its four header bytes, so a consumer accounting for link failures never needs to know where a decoder slices the packet. The other variants name what is wrong instead of a size: `InvalidIpVersion`, `InvalidAddressFamily`, `InvalidPreamble`, `InvalidSmd` and `PreemptibleFragment`. An unsupported LINKTYPE is not among them: it is `ParseError::UnsupportedLinkType`. Neither is a malformed PPPoE session: the frame is kept unpeeled, with EtherType `0x8864` and no layer 3, never refused ([PPPoE session](./pppoe.md#what-makes-a-session)).
 
 ---
 
 ## **🚀 Conclusion**
 Parsing the **Data Link Layer** requires **careful validation** and **structured extraction**. By following a modular approach:
 - **MAC addresses** are extracted safely.
-- **EtherType** is correctly mapped, VLAN stacks are consumed.
+- **EtherType** is correctly mapped, VLAN stacks and PPPoE sessions are consumed.
 - **The LINKTYPE is trusted, the bytes are not**: each format has its own decoder, and none of them can be mistaken for another.
 - The structure is **extensible** to new link formats without touching the L3/L4/L7 pipeline.
 

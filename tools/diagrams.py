@@ -1721,44 +1721,6 @@ def profinet_dcp_diagram():
     svg.save("network/profinet_dcp.svg")
 
 
-def profinet_frame_ids_diagram():
-    accepted = [("0xC000 – 0xF7FF", "FrameId::Unicast"), ("0xF800 – 0xFBFF", "FrameId::Multicast"),
-                ("0xFEFD", "DCP Get / Set"), ("0xFEFE", "DCP Identify request"), ("0xFEFF", "DCP Identify response")]
-    rejected = [("0x0100", "RT_CLASS_3 cyclic data"), ("0x8000", "RT_CLASS_1 cyclic data"),
-                ("0xFC01 · 0xFE01", "alarms, high and low"), ("0xFEFC", "DCP Hello"),
-                ("0xFF00 · 0xFF40", "PTCP sync and delay"), ("0xFF80", "fragment")]
-    rh, gap = 40, 8
-    top = 150
-    height = top + 6 * (rh + gap) + 110
-    svg = Svg(height, "Which Frame IDs the 11.5.0 validator accepts",
-              "The validator accepts five Frame ID ranges and values: 0xC000 to 0xF7FF, 0xF800 to 0xFBFF, 0xFEFD, "
-              "0xFEFE and 0xFEFF; those frames give an Internet layer named Profinet. Every other Frame ID is an "
-              "UnknownFrameId reported in corrupted although the frame is healthy: RT_CLASS_3 and RT_CLASS_1 "
-              "cyclic data, alarms, DCP Hello, PTCP, fragments. Issue 133 tracks it.")
-    svg.text(40, 62, "Which Frame IDs the validator accepts", 22, weight=600, anchor="start")
-    svg.text(40, 88, "packet_parser 11.5.0, checked against tshark 4.6.6 on built frames", 14, anchor="start",
-             opacity=0.6)
-    cols = [(40, 400, GREEN, DARK, "accepted → internet: Profinet", accepted),
-            (460, 400, RED, WHITE, "rejected → corrupted, although healthy (#133)", rejected)]
-    for x, w, fill, ink, title, items in cols:
-        svg.rect(x, top - 40, w, 32, fill, rx=6)
-        svg.text(x + w / 2, top - 18, title, 14, fill=ink, weight=600)
-        for k, (fid, what) in enumerate(items):
-            y = top + k * (rh + gap)
-            svg.rect(x, y, w, rh, GREEN_LIGHT if fill == GREEN else "#F2C9C9", rx=6)
-            svg.text(x + 14, y + 25, fid, 14, family=MONO, weight=600, anchor="start")
-            svg.text(x + w - 14, y + 25, what, 13, anchor="end", opacity=0.75)
-    ny = top + 6 * (rh + gap) + 16
-    svg.text(40, ny, "In the accepted ranges, the DCP structure is applied to any frame:", 13.5, weight=600,
-             anchor="start")
-    svg.text(40, ny + 22, "cyclic data made of 0x00 passes with meaningless DCP fields, data made of 0xFF fails as "
-             "an invalid DCP block length.", 13, anchor="start", opacity=0.75)
-    svg.text(40, ny + 54, "DCP Identify and Get/Set, the frames the crate was written for, are read correctly.", 13,
-             anchor="start", opacity=0.75)
-    svg.save("network/profinet_frame_ids.svg")
-
-
-
 def _bits(octet):
     return [(octet >> (7 - i)) & 1 for i in range(8)]
 
@@ -2103,7 +2065,6 @@ if __name__ == "__main__":
     udp_diagram()
     udp_lengths_diagram()
     profinet_dcp_diagram()
-    profinet_frame_ids_diagram()
     asterix_datagram_diagram()
     asterix_record_diagram()
     asterix_formats_diagram()

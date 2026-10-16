@@ -11,15 +11,15 @@ pub struct Transport<'a> {
     pub destination_port: Option<u16>,
     /// TCP and UDP: the bytes after the header, possibly empty. `None` for every other protocol.
     pub payload: Option<&'a [u8]>,
-    /// Full parsed header: TcpPacket, UdpPacket, IcmpPacket or Icmpv6Packet.
-    /// `None` for the other protocols, and for an unreadable ICMP message.
+    /// Full parsed header: TcpPacket, UdpPacket, IcmpPacket, Icmpv6Packet or EspPacket.
+    /// `None` for the other protocols, and for an unreadable ICMP or ESP packet.
     pub details: Option<TransportDetails<'a>>,
 }
 ```
 
-`Transport` and `TransportDetails` are both `#[non_exhaustive]`. The identity of the layer is `protocol` plus the two ports: `PartialEq`, `Hash` and serialization ignore `payload` and `details`, and `protocol` is serialized under the key `protocol_transport` as its `Display` name (`"TCP"`, `"ICMPv6"`, `"Unknown (150)"`), the same string `TransportOwned` carries ([#22](https://github.com/Akmot9/Packet-parser/issues/22)).
+`Transport` and `TransportDetails` are both `#[non_exhaustive]`; `TransportDetails` has `Tcp`, `Udp`, `Icmp`, `Icmpv6` and, since 11.6.0, `Esp`. The identity of the layer is `protocol` plus the two ports: `PartialEq`, `Hash` and serialization ignore `payload` and `details`, and `protocol` is serialized under the key `protocol_transport` as its `Display` name (`"TCP"`, `"ICMPv6"`, `"Unknown (150)"`), the same string `TransportOwned` carries ([#22](https://github.com/Akmot9/Packet-parser/issues/22)).
 
-`TransportProtocol` has a named variant for **every protocol number IANA has assigned** (0 to 147 and 253 to 255: `Tcp`, `Udp`, `Icmp`, `Ipv6Icmp`, `Gre`, `Sctp`, `Ospfigp`...) and `Unknown(u8)` for the unassigned range 148 to 252, so a packet carrying a protocol without a dedicated parser still gets a correct `protocol` label. Only TCP, UDP, ICMPv4 and ICMPv6 are decoded further.
+`TransportProtocol` has a named variant for **every protocol number IANA has assigned** (0 to 147 and 253 to 255: `Tcp`, `Udp`, `Icmp`, `Ipv6Icmp`, `Gre`, `Sctp`, `Ospfigp`...) and `Unknown(u8)` for the unassigned range 148 to 252, so a packet carrying a protocol without a dedicated parser still gets a correct `protocol` label. Only TCP, UDP, ICMPv4, ICMPv6 and, since 11.6.0, ESP are decoded further.
 
 ## Dispatch on the IP protocol number
 
@@ -33,6 +33,8 @@ pub fn try_from_parts(payload_protocol: Option<TransportProtocol>, payload: &'a 
         Some(TransportProtocol::Icmp) => Ok(Transport { /* no ports, payload: None,
             details: IcmpPacket::try_from(payload).ok().map(TransportDetails::Icmp) */ }),
         Some(TransportProtocol::Ipv6Icmp) => Ok(Transport { /* same with Icmpv6Packet */ }),
+        Some(TransportProtocol::Esp) => Ok(Transport { /* no ports, payload: None,
+            details: EspPacket::try_from(payload).ok().map(TransportDetails::Esp) */ }),
         Some(other) => Ok(Transport { protocol: other, source_port: None, destination_port: None, payload: None, details: None }),
         None => Err(TransportError::UnsupportedProtocol),
     }
@@ -45,7 +47,7 @@ Same philosophy as the internet layer: the protocol number decides, there is no 
 
 ## The protocols
 
-TCP, UDP, ICMPv4 and ICMPv6 are decoded further, each on its page: [TCP](./tcp.md), [UDP](./udp.md), [ICMPv4 and ICMPv6](./icmp.md).
+TCP, UDP, ICMPv4, ICMPv6 and ESP are decoded further, each on its page: [TCP](./tcp.md), [UDP](./udp.md), [ICMPv4 and ICMPv6](./icmp.md) and [ESP](./esp.md). ESP also travels in UDP 4500 behind a NAT, where the transport layer is UDP and `"ESP"` is an application label; its page covers both carriers.
 
 ## Checksums
 
