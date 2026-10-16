@@ -8,7 +8,7 @@ The Data Link Layer is responsible for **frame-level communication** between dev
 ![The Ethernet II frame: destination MAC, source MAC, optional VLAN tags, EtherType, payload](images/datalink/ethernet_frame.svg)
 
 The main components are:
-1. **Destination MAC Address** (6 bytes) - the unique physical identifier of the receiving network hardware.
+1. **Destination MAC Address** (6 bytes) - the address of the receiving interface, or of a group of interfaces (multicast, broadcast).
 2. **Source MAC Address** (6 bytes)
 3. **EtherType** (2 bytes) – determines the protocol encapsulated in the payload.
 4. **Payload** (variable length) – contains the encapsulated network-layer packet (IPv4, ARP, etc.).
@@ -85,7 +85,8 @@ pub struct DataLink<'a> {
     pub vlan_stack: VlanStack<'a>,
     /// The PPPoE session the frame belongs to, if any (11.6.0).
     pub pppoe: Option<PppoeSession>,
-    /// The real layer-3 EtherType, after the tags and the PPPoE session.
+    /// The real layer-3 EtherType, after the tags and, when PPP carries IP,
+    /// the PPPoE session.
     pub ethertype: Ethertype,
     pub payload: &'a [u8],
 }

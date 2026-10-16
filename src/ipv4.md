@@ -47,7 +47,7 @@ pub fn validate_ipv4_total_length(
 
 The payload is then `data[header_len..]`, and `Ipv4Packet::total_length` keeps the wire value, 0, so a consumer can still tell such a packet apart. Any other value below the header length is still `InvalidTotalLength`. With nothing but the frame to bound it, the packet takes whatever follows it in the frame.
 
-The golden test `tests/ipv4_tso.rs` checks two such frames: frame 275 of `pcaps_exemple/protocols/ntp/ndpi_line.pcap`, a TLS record of 3 133 bytes, and frame 47 790 of `pcaps_exemple/The-Ultimate-PCAP.pcapng`, a TLS ClientHello of 1 908 bytes; both come out `"TLS"`. The second one (*tested*):
+The golden test `tests/ipv4_tso.rs` checks two such frames: frame 275 of `pcaps_exemple/protocols/ntp/ndpi_line.pcap`, a TLS record of 3 133 bytes, and frame 47 790 of `pcaps_exemple/The-Ultimate-PCAP.pcapng`, a 1 908-byte TLS record carrying a ClientHello; both come out `"TLS"`. The second one (*tested*):
 
 ```rust
 {{#include ../examples/src/link_layer.rs:ipv4_tso}}

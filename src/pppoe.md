@@ -162,7 +162,7 @@ pub(crate) fn peel_session(payload: &[u8]) -> Option<(PppoeSession, &[u8])> {
 }
 ```
 
-A session data frame (RFC 2516 §5) has the six header bytes, version and type `0x11`, code `0x00`, a PPP protocol field, and a `length` that covers at least that field. When one of them is missing, nothing is an error: the frame is left as it is, `pppoe` `None`, EtherType `0x8864` and the whole payload, like an unknown EtherType. No internet layer, nothing in `corrupted`, and the parse never fails because of it; there is no PPPoE error type.
+A session data frame (RFC 2516 §6) has the six header bytes, version and type `0x11`, code `0x00`, a PPP protocol field, and a `length` that covers at least that field. When one of them is missing, nothing is an error: the frame is left as it is, `pppoe` `None`, EtherType `0x8864` and the whole payload, like an unknown EtherType. No internet layer, nothing in `corrupted`, and the parse never fails because of it; there is no PPPoE error type.
 
 The protocol field may be compressed to one byte (PFC). A PPP protocol has an even high byte and an odd low byte, so an odd first byte can only be the low byte of a one-byte field, which is how tshark reads it too: `0x21` is IPv4 and is reported as `0x0021`. No frame of the corpus uses it (all 6 881 session frames of the two captures below carry a two-byte field); the unit tests of `pppoe.rs` cover it on built bytes.
 
@@ -220,7 +220,7 @@ The [owned model](./getting_started.md#owned-flows-and-serialization) has no ses
 
 ## Oracle: 6 795 session frames
 
-The golden test `tests/pppoe_golden.rs` reads `pcaps_exemple/The-Ultimate-PCAP.pcapng` in place and compares every frame that tshark 4.6.6 decodes as `pppoes` with the oracle frozen in `tests/data/pppoe_tshark_oracle.tsv` (`tools/pppoe_oracle.sh`): session identifier, PPPoE length, PPP protocol, the protocol after the first IP header, and the UDP or TCP ports. The crate peels a session on exactly those 6 795 frames and on no other frame of the capture, all of them without a corruption. They are a subscriber's traffic, all under VLAN 7:
+The golden test `tests/pppoe_golden.rs` reads `pcaps_exemple/The-Ultimate-PCAP.pcapng` in place and compares every frame that tshark 4.6.6 decodes as `pppoes` with the oracle frozen in `tests/data/pppoe_tshark_oracle.tsv` (`tools/pppoe_oracle.sh`): session identifier, PPPoE length, PPP protocol, the protocol after the first IP header, and the UDP or TCP ports. The crate peels a session on exactly those 6 795 frames and on no other frame of the capture, all of them without a corruption. The Ultimate PCAP merges many captures, and these frames belong to five sessions between four pairs of MAC addresses, all under VLAN 7. `0x001e` carries the 6 486 IPv4 frames, `0x8f9e` 34 control messages and 194 DHCPv6 messages, `0xe579` the 78 IPv4 packets in IPv6, `0x1f3d` two more DHCPv6 messages, and `0x8f80`, between the same two MAC addresses as `0x8f9e`, a single LCP message before the PADT that ends it. By PPP protocol:
 
 | PPP protocol | Frames | What PPP carries, as tshark reads it |
 | --- | --- | --- |
@@ -232,13 +232,13 @@ The golden test `tests/pppoe_golden.rs` reads `pcaps_exemple/The-Ultimate-PCAP.p
 
 One difference is named: frame 15 114, the first of two fragments of a 2 017-byte SIP datagram, whose UDP header tshark reads while the crate decodes no transport in a fragment ([IPv4 fragments](./ipv4.md#fragments)).
 
-On the 11.5.0 corpus, the IP frames of that session gained their internet and transport layers: 6 482 went from no application to `"Unknown"`, 196 to `"DHCPv6"` and 78 to the `"IP-in-IP"` tunnel label.
+On the 11.5.0 corpus, the IP frames of these sessions gained their internet and transport layers: 6 482 went from no application to `"Unknown"`, 196 to `"DHCPv6"` and 78 to the `"IP-in-IP"` tunnel label.
 
 The second capture, `pcaps_exemple/vlan/pppoe-over-qinq.pcap`, is the one of `tests/qinq_golden.rs`: 86 frames under two 802.1Q tags (VID 3704 then 2474), session `0x0f07`, PPP IPv4 throughout. Since 11.6.0 the test follows them past the session down to TCP, except the six frames of the [short PPPoE length](#bounded-like-tshark-does). No fuzz target is dedicated to the session: `parse_packetflow` and `parse_linktype` hand arbitrary bytes to the Ethernet decoder, the peeling included.
 
 ## What is left out
 
-- **The discovery stage**, EtherType `0x8863` (PADI, PADO, PADR, PADS, PADT), is only named (`"Pppoe Discovery Stage"`): `pppoe` stays `None` and there is no internet layer. The Ultimate PCAP has eight of them, among which the PADS that assigns session `0x8f9e` (frame 10 400), just before the first LCP message of that session.
+- **The discovery stage**, EtherType `0x8863` (PADI, PADO, PADR, PADS, PADT), is only named (`"Pppoe Discovery Stage"`): `pppoe` stays `None` and there is no internet layer. The Ultimate PCAP has eight of them, among which the PADT that ends session `0x8f80` (frame 10 396) and the PADS that assigns session `0x8f9e` (frame 10 400), just before the first LCP message of that session.
 - **PPP control protocols** are named, not decoded: LCP options, the PAP or CHAP exchange and the IPCP addresses stay in the raw `payload`.
 - **No session state**: the crate does not follow a discovery to its session, nor tie a session identifier to its MAC addresses. One frame at a time, like the rest of the crate.
 - **The JSON and the owned model** do not carry the session yet (see above).

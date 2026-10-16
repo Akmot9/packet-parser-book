@@ -4,7 +4,7 @@ BACnet (ASHRAE 135, *A Data Communication Protocol for Building Automation and C
 
 ## Detection: its ports, then any UDP port
 
-Two rules of the [dispatch table](./application.md) share one probe, `ProbeId::Bacnet`:
+Two rules of the [dispatch table](./application.md#reading-the-table), 27 and 45, share one probe, `ProbeId::Bacnet`:
 
 ```rust
 // among the port rules, right after RADIUS
@@ -13,14 +13,14 @@ port_rule("BACnet/IP", Guard::Udp, is_bacnet_udp_port, ProbeId::Bacnet), // 4780
 rule("BACnet/IP", Guard::Udp, ProbeId::Bacnet),
 ```
 
-`is_bacnet_udp_port` matches 47808 to 47823, `0xBAC0` to `0xBACF`, on either side: 47808 is the IANA `bacnet` port, and the crate's source ties the fifteen others to the multiple networks of annex J (tshark registers BVLC on 47808 alone). The probe is `BacnetPacket::try_from(payload).is_ok()`, run on the whole payload and not on the first `PROBE_CAP` bytes, because the BVLC length is compared with the real datagram. It accepts a datagram only if:
+`is_bacnet_udp_port` matches 47808 to 47823, `0xBAC0` to `0xBACF`, on either side: 47808 is the IANA `bacnet` port, and the crate's source ties the fifteen others to the multiple networks of annex J (tshark registers BVLC on 47808 alone). The probe is `BacnetPacket::try_from(full_payload).is_ok()`, run on the whole payload and not on its first `PROBE_CAP` bytes, because the BVLC length is compared with the real datagram. It accepts a datagram only if:
 
 - the first byte, the BVLC type, is `0x81`;
 - the function is one of the thirteen of annex J, `0x00` to `0x0C`;
 - the BVLC length is the length of the datagram, to the byte;
 - for the four functions that carry an NPDU, the NPDU has version 1, the addresses and the hop count its control byte announces, and then either a network message or an APDU of type 0 to 7 with the fixed fields of its type.
 
-The crate considers this constrained enough to do without the port, so the same probe runs blind on every UDP datagram, and there is no `DecodeAsProtocol` variant for BACnet: a device on another port is recognized anyway. Both rules are `Guard::Udp`; the same bytes in a TCP segment never get the label.
+The crate considers this constrained enough to do without the port, so the same probe runs blind on any UDP datagram that no earlier rule has claimed, and there is no `DecodeAsProtocol` variant for BACnet: a device on another port is recognized anyway. Both rules are `Guard::Udp`; the same bytes in a TCP segment never get the label.
 
 Since the two rules share the probe, a datagram on 47808 that fails it is not probed again by the blind rule: it goes on down the table, usually to `"Unknown"`. A refusal never fills `corrupted`: on UDP a port is a hint, not an announcement, as for [PTP](./ptp.md). Every datagram of the corpus has 47808 on one side; the blind route is checked by moving frame 3 of `iti_bacnet_test.pcap` to other ports (*tested*):
 
@@ -171,10 +171,10 @@ All of them are `BacnetParseError`, in `packet_parser::errors::application::bacn
 
 | Error | When |
 | --- | --- |
-| `Truncated { expected, actual }` | a part is shorter than its fixed fields: the 4-byte BVLC header, the origin of a Forwarded-NPDU, the NPDU header, a network address, the hop count, a network message, the fields of an APDU type; the two numbers count the bytes of that part, not of the datagram |
+| `Truncated { expected, actual }` | a part is shorter than its fixed fields: the 4-byte BVLC header, the origin of a Forwarded-NPDU, the NPDU header, a network address, the hop count, a network message, the fields of an APDU type; both numbers count from the start of what is being read: the datagram for the BVLC header, the BVLC body for the origin, the NPDU for its header and its hop count, and otherwise the address, the network message or the APDU itself |
 | `InvalidBvlcType(u8)` | the first byte is not `0x81`; BACnet/IPv6 (annex U), type `0x82` for tshark, ends here |
 | `UnknownBvlcFunction(u8)` | a function above `0x0C` |
-| `LengthMismatch { declared, actual }` | a BVLC length other than the datagram's, trailing bytes included |
+| `LengthMismatch { declared, actual }` | a BVLC length other than the datagram's, trailing bytes included; the Ethernet padding of a short frame is not part of the datagram (frames 1 to 9 of `ndpi_bacnet.pcap` carry one byte of it) |
 | `UnsupportedNpduVersion(u8)` | an NPDU version other than 1 |
 | `UnknownApduType(u8)` | an APDU type above 7 |
 
@@ -186,12 +186,12 @@ The golden test `tests/bacnet_golden.rs` runs the two captures of `pcaps_exemple
 
 | Capture | Datagrams | Content | Origin |
 | --- | --- | --- | --- |
-| `iti_bacnet_test.pcap` | 22 of 26 frames | two controllers: nine readProperty of the device object and their ComplexACK, a Read-Broadcast-Distribution-Table and a Register-Foreign-Device, both answered by a BVLC-Result | ITI ICS-Security-Tools, CC-BY-4.0 |
-| `ndpi_bacnet.pcap` | 23 | nine readProperty that Internet scanners send to an exposed device, then a local network: Who-Is, I-Am, an Error, two network messages | nDPI test corpus, LGPL-3.0 |
+| `iti_bacnet_test.pcap` | 22 of 26 frames | a host queries a Johnson Controls controller (`MS-NAE4510-2`): the nine readProperty of nmap's `bacnet-info` script, byte for byte, all on the device object, and their ComplexACK; a Read-Broadcast-Distribution-Table and a Register-Foreign-Device, both answered by a BVLC-Result | ITI ICS-Security-Tools, CC-BY-4.0 |
+| `ndpi_bacnet.pcap` | 23 | nine readProperty that Internet scanners send to seven exposed addresses of one network, then a local network: Who-Is, I-Am, an Error, two network messages | nDPI test corpus, LGPL-3.0 |
 
 Over the 45: 27 Original-Unicast-NPDU, 14 Original-Broadcast-NPDU, two BVLC-Results, one Read-Broadcast-Distribution-Table and one Register-Foreign-Device; 18 ConfirmedRequest, 11 UnconfirmedRequest, 9 ComplexACK and one Error APDU, plus two network messages. One column is compared after a translation: tshark's `bvlc.length` is the size of the BVLC header it consumed (4, or 10 with the origin of a Forwarded-NPDU) when an NPDU follows, and the whole message otherwise; the test rebuilds that value, while the wire field is checked against the datagram by the decoder itself. A second test moves frame 3 of the ITI capture to ports 40000 and 40001, where only the blind rule can label it, then alters one byte at a time (BVLC type, function, length, NPDU version, APDU type): the decoder refuses each of the five, and the label goes.
 
-A run of the 11.6.0 pipeline over the captures the repository tracks, 386 403 frames, gives the label `"BACnet/IP"` to these 45 datagrams and to nothing else: the very frames tshark dissects as BVLC. The fuzz target `parse_bacnet` runs nightly, on its input and on mutations of four real datagrams: whatever it decodes must have the input's length as BVLC length, a hop count exactly when it has a destination, a vendor id exactly on network message types `0x80` and above, and its body and data inside the input.
+A run of the 11.6.0 pipeline over the 386 403 frames that the crate's test reader gets from the captures tracked under `pcaps_exemple/` gives the label `"BACnet/IP"` to these 45 datagrams and to nothing else: the very frames tshark dissects as BVLC. The fuzz target `parse_bacnet` runs nightly, on its input and on mutations of four real datagrams: whatever it decodes must have the input's length as BVLC length, a hop count exactly when it has a destination, a vendor id exactly on network message types `0x80` and above, and its body and data inside the input.
 
 ## What is left out
 

@@ -6,7 +6,7 @@ A UDP datagram carries one or more PDUs, each behind the same 12-byte header. Th
 
 ## Detection: a customary port and a strict blind probe
 
-Like [ASTERIX](./asterix.md), DIS has neither a magic nor an IANA port. UDP 3000 is the customary one, the port Wireshark registers for DIS by default; the corpus also carries DIS on 6993 and 22999. The dispatch table has two rules for it, which read the same bytes in two ways:
+Like [ASTERIX](./asterix.md), DIS has neither a magic nor an IANA port. UDP 3000 is the customary one, the port Wireshark registers for DIS by default; the corpus also carries DIS on 6993 and 22999. The [dispatch table](./application.md#reading-the-table) has two rules for it, which read the same bytes in two ways:
 
 ```rust
 // among the port rules, right after PTP: UDP 3000 on either side
@@ -22,7 +22,7 @@ ProbeId::Dis => DisPacket::try_from(full_payload).is_ok(),
 ProbeId::DisLenient => DisPacket::try_from_lenient(full_payload).is_ok(),
 ```
 
-- **The blind probe** is `DisPacket::try_from`, the **strict** read: every PDU must be valid (a version from 1 to 7, a type from 1 to 72, a family of the standard or an experimental one, a length that covers the header and stays within the datagram, the fixed fields of a typed body), and the PDUs must tile the datagram to the last byte. This exact tiling is the signature that lets DIS be labelled on any UDP port.
+- **The blind probe** is `DisPacket::try_from`, the **strict** read: every PDU must be valid (a version from 1 to 7, a type from 1 to 72, a family of the standard or an experimental one, a length that covers the header and stays within the datagram, the fixed fields of a typed body), and the PDUs must tile the datagram to the last byte. This exact tiling is the signature that lets the blind rule label DIS without a port guard. It is still not reached on the terminal mDNS and LLMNR ports, UDP 5353 and 5355, where a failed probe ends the dispatch with no label.
 - **On UDP 3000** the port already says DIS, and the probe is `DisPacket::try_from_lenient`: a declared length shorter than the datagram is accepted, and the rest is kept in `trailing`. Three real PDUs of the corpus declare 48 bytes in a 160-byte datagram, and tshark dissects them without stopping at the length.
 - **On another port**, `ParseConfig::decode_as(port, DecodeAsProtocol::Dis)` gives the same lenient read: the variant maps to `("DIS", Guard::Udp, ProbeId::DisLenient)`, evaluated before the table like every [Decode As](./application.md#decode-as) port.
 
@@ -245,7 +245,7 @@ All values are big-endian. The offsets below count from the start of the PDU, he
 | 30–31 | `samples` | |
 | 32– | `data` | to the end of the PDU |
 
-A body must hold the fixed fields of its type, or the PDU is `BodyTooShort { pdu_type, expected, actual }`: 132 bytes for an Entity State plus 16 per announced variable parameter (a PDU of 144 + 16 *n* bytes), 92 for a Transmitter (a PDU of 104), 20 for a Signal (a PDU of 32). A longer body is accepted, and what the decoder does not read stays in `raw`. After the 92 fixed bytes of a Transmitter come its modulation parameters and its antenna pattern, which are not decoded: the 120-byte Transmitters of `dis_voice_sample.pcap` carry 16 bytes of modulation parameters. The 149-byte Transmitters of `DIS_signal_and_transmitter.pcapng` announce neither, and still run 45 bytes past the fixed fields; they decode all the same.
+A body must hold the fixed fields of its type, or the PDU is `BodyTooShort { pdu_type, expected, actual }`: 132 bytes for an Entity State plus 16 per announced variable parameter (a PDU of 144 + 16 *n* bytes), 92 for a Transmitter (a PDU of 104), 20 for a Signal (a PDU of 32). A longer body is accepted, and what the decoder does not read stays in `raw`. After the 92 fixed bytes of a Transmitter come its modulation parameters, its antenna pattern and, in version 7, the variable transmitter parameter records that `variable_parameter_count` announces; none of them are decoded. The 120-byte Transmitters of `dis_voice_sample.pcap` carry 16 bytes of modulation parameters. The 149-byte Transmitters of `DIS_signal_and_transmitter.pcapng`, in version 5, announce no modulation parameters and no antenna pattern, and still run 45 bytes past the fixed fields; they decode all the same.
 
 The corpus has no Entity State: the wiki captures that carry some were set aside as replayed PDUs rather than recorded exercises (see the `SOURCE.md` of the corpus folder), so this body is checked on synthetic bytes only, by a unit test of the crate.
 
@@ -262,7 +262,7 @@ All of them are `DisParseError`, in `packet_parser::errors::application::dis`:
 | `InvalidLength(u16)` | a declared length shorter than the header |
 | `LengthOverflow { declared, available }` | a declared length beyond the bytes left in the datagram |
 | `UnexpectedTrailingBytes { trailing }` | `try_from` only: bytes after the last PDU that do not form a PDU |
-| `BodyTooShort { pdu_type, expected, actual }` | an Entity State, Transmitter or Signal body shorter than its fixed fields |
+| `BodyTooShort { pdu_type, expected, actual }` | an Entity State, Transmitter or Signal body shorter than its fixed fields, plus 16 bytes per announced variable parameter for an Entity State |
 
 Only the first PDU reports its own error. After it, a PDU that fails ends the list, and from `try_from` the datagram is then refused with `UnexpectedTrailingBytes`. Like every application decoder, a failure only means no label: the dispatch moves on to the next rule, and nothing goes to `corrupted`.
 
@@ -283,6 +283,6 @@ In the golden histogram of the whole corpus, `"DIS"` went from 0 to 390 with 11.
 ## What is left out
 
 - **69 of the 72 types** keep their body raw, in `DisBody::Opaque`: Fire, Detonation, Underwater Acoustic, the simulation management PDUs...
-- **Inside the typed bodies**: the dead-reckoning parameters after the algorithm byte, the variable parameters (raw 16-byte records), the modulation parameters and antenna pattern of a Transmitter, and the data of a Signal (no audio, no tactical data link message) are not decoded. `appearance` and `capabilities` are raw bits.
+- **Inside the typed bodies**: the dead-reckoning parameters after the algorithm byte, the variable parameters (raw 16-byte records), the modulation parameters, antenna pattern and variable transmitter parameters of a Transmitter, and the data of a Signal (no audio, no tactical data link message) are not decoded. `appearance` and `capabilities` are raw bits.
 - **Enumerations are numbers**: entity kinds, countries, modulations and encodings are the values of SISO-REF-010, not names.
 - **No state**: no dead reckoning, no pairing of a Signal with its Transmitter, no time conversion. One datagram at a time, like the rest of the crate.

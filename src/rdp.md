@@ -50,7 +50,7 @@ pub struct X224Tpdu {
 
 Every type of the module is `#[non_exhaustive]`: a `match` on `RdpPayload` or `McsPduType` needs a `_` arm.
 
-`RdpPacket::try_from` reads TPKTs back to back until the end of the segment, and the segment is RDP only if every one of them decodes. The last one may announce more bytes than the segment holds, because TCP cut it: as long as the headers the decoder reads are complete, it is decoded on what is there and `truncated` is set. Its continuation, in the next segment, has no header of its own and is not RDP: the crate does not reassemble, and tshark without reassembly calls those bytes `data`. The corpus has 12 TPKTs cut that way: 11 Send Data Requests of 1 421 bytes whose first segment holds 1 260, and a Connect-Response of 1 405 bytes whose first segment holds 1 398.
+`RdpPacket::try_from` reads TPKTs back to back until the end of the segment, and the segment is RDP only if every one of them decodes. The last one may announce more bytes than the segment holds, because TCP cut it: as long as the headers the decoder reads are complete, it is decoded on what is there and `truncated` is set. Its continuation, in the next segment, has no header of its own and is not RDP: the crate does not reassemble, and tshark without reassembly calls those bytes `data`. TCP cuts 16 TPKTs of the corpus in two, and the 12 that start their segment are decoded that way: 11 Send Data Requests of 1 421 bytes whose first segment holds 1 260, and a Connect-Response of 1 405 bytes whose first segment holds 1 398. The other 4 start in the middle of a segment, after the end of the previous TPKT (frames 69, 71, 73 and 74 of `rdp-proprietary-encryption.pcap`): those segments do not start with a TPKT, and none of their bytes is decoded.
 
 The TPKT header and the fixed part of the TPDU, on the Connection Request of frame 6 of `rdp-x509.pcap` (offsets in the TCP payload):
 
@@ -101,7 +101,7 @@ pub enum NegotiationResponse {
 }
 ```
 
-The X.224 user data of a Connection Request is a token, then a negotiation request, both optional. The token is everything before the first CR LF, kept raw: `Cookie: mstshash=<user>` from the usual client, or a routing token. `cookie_user()` returns the user of a cookie as a `&str`, and `None` for anything else. After the token comes nothing, or an 8-byte negotiation structure; anything else is `UnexpectedX224Data`. The user data of a Connection Confirm is empty, or the server's response or failure, in the same 8-byte structure:
+The X.224 user data of a Connection Request is a token, then a negotiation request, both optional. The token is everything before the first CR LF, kept raw: `Cookie: mstshash=<user>` from the usual client, or a routing token. `RdpPayload::cookie_user()` returns the user of a cookie as a `&str`, and `None` for anything else. After the token comes nothing, or an 8-byte negotiation structure; a negotiation structure of another length is `InvalidNegotiation` (see the [validations](#validations)), and anything else `UnexpectedX224Data`. The user data of a Connection Confirm is empty, or the server's response or failure, in the same 8-byte structure:
 
 | Byte | Field | Note |
 | --- | --- | --- |
@@ -110,7 +110,7 @@ The X.224 user data of a Connection Request is a token, then a negotiation reque
 | 2–3 | length, little-endian | must be 8, else `InvalidNegotiation` |
 | 4–7 | `requested_protocols`, `selected_protocol` or `failure_code` | `u32`, little-endian |
 
-The protocols are bits, and `NegotiationRequest` has a method for each:
+The protocols are bits (MS-RDPBCGR §2.2.1.1.1), and `NegotiationRequest` has a method for each but the last:
 
 | Value | Security protocol | Method |
 | --- | --- | --- |
@@ -119,6 +119,7 @@ The protocols are bits, and `NegotiationRequest` has a method for each:
 | `0x2` | CredSSP | `credssp()` |
 | `0x4` | RDSTLS | `rdstls()` |
 | `0x8` | CredSSP with Early User Authorization Result | `credssp()` |
+| `0x10` | RDS-AAD-Auth | none: the bit stays in `requested_protocols` |
 
 `selected_protocol` holds one of these values; the flags and `failure_code` stay numbers that the crate does not name. The negotiation is where the connection forks: standard security keeps TPKT and MCS on the wire, TLS or CredSSP turns the rest of it into TLS records. A refusal and a CredSSP selection, on real frames of two captures (*tested*):
 
@@ -185,7 +186,7 @@ Any other choice is `UnknownMcsPdu(choice)`. The two Send Data PDUs, which carry
 | 3–4 | `channel_id`, big-endian | 1003 |
 | 5 | `priority_and_segmentation` | `0x70` |
 | 6 | PER length, `declared_length`: one byte below `0x80`, or two bytes `10xxxxxx xxxxxxxx` (14 bits) | 80 |
-| 7… | `data`, from the end of the length as far as the segment goes | 80 bytes |
+| 7… | `data`, from the end of the length to the end of the TPKT, or of the segment if TCP cut it | 80 bytes |
 
 A fragmented length (first byte `11xxxxxx`) leaves `declared_length` at `None`, and `data` then starts right after the priority byte. The data are not decoded: they are the RDP payload as it travels, encrypted or not.
 
@@ -220,9 +221,9 @@ A failure only means no label. On port 3389 or a declared port, the segment goes
 | Segments | tshark | The crate |
 | --- | --- | --- |
 | 83 | `rdp`, `t125` or `t124` | `"RDP"`, with the same TPKT length, COTP type, token, negotiation and MCS type: 7 Connection Requests, 6 of them with a cookie, 7 Connection Confirms and 69 MCS PDUs |
-| 481 | `tls`, or `x509ce` for a certificate | `"TLS"` for the 449 where a record starts; `"Unknown"` for the 32 continuations of a record cut by TCP |
-| 287 | `data` for 278 segments that do not start with a TPKT, the 12 continuations of cut TPKTs among them; nothing above `tcp` for 9 segments it flags as out of order | `"Unknown"` |
-| 10 | retransmissions, not dissected | skipped by the oracle |
+| 481 | `tls`, or `x509ce` for a certificate | `"TLS"` for the 449 that start with a whole record; `"Unknown"` for the other 32: 27 continuations of a record cut by TCP, and 5 segments of `rdp-to-ssl.pcap` that start an Application Data record longer than themselves, which the TLS probe refuses |
+| 287 | `data` for 278 segments that do not start with a TPKT, the 16 continuations of cut TPKTs among them; nothing above `tcp` for 9 segments it flags as out of order | `"Unknown"` |
+| 10 | retransmissions, not dissected | not compared |
 
 The 69 MCS PDUs are 3 Connect-Initial, 2 Connect-Response, 1 Erect Domain Request, 1 Attach User Request, 1 Attach User Confirm, 6 Channel Join Requests, 6 Channel Join Confirms, 27 Send Data Requests, 21 Send Data Indications and 1 Disconnect Provider Ultimatum. In the golden histogram of the whole corpus, `"RDP"` counts 89 frames: these 83, and six of the retransmissions, two in each of `rdp-no-cookie-mstshash.pcap`, `rdp-unknown-keyboard.pcap` and `rdp-x509.pcap`, which the stateless parser labels by their bytes. The fuzz target `parse_rdp` runs nightly on the decoder: no panic, and on success the TPKTs tile the segment, the last one possibly cut, and every borrowed slice points into the input.
 
@@ -237,8 +238,9 @@ The 69 MCS PDUs are 3 Connect-Initial, 2 Connect-Response, 1 Erect Domain Reques
 ## What is left out
 
 - **RDP over UDP** (MS-RDPEUDP) is another transport, which the crate does not decode; the `rdpeudp*` captures of Zeek's corpus were left out.
-- **No reassembly**: a TPKT cut by TCP is decoded on its first segment, and its continuation stays `"Unknown"`, like the continuations of TLS records.
-- **Fast-path PDUs**, which MS-RDPBCGR sends without the TPKT, X.224 and MCS headers, fail the TPKT check and stay `"Unknown"`; tshark leaves them at `data` as well. Of the 278 `data` segments of the corpus, 241 start with a byte whose two low bits are clear, the mark of a fast-path PDU, where a TPKT has 3.
+- **No reassembly**: a TPKT cut by TCP is decoded on its first segment when it starts that segment, and its continuation stays `"Unknown"`, like the continuations of TLS records. A segment that starts with a continuation is refused whole, the complete TPKTs that follow it included: frame 77 of `rdp-proprietary-encryption.pcap` holds two.
+- **Fast-path PDUs**, which MS-RDPBCGR sends without the TPKT, X.224 and MCS headers, fail the TPKT check and stay `"Unknown"`; tshark leaves them at `data` as well. Of the 262 `data` segments of the corpus that do not continue a cut TPKT, 241 start with a byte whose two low bits are clear, the mark of a fast-path PDU, where a TPKT has 3.
+- **The correlation info** that a client may append to its negotiation request (36 bytes, announced by its flag `0x08`, MS-RDPBCGR §2.2.1.1) is not read: such a Connection Request is `InvalidNegotiation`, and comes out `"Unknown"` even on port 3389.
 - **No connection state**: after a TLS or CredSSP negotiation the label is `"TLS"`, and nothing records that those records belong to an RDP connection, nor which protocol it selected.
 - **The connect PDUs are not opened**: the T.124 conference data of a Connect-Initial or Connect-Response, where the keyboard layout of `rdp-unknown-keyboard.pcap` sits, stays in `raw`.
 - **The Send Data contents are raw**: the RDP PDUs they carry are `data`.

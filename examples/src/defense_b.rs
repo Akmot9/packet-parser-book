@@ -255,11 +255,22 @@ mod tests {
             RtpsPacket::try_from(other_magic.as_slice()),
             Err(RtpsParseError::InvalidMagic(*b"GIOP"))
         );
+        let mut version_1 = payload.to_vec();
+        version_1[4] = 1; // RTPS 1.x, another format
+        assert_eq!(
+            RtpsPacket::try_from(version_1.as_slice()),
+            Err(RtpsParseError::UnsupportedVersion { major: 1, minor: 1 })
+        );
         let mut reserved = payload.to_vec();
         reserved[20] = 0x02; // the first submessageId
         assert_eq!(
             RtpsPacket::try_from(reserved.as_slice()),
             Err(RtpsParseError::ReservedSubmessageId { id: 0x02, offset: 20 })
+        );
+        reserved[20] = 0x00; // the HeaderExtension of RTPS 2.5, unknown to the crate
+        assert_eq!(
+            RtpsPacket::try_from(reserved.as_slice()),
+            Err(RtpsParseError::ReservedSubmessageId { id: 0x00, offset: 20 })
         );
         let mut overflow = payload.to_vec();
         overflow[22] = 200; // INFO_DST declares 200 bytes instead of 12

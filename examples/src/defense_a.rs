@@ -573,7 +573,8 @@ mod tests {
             (transport.source_port, transport.destination_port),
             (Some(41778), Some(5067))
         );
-        // Still an S_PDU, but off port 5066 no rule probes it.
+        // Still an S_PDU, but off port 5066 no rule runs the SIS probe, and
+        // no other probe accepts it.
         assert!(SisPdu::try_from(transport.payload.unwrap()).is_ok());
         assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
 

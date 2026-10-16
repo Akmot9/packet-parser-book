@@ -16,7 +16,7 @@ ProbeId::Rtps => {
 ```
 
 - the magic is a **constant-cost guard**, as for GIOP: the decoder only runs on a datagram that starts with `RTPS`, or with `RTPX`, a variant RTI Connext emits;
-- the decoder reads the **whole payload**, not the first `PROBE_CAP` = 18 KiB the other probes see: a 60 KB `DATA_FRAG` is still RTPS, and the six of `wireshark_15227_reassembly_one_each.pcapng`, up to 65 064 bytes of payload, are labelled;
+- the decoder reads the **whole payload**, not only the first `PROBE_CAP` = 18 KiB that most probes, ASTERIX's among them, see: a 60 KB `DATA_FRAG` is still RTPS, and the six of `wireshark_15227_reassembly_one_each.pcapng`, up to 65 064 bytes of payload, are labelled;
 - the submessages must **tile the datagram exactly**; a reserved `submessageId` or a body too short for its kind refuses the message.
 
 A refused message is not a corruption: the label is not given, the datagram goes on down the table and usually comes out `"Unknown"`, with nothing in `corrupted`. RTPS is probed on UDP only, and there is no `DecodeAsProtocol` variant for it: a rule without a port guard has no port to extend.
@@ -75,7 +75,7 @@ pub struct RtpsPing {
 }
 ```
 
-A payload of exactly 16 bytes ending with `NDDSPING` is an `RtpsPacket::Ping`, its magic and version still checked; sixteen bytes without the text are a truncated header, `Truncated { expected: 20, actual: 16 }`. The corpus has eight pings, seven in `RTPS_Discovery.pcapng` and one in `rtps.pcap` (*tested*):
+A payload of exactly 16 bytes ending with `NDDSPING` is an `RtpsPacket::Ping`, its magic and version still checked; sixteen bytes without the text are a truncated header, `Truncated { expected: 20, actual: 16 }`. The corpus has eight pings, seven in `RTPS_Discovery.pcapng` and one in `rtps.pcap`, all counted by the golden test; the one of `rtps.pcap` (*tested*):
 
 ```rust
 {{#include ../examples/src/defense_b.rs:rtps_ping}}
@@ -109,7 +109,7 @@ pub struct RtpsSubmessage<'a> {
 
 ### `octetsToNextHeader`: a length, or zero
 
-The body is `octetsToNextHeader` bytes long. Zero means that the submessage runs **to the end of the message**, which only the last one can do, except for PAD and INFO_TS, where zero is an empty body. `octets_to_next_header` keeps what the wire carries, `body` what it covers; a length beyond the end of the datagram is `SubmessageOverflow`. The thirteen zeros of the corpus are the final DATA of the thirteen OpenDDS messages (*tested*):
+The body is `octetsToNextHeader` bytes long. Zero means that the submessage runs **to the end of the message**, which only the last one can do, except for PAD and INFO_TS, where zero is an empty body. `octets_to_next_header` keeps what the wire carries, `body` what it covers; a length beyond the end of the datagram is `SubmessageOverflow`. The thirteen zeros of the corpus are the final DATA of the thirteen OpenDDS messages; the first of them (*tested*):
 
 ```rust
 {{#include ../examples/src/defense_b.rs:rtps_to_the_end}}
@@ -119,7 +119,7 @@ The sequence number of that DATA has a high half of −1, like those of frames 1
 
 ### Kinds and their fields
 
-`SubmessageKind` names the identifiers of the specification, of DDS Security 1.1 and of the vendor range. `SubmessageDetails` decodes, for the kinds of the specification, the entity ids, sequence numbers, counters, timestamps and fragmentation fields, once the body has been checked to be long enough for them:
+`SubmessageKind` names the identifiers of the specification up to RTPS 2.4, of DDS Security 1.1 and of the vendor range; the HeaderExtension that RTPS 2.5 adds at `0x00` is not among them. `SubmessageDetails` decodes, for the kinds of the specification, the entity ids, sequence numbers, counters, timestamps and fragmentation fields, once the body has been checked to be long enough for them:
 
 | `submessageId` | `SubmessageKind` | `SubmessageDetails` | Minimum body |
 | --- | --- | --- | --- |
@@ -138,7 +138,7 @@ The sequence number of that DATA has a high half of −1, like those of frames 1
 | `0x01` PAD | `Pad` | `Opaque` | — |
 | `0x30`–`0x34` | `SecureBody`, `SecurePrefix`, `SecurePostfix`, `SecureRtpsPrefix`, `SecureRtpsPostfix` | `Opaque` | — |
 | `0x80`–`0xff` | `VendorSpecific(id)` | `Opaque` | — |
-| any other | — | — | `ReservedSubmessageId` |
+| `0x00` (HeaderExtension, RTPS 2.5) and any other | — | — | `ReservedSubmessageId` |
 
 The bitmap of a `SequenceNumberSet` or a `FragmentNumberSet` is `numBits` rounded up to 32-bit words, 4 × ⌈`numBits` / 32⌉ bytes, and the count of an ACKNACK or a NACK_FRAG comes after it: the crate checks that the bitmap fits before reading the count. An `RtpsTime` is `seconds: u32` and `fraction: u32`, in 2⁻³² s. Of the flags, `details` exposes Q, D and K of a DATA (`inline_qos`, `serialized_payload`, `serialized_key`), F of an ACKNACK (`final_flag`) and I of an INFO_TS (`timestamp: None`); the others stay in `flags`. What follows the fixed fields, the serialized data, the inline QoS, the locator lists, stays in `body`, as raw bytes.
 
@@ -154,7 +154,7 @@ All of them are `RtpsParseError`, in `packet_parser::errors::application::rtps`:
 | `InvalidMagic([u8; 4])` | the first four bytes are neither `RTPS` nor `RTPX` |
 | `UnsupportedVersion { major, minor }` | the major version is not 2 |
 | `NoSubmessage` | a header and nothing after it |
-| `ReservedSubmessageId { id, offset }` | an identifier outside the specification, DDS Security and `0x80`–`0xff` |
+| `ReservedSubmessageId { id, offset }` | an identifier that is neither one of the specification up to RTPS 2.4, nor `0x30`–`0x34` (DDS Security), nor `0x80`–`0xff`; `0x00`, the HeaderExtension of RTPS 2.5, is refused too |
 | `SubmessageOverflow { id, offset, declared, available }` | `octetsToNextHeader` beyond the end of the message |
 | `SubmessageTooShort { id, offset, expected, actual }` | a body shorter than its kind requires (entity ids, sequence numbers, bitmap) |
 
@@ -168,7 +168,7 @@ The probe only asks whether the decode succeeds, so any of them means "not RTPS"
 
 The golden test `tests/rtps_golden.rs` runs the eight captures of `pcaps_exemple/protocols/rtps/` and compares every frame with tshark 4.6.6 without IP reassembly, frozen by `tools/rtps_oracle.sh` in `tests/data/rtps_tshark_oracle.tsv`: version, vendorId, guidPrefix, the sequence of submessages with their `octetsToNextHeader`, the entity ids and the sequence numbers. Every frame of the oracle must come out `"RTPS"` and decode identically, every other frame of the folder must not: 231 frames, the 8 pings and the 4 `RTPX` messages among them. The other 16 frames of the folder are IPv4 fragments of `RTPS_Discovery.pcapng`, which tshark reassembles and a stateless parser never sees whole. In the golden histogram of `pcaps_exemple/protocols/` (`tests/golden_pcaps.rs`), `"RTPS"` went from 0 to 231 and `"Unknown"` from 9 409 to 9 178: no frame of another folder comes out RTPS. The fuzz target `parse_rtps` runs nightly on the same decoder.
 
-| Capture | Frames | Implementation (vendorId) | Origin |
+| Capture | RTPS frames | Implementation (vendorId) | Origin |
 | --- | --- | --- | --- |
 | `talker-listener-rtps.pcapng` | 87 | Eclipse Cyclone DDS (`0x0110`), ROS 2 talker and listener, LINKTYPE_NULL | foxglove/rtps |
 | `RTPS_Discovery.pcapng` | 93 | RTI Connext (`0x0101`), discovery, pings, the `RTPX` messages | Wireshark wiki |
@@ -186,5 +186,6 @@ Two oracle details: tshark lists the identifier of a vendor submessage but not i
 - **User data**: the serialized payload (CDR), the inline QoS parameter lists and the locator lists stay raw in `body`; no topic, type or QoS policy is decoded, and the `extraFlags` and `octetsToInlineQos` of a DATA are not exposed.
 - **Names**: entity ids and GUID prefixes are numbers and bytes; tshark calls `0x000200c2` `ENTITYID_P2P_BUILTIN_PARTICIPANT_MESSAGE_WRITER`, the crate does not.
 - **DDS Security**: the secure submessages are recognized by their identifier, their bodies stay opaque.
+- **HeaderExtension**: RTPS 2.5 adds this submessage, `0x00`, right after the header. The crate does not know it: a message that carries one is `ReservedSubmessageId` and is not labelled. No capture of the corpus has one.
 - **Reassembly**: `DATA_FRAG` fragments are not put back together, nor are the IPv4 fragments of a datagram. One message at a time, as everywhere in the crate.
 - **RTPS 1.x** is `UnsupportedVersion`, and RTPS is only looked for on UDP.

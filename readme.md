@@ -13,8 +13,9 @@ This is not the API reference (that is on [docs.rs](https://docs.rs/packet_parse
 src/            the chapters (SUMMARY.md is the table of contents)
 src/images/     diagrams
 examples/       a Cargo crate: every snippet marked "tested" in the book is
-                included from examples/src/lib.rs and run against the
-                reference version of packet_parser
+                included from examples/src/ (lib.rs and one module per group
+                of chapters) and run against the reference version of
+                packet_parser
 tools/          check_book.py, the pre-build checks
 .github/        CI: validation on pull requests, deployment to Pages on main
 ```

@@ -55,8 +55,8 @@ mod tests {
         "000201080002000000",
     );
 
-    /// Frame 8 of the same capture: TCP 49206 -> 3389, the next segment of the
-    /// client, a TLS record.
+    /// Frame 8 of the same capture: TCP 49206 -> 3389, the client's next
+    /// segment with a payload, a TLS record (its ClientHello).
     const RDP_CLIENT_HELLO_HEX: &str = concat!(
         "080027126d890800274a2a0c0800450000a11d70400080065838c0a801c8c0a8",
         "0196c0360d3d5565d42d9b89a67f5018010005df000016030100740100007003",
@@ -278,8 +278,9 @@ mod tests {
             }
         );
 
-        // ... so the client's next segment (frame 8) is a TLS record: on port
-        // 3389 it fails the TPKT check, and the blind TLS rule labels it.
+        // ... so the client's next segment with a payload (frame 8) is a TLS
+        // record: on port 3389 it fails the TPKT check, and the blind TLS rule
+        // labels it.
         let raw = hex::decode(RDP_CLIENT_HELLO_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         let transport = flow.transport.as_ref().unwrap();

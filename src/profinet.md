@@ -89,8 +89,8 @@ The fixed header is 12 bytes; DCPDataLength counts the blocks that follow, and b
 
 | Bytes | Field | Note |
 | --- | --- | --- |
-| 0–1 | `frame_id` | one of the four DCP Frame IDs, otherwise `NotDcp` |
-| 2 | `service_id` | `DCP_SERVICE_GET` (3), `DCP_SERVICE_SET` (4), `DCP_SERVICE_IDENTIFY` (5), `DCP_SERVICE_HELLO` (6) |
+| 0–1 | `frame_id` | one of the four DCP Frame IDs; another assigned one is `NotDcp`, a reserved one `UnknownFrameId` |
+| 2 | `service_id` | `DCP_SERVICE_GET` (3), `DCP_SERVICE_SET` (4), `DCP_SERVICE_IDENTIFY` (5), `DCP_SERVICE_HELLO` (6); the value is not checked |
 | 3 | `service_type` | `DCP_SERVICE_TYPE_REQUEST` (0) for a request; any other value is read as a response, 1 for success, 5 for not supported |
 | 4–7 | `xid` | transaction ID |
 | 8–9 | `response_delay` | |
@@ -163,7 +163,7 @@ The repository had no PROFINET capture until [#140](https://github.com/Akmot9/Pa
 | `miguelob_pn.pcapng` | 48 | 18 | 10 cyclic RT_CLASS_1 `0x8000`/`0x8010`, 4 alarms `0xFE01`, 4 DCP, all VLAN-tagged |
 | `miguelob_pn_dcp.pcapng` | 18 | 18 | 15 Identify responses, 3 Identify requests |
 
-The golden test `tests/profinet_corpus.rs` compares every PN-RT frame with tshark 4.6.6, frozen in `tests/data/profinet_tshark_oracle.tsv`: the Frame ID, the service and the NameOfStation of every DCP message, and tshark's malformed flag. The crate must find exactly the PN-RT frames of tshark by their EtherType, VLAN tags included, class every Frame ID, read the same NameOfStation, and refuse only what tshark calls malformed. The outcome is frozen: **231** frames give `internet = Profinet`, and one is `DcpDataOverflow`, frame 3 of `miguelob_pn_dcp.pcapng`, the example above. The 11.5.0 validator gave 103 `Profinet` and 129 `corrupted`, almost all on healthy frames: 67 `UnknownFrameId` (cyclic RT_CLASS_1, PTCP, alarms, fragments), 56 `InvalidDcpBlockLength` (cyclic `0xC000`/`0xC002` frames read as DCP), 5 `InvalidNameOfStation` (the first block read as the name) and 1 `PacketTooShort`.
+The golden test `tests/profinet_corpus.rs` compares every PN-RT frame with tshark 4.6.6, frozen in `tests/data/profinet_tshark_oracle.tsv`: the Frame ID, the service and the NameOfStation of every DCP message, and tshark's malformed flag. The crate must find exactly the PN-RT frames of tshark by their EtherType, VLAN tags included, class every Frame ID, read the same NameOfStation, and refuse only what tshark calls malformed. The outcome is frozen: **231** frames give `internet = Profinet`, and one is `DcpDataOverflow`, frame 3 of `miguelob_pn_dcp.pcapng`, the example above. The 11.5.0 validator gave 103 `Profinet` and 129 `corrupted`, almost all on healthy frames: 67 `UnknownFrameId` (cyclic RT_CLASS_1, PTCP, alarms, fragments), 56 `InvalidDcpBlockLength` (the cyclic `0xC000` frames, read as DCP; the 46 cyclic `0xC002` frames passed that reading), 5 `InvalidNameOfStation` (the first block read as the name) and 1 `PacketTooShort`.
 
 The corpus covers eight classes of the table: `Unicast`, `RtClass1Unicast`, `AlarmLow`, `PtcpDelay`, `Fragment` and the three DCP Frame IDs other than `Hello`. The ten others, `Sync`, `RtClass3`, `RtClass1Multicast`, `Multicast`, `AlarmHigh`, `Rsi`, `Sxp`, `Hello`, `PtcpAnnounce` and `PtcpFollowUp`, are covered by the crate's unit tests only. The fuzz target `parse_profinet` runs nightly on `validate_frame` and `ProfinetPacket::try_from`.
 
@@ -173,5 +173,5 @@ The corpus covers eight classes of the table: `Unicast`, `RtClass1Unicast`, `Ala
 - **DCP block values**: only the NameOfStation is read; IP parameters, device ID, role and options stay raw in `DcpBlock::data`.
 - **No `details`**: a caller re-runs `validate_frame` or `ProfinetPacket::try_from` on the link payload.
 - **The blind probe** of `Internet::try_from` recognizes PROFINET by a complete DCP message only: two bytes of Frame ID are not a proof, so a cyclic frame is not recognized without its EtherType, and a DCP-looking header can be something else (see the [internet page](./network.md#dispatch-on-the-announced-protocol-not-probing)).
-- **PROFINET over UDP** is ordinary UDP to the crate: no rule of the [dispatch table](./application.md) names RT_CLASS_UDP (ports 34962 to 34964), nor the DCE/RPC of PROFINET IO-CM, of which the corpus holds 1 000 datagrams.
+- **PROFINET over UDP** is ordinary UDP to the crate: no rule of the [dispatch table](./application.md) names RT_CLASS_UDP (UDP 34962 and 34963, `profinet-rt` and `profinet-rtm`), nor the DCE/RPC of PROFINET IO-CM (UDP 34964, `profinet-cm`), of which the corpus holds 1 000 datagrams.
 - **Time-aware Frame IDs** are not classed.

@@ -198,7 +198,7 @@ An S_UNIDATA_REQUEST carrying ACP 142 (*tested*):
 
 ## Stateless: one S_PDU at a time
 
-An S_PDU and a TCP segment have no reason to coincide. The first segment of a large one carries its header and fixed fields, the next segments carry the rest of the U_PDU, and a segment may hold several short S_PDUs. With no reassembly, the decoder follows four rules:
+An S_PDU and a TCP segment have no reason to coincide: one S_PDU may be split over several segments, and one segment may hold several S_PDUs. The HF Chat client and node of the corpus send every data primitive in two segments, its header and fixed fields then its U_PDU, even when the whole S_PDU is only 29 bytes; the ACP 142 capture packs three S_PDUs of 2 065 bytes into one segment. With no reassembly, the decoder follows four rules:
 
 1. **An S_PDU that overflows its segment is accepted and flagged** `truncated`. Its fixed fields are decoded, and `u_pdu` is what the segment holds, possibly nothing. The fixed fields must all be there: a segment that cuts them is `PrimitiveTooShort`, truncated or not.
 2. **A continuation segment is not SIS.** It does not start with the preamble, so `try_from` refuses it (`InvalidPreamble`, or `Truncated` below six bytes), and the segment is labelled by whatever else matches: `"Unknown"`, for the five of the corpus.

@@ -12,7 +12,7 @@ pub struct Application {
 
 `PacketFlow::application` is a **label**. It says *which* protocol the transport payload looks like, not what the message contains. It is `&'static str`, so classification costs no allocation.
 
-For the actual decode, every protocol has a module under `packet_parser::parse::application::protocols`, and every one of them is a `TryFrom<&[u8]>` with its own struct and error:
+For the actual decode, every protocol has a module under `packet_parser::parse::application::protocols` (except ESP, whose `EspPacket` is a transport decoder, in `packet_parser::parse::transport::protocols::esp`), and every one of them is a `TryFrom<&[u8]>` with its own struct and error:
 
 ```rust
 use packet_parser::parse::application::protocols::dns::DnsPacket;
@@ -21,7 +21,8 @@ if let Some(transport) = &flow.transport
     && let Some(payload) = transport.payload
     && let Ok(dns) = DnsPacket::try_from(payload)
 {
-    println!("{} questions, {} answers", dns.header.qdcount, dns.header.ancount);
+    // counts: questions, answers, authority records, additional records
+    println!("{} questions, {} answers", dns.header.counts[0], dns.header.counts[1]);
 }
 ```
 
@@ -65,7 +66,7 @@ and the invariants are:
 
 ![One rule of the table: the transport payload, a TLS ClientHello on TCP 54322 to 443, passes the transport guard, then the port guard, then the content probe, and gets the label TLS; a failed gate moves on to the next rule, the last rule falls through to Unknown, an empty payload is not probed](images/application/dispatch_rule.svg)
 
-Each rule is three gates in a row, and a payload stops at the first rule whose three gates open. The TLS rule has no port guard, so its second gate always opens: the ClientHello is labelled by its content, whatever the port. A probe that fails is not re-run by a later rule that shares it. Two outcomes do not come from a rule: an empty payload is never probed (`application: None`), and a payload no rule matched is `"Unknown"`, except on the terminal mDNS and LLMNR ports, where a failed probe ends the search with `None` (see below).
+Each rule is three gates in a row, and a payload stops at the first rule whose three gates open. The TLS rule has no port guard, so its second gate always opens: the ClientHello is labelled by its content, whatever the port. A probe that fails is not re-run by a later rule that shares it. Two outcomes do not come from a rule: an empty payload is never probed (`application: None`), and a payload no rule matched is `"Unknown"`, except on the terminal mDNS and LLMNR ports, where a failed probe ends the search with `None` (rules 11 and 12 below).
 
 ### Reading the table
 
@@ -132,7 +133,7 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 30 | [PostgreSQL](#postgresql) | `Tcp` | 5432 | `PostgresqlPort` | `is_plausible_postgresql_payload`: a decode of compatible shape |
 | 31 | [IKE](./ike.md) | `Udp` | 500, 4500 | `Ike` | `IkePacket::from_udp`, bare or behind the non-ESP marker, whole payload |
 | 32 | [ESP](./esp.md) | `Udp` | 4500 | `EspNatT` | `UdpEncapsulation::classify` finds ESP and `EspPacket::try_from` accepts it |
-| 33 | [NAT-keepalive](./ike.md) | `Udp` | 4500 | `NatKeepalive` | `UdpEncapsulation::classify` finds the one byte `0xFF` |
+| 33 | [NAT-keepalive](./esp.md#in-udp-4500-behind-a-nat) | `Udp` | 4500 | `NatKeepalive` | `UdpEncapsulation::classify` finds the one byte `0xFF` |
 | 34 | [STANAG 5066](./stanag5066.md) | `Tcp` | 5066 | `Stanag5066` | `SisPdu::try_from` |
 | 35 | [UMAS](#modbustcp-and-umas) | `Tcp` | 502 | `Umas` | `UmasPacket::try_from` |
 | 36 | [ModbusTCP](#modbustcp-and-umas) | `Tcp` | 502 | `ModbusTcp` | `ModbusTcpPacket::try_from`: the envelope alone |
@@ -168,7 +169,7 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 61 | [WireGuard](./wireguard.md) | `Udp` | none | `WireGuardBlind` | `WireGuardPacket::is_blind_udp_match`, whole payload |
 | 62 | MQTT | `Tcp` | none | `Mqtt` | `MqttPacket::try_from` |
 
-Six probes serve two rules each: `Ams` its TCP and its UDP port (18, 19), and five others a port rule that gives them priority and a blind rule further down, `Snmp` (1, 51), `Opcua` (21, 47), `Radius` (26, 44), `Bacnet` (27, 45) and `Umas` (35, 58). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, the three verb checks, `is_plausible_short_header`, the `is_blind_*` and `is_port_udp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. Each comment in the real file cites the capture frame or the issue that motivated the line. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
+Six probes serve two rules each: `Ams` its TCP and its UDP port (18, 19), and five others a port rule that gives them priority and a blind rule further down, `Snmp` (1, 51), `Opcua` (21, 47), `Radius` (26, 44), `Bacnet` (27, 45) and `Umas` (35, 58). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, the three verb checks, `is_plausible_short_header`, the `is_blind_*` and `is_port_udp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. In the real file most lines carry a comment that says why they are there, often with the issue, the capture frame or the RFC section behind them. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
 
 ### Three detection routes
 
@@ -182,7 +183,7 @@ When choosing where a new protocol goes, the question is: *can a valid payload o
 
 Whatever the route, the **transport guard** is always there: the RFC says on which transport a protocol exists, and probing it elsewhere only produces false positives.
 
-A protocol with a standard port and a signature strong enough elsewhere takes two routes at once, one rule each. With **one probe**, the port rule only gives it priority over the cascade: SNMP, OPC UA, RADIUS, BACnet/IP and UMAS. With **two probes**, the port rule keeps a lenient decoder and the blind rule a stricter one, because the standard port carries real traffic that no blind probe could prove: NTP on 123 (`Ntp`, `NtpBlind`), Modbus/TCP on 502 (`ModbusTcp`, `ModbusTcpBlind`), PostgreSQL on 5432 (`PostgresqlPort`, `Postgresql`), DIS on 3000 (`DisLenient`, `Dis`) and WireGuard on 51820 (`WireGuardPort`, `WireGuardBlind`). The first three have their section below.
+A protocol with a standard port and a signature strong enough elsewhere takes two routes at once, one rule each. With **one probe**, the port rule only gives it priority over the cascade: SNMP, OPC UA, RADIUS, BACnet/IP and UMAS. With **two probes**, the port rule keeps a lenient decoder and the blind rule a stricter one, because the standard port carries real traffic that no blind probe could prove: DNS on UDP 53 (`Dns`, `DnsBlind`, below), NTP on 123 (`Ntp`, `NtpBlind`), Modbus/TCP on 502 (`ModbusTcp`, `ModbusTcpBlind`), PostgreSQL on 5432 (`PostgresqlPort`, `Postgresql`), DIS on 3000 (`DisLenient`, `Dis`) and WireGuard on 51820 (`WireGuardPort`, `WireGuardBlind`). NTP, Modbus/TCP and PostgreSQL have their section below. QUIC has two rules too, but they read two different headers: the opaque short header only on UDP 443, the long header on any UDP port.
 
 ### Tightening a blind probe
 
@@ -191,11 +192,11 @@ A blind probe is only as good as the captures it has been confronted with. The d
 - **SRVLOC**: 829 PTPv2 `Delay_Req` messages were labelled SRVLOC. Their header has exactly the shape of an SLPv1 one (version 1, a `SrvRply` function, a length equal to the datagram). The SLPv1 language field must now be a two-letter ASCII ISO 639 code (RFC 2165 §7); anything else is `SrvlocPacketParseError::InvalidLanguageCode`.
 - **DNS**: off port 53, any UDP datagram whose first twelve bytes formed a plausible empty header was DNS, among them 37 datagrams of a radar stream. The blind rule now runs its own probe, `ProbeId::DnsBlind`: the sections must consume the datagram exactly and carry at least one question or record. Port 53 keeps the tolerant decoder, so the two DNS rules no longer share a probe.
 
-In both cases the rule kept its place in the table; what changed is what the probe demands. Both corrections only remove labels: the 866 frames concerned now come out as `"Unknown"`, and the golden histogram moves on those frames and nowhere else.
+In both cases the rule kept its place in the table; what changed is what the probe demands. Both corrections only removed labels: in 11.4.0 the 866 frames concerned came out as `"Unknown"`, and the golden histogram moved on those frames and nowhere else. The 829 `Delay_Req` have had their own label since 11.5.0, `"PTP"`, from the port rule of UDP 319; the 37 radar datagrams are still `"Unknown"`.
 
 11.6.0 did the same for two blind rules that ran a whole decoder, NTP ([#164](https://github.com/Akmot9/Packet-parser/issues/164)) and Modbus/TCP ([#167](https://github.com/Akmot9/Packet-parser/issues/167)), and split them as DNS had been split: the tolerant decoder now runs in a port rule on the standard port, where the labels of the corpus did not move, and the blind rule has a stricter probe of its own. The [NTP](#ntp) and [Modbus/TCP](#modbustcp-and-umas) sections give the details.
 
-The reverse defect exists too, a parser refusing its own traffic, and 11.5.0 fixed one in SRVLOC ([#131](https://github.com/Akmot9/Packet-parser/issues/131)): the Char Encoding field of an SLPv1 header was read on one byte instead of two (RFC 2165 §7), which shifted everything after it, the XID and, in a `DAAdvert`, the error code, URL and scope list; the 26 SLPv1 `DAAdvert` of a real capture came out `"Unknown"`. The header now has `SrvlocHeaderV1::char_encoding` (`u16`, the IANA MIBenum, 106 for UTF-8); the old single-byte `encoding` is deprecated, which is what made 11.5.0 a minor and not a patch. 11.6.0 fixed four more, all with real frames: NTP replies refused because of the client's clock ([#161](https://github.com/Akmot9/Packet-parser/issues/161)), timestamps without their era ([#162](https://github.com/Akmot9/Packet-parser/issues/162)), reference ids and polls an implementation does send ([#165](https://github.com/Akmot9/Packet-parser/issues/165)), and the PostgreSQL `p` message of every password or SCRAM authentication ([#98](https://github.com/Akmot9/Packet-parser/issues/98)).
+The reverse defect exists too, a parser refusing its own traffic, and 11.5.0 fixed one in SRVLOC ([#131](https://github.com/Akmot9/Packet-parser/issues/131)): the Char Encoding field of an SLPv1 header was read on one byte instead of two (RFC 2165 §7), which shifted everything after it, the XID and, in a `DAAdvert`, the error code, URL and scope list; the 26 SLPv1 `DAAdvert` of a real capture came out `"Unknown"`. The header now has `SrvlocHeaderV1::char_encoding` (`u16`, the IANA MIBenum, 106 for UTF-8); the old single-byte `encoding` is deprecated, a change that on its own calls for a minor version, not a patch. 11.6.0 fixed four more, all with real frames: NTP replies refused because of the client's clock ([#161](https://github.com/Akmot9/Packet-parser/issues/161)), timestamps without their era ([#162](https://github.com/Akmot9/Packet-parser/issues/162)), reference ids and polls an implementation does send ([#165](https://github.com/Akmot9/Packet-parser/issues/165)), and the PostgreSQL `p` message of every password or SCRAM authentication ([#98](https://github.com/Akmot9/Packet-parser/issues/98)).
 
 ## "Decode As"
 
@@ -337,7 +338,7 @@ A timestamp is 32 bits of seconds since 1900 and 32 bits of fraction, which the 
 
 Originate (T1) is the client's timestamp, copied as is into the reply; Reference, Receive (T2) and Transmit (T3) are the server's. Until 11.6.0 the decoder demanded `reference <= originate <= receive <= transmit`: as soon as the client's clock was a few milliseconds ahead, which is what NTP is there to correct, or a first request left originate null, the server's reply was `InconsistentTimestamps`, hence `"Unknown"`, and so were 20 of the 26 real replies of the IEC 61850 substation of `protocols/goose/iti_Sample_File_MMS_and_GOOSE.pcap` ([#161](https://github.com/Akmot9/Packet-parser/issues/161)). The decoder now compares no timestamp: Receive and Transmit do share a clock, but in interleaved mode (chrony `xleave`) a reply carries the Transmit of the previous one ([#165](https://github.com/Akmot9/Packet-parser/issues/165)). Only the blind probe checks that Receive does not follow Transmit.
 
-The exchange of the Java client of `protocols/iec104/iti_JavaRMI_and_IEC_Misc.pcap`, frames 1 and 2, shows the three points (*tested*):
+The exchange of the Java client of `protocols/iec104/iti_JavaRMI_and_IEC_Misc.pcap`, frames 1 and 2, shows the era, the null timestamp and the two clocks (*tested*):
 
 ```rust
 {{#include ../examples/src/shared.rs:ntp_era_and_clocks}}
@@ -345,7 +346,7 @@ The exchange of the Java client of `protocols/iec104/iti_JavaRMI_and_IEC_Misc.pc
 
 ### Oracle: 1 308 datagrams
 
-`tests/ntp_golden.rs` compares the crate with tshark 4.6.6 (`tools/ntp_oracle.sh`, frozen in `tests/data/ntp_tshark_oracle.tsv`) field by field: ports, LI, version, mode, stratum, poll, precision, root delay and dispersion, reference id and the four timestamps to the nanosecond, on **1 308 datagrams**. They come from `pcaps_exemple/protocols/ntp/`, the substation of `goose/iti_Sample_File_MMS_and_GOOSE.pcap`, the Java exchange and, read in place, `The-Ultimate-PCAP.pcapng` and `4SICS-GeekLounge-151020.pcap`: NTS, authenticated MS-SNTP, SHA-256 and SHA-512 MACs, chrony requests with random timestamps, symmetric mode, IPv6 upstreams. Two gaps are named, not masked: the 104 control messages of mode 6 and the 36 ICMP errors quoting an NTP datagram, where the crate labels the ICMP frame. No other frame of `pcaps_exemple/` comes out NTP, among them 31 datagrams of six nDPI captures that the former blind probe took for NTP, and 8 that the lenient decoder accepts but the blind probe refuses. Moved off port 123, the 1 308 datagrams are recognized by the blind probe, except one: the chrony request of the example above. The golden histogram counts 77 NTP labels.
+`tests/ntp_golden.rs` compares the crate with tshark 4.6.6 (`tools/ntp_oracle.sh`, frozen in `tests/data/ntp_tshark_oracle.tsv`) field by field: ports, LI, version, mode, stratum, poll, precision, root delay and dispersion, reference id and the four timestamps to the nanosecond, on **1 308 datagrams**. They come from `pcaps_exemple/protocols/ntp/`, the substation of `goose/iti_Sample_File_MMS_and_GOOSE.pcap`, the Java exchange and, read in place, `The-Ultimate-PCAP.pcapng` and `4SICS-GeekLounge-151020.pcap`: NTS, authenticated MS-SNTP, SHA-256 and SHA-512 MACs, chrony requests with random timestamps, symmetric mode, IPv6 upstreams. Two gaps are named, not masked: the 104 control messages of mode 6 and the 36 ICMP errors quoting an NTP datagram, where the crate labels the ICMP frame. No other frame of `pcaps_exemple/` comes out NTP. The test names 31 datagrams of six nDPI captures that the former blind probe took for NTP, and 8 more among those that only the lenient decoder of [#165](https://github.com/Akmot9/Packet-parser/issues/165) accepts: KCP, QUIC and CryNet datagrams, and ASTERIX CAT 021 datagrams of `wireshark_9953_cat021023.pcap`, 1 555 of which have the shape of an NTP header. Moved off port 123, the 1 308 datagrams are recognized by the blind probe, except one: the chrony request of the example above. The golden histogram counts 77 NTP labels.
 
 ## Modbus/TCP and UMAS
 
@@ -463,7 +464,7 @@ pub struct UmasPacket<'a> {
 
 ## PostgreSQL
 
-The frontend/backend protocol of PostgreSQL, on TCP only. The module is `packet_parser::parse::application::protocols::postgresql`: `PostgreSqlPacket::try_from` splits a segment into `PostgreSqlMessage`s and decodes the bodies of the main ones; its errors are `PostgreSqlError`, in `packet_parser::errors::application::postgresql`. The largest decoder of the crate had no real frame to exercise it until [#98](https://github.com/Akmot9/Packet-parser/issues/98) brought fourteen captures of Zeek's test corpus, and they rewrote its detection.
+The frontend/backend protocol of PostgreSQL, on TCP only. The module is `packet_parser::parse::application::protocols::postgresql`: `PostgreSqlPacket::try_from` splits a segment into `PostgreSqlMessage`s and decodes the bodies of the main ones; its errors are `PostgreSqlError`, in `packet_parser::errors::application::postgresql`. The largest single-file decoder of the crate had no real frame to exercise it until [#98](https://github.com/Akmot9/Packet-parser/issues/98) brought fourteen captures of Zeek's test corpus, and they rewrote its detection.
 
 ### Two message formats, two new types
 

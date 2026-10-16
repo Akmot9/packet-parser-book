@@ -38,7 +38,7 @@ rule("MQTT", Guard::Tcp, ProbeId::Mqtt),
 **Elsewhere, the blind probe**, the last UDP probe of the cascade, after QUIC, has to make up for a type that is one byte and a Transport Data that has nothing but `04 00 00 00` and its minimum size for it:
 
 - the **reserved bytes are zero**, for every message: Linux reads the header as one four-byte integer;
-- the **counter** of Transport Data is below 2^60, `REKEY_AFTER_MESSAGES` (whitepaper §6.2), beyond which a session must be renewed: no real counter gets there;
+- the **counter** of Transport Data is below 2^60, `REKEY_AFTER_MESSAGES` (whitepaper §6.1), the number of messages after which WireGuard starts a new handshake (§6.2): no real counter gets there;
 - the **length** of Transport Data is one that padding explains. The plaintext, the message minus its 16-byte header and its 16-byte tag, is padded with zeros to a multiple of 16 (whitepaper §5.4.6), except when that would exceed the MTU: Linux (`calculate_skb_padding`) and wireguard-go (`calculatePaddingSize`) then stop at the MTU. The probe accepts a plaintext that is a multiple of 16, or at least 552 bytes long, the floor of the IPv4 path MTU of Linux (`DEFAULT_MIN_PMTU`, 512 + 20 + 20). The five 1 452-byte messages of the corpus are of the second kind: 1 420 bytes of plaintext, the MTU of `wg-quick`, which is not a multiple of 16.
 
 The probes and `REKEY_AFTER_MESSAGES` are internal to the crate; the public way to them is `parse`, `parse_with`, and `Application::try_from`, whose cascade, without ports, runs the same blind probe just before MQTT.
@@ -120,7 +120,7 @@ pub struct TransportData<'a> {
 
 All of them are `#[non_exhaustive]`, and a `match` on `WireGuardMessage` needs a `_` arm. `TransportData::is_keepalive()` is true when the encrypted packet is the tag alone, a 32-byte message.
 
-Every message starts with the same four bytes, and every integer is little-endian:
+Every message starts with the same four-byte header, and every integer is little-endian:
 
 | Bytes | Field |
 | --- | --- |

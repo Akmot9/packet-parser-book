@@ -18,8 +18,8 @@ mod tests {
     use packet_parser::{LinkType, parse};
 
     /// Frame 3 of `protocols/bacnet/iti_bacnet_test.pcap` (ITI, CC-BY-4.0):
-    /// Ethernet / IPv4 / UDP 47808 -> 47808, a readProperty request between
-    /// two controllers.
+    /// Ethernet / IPv4 / UDP 47808 -> 47808, a readProperty request from a
+    /// host to a controller (the first query of nmap's `bacnet-info` script).
     const ITI_READ_PROPERTY_HEX: &str = concat!(
         "001907243cca3ca9f42122f808004500002d28af00008011fac30a0101a70a01",
         "01a5bac0bac0001959a1810a001101040005010c0c023fffff194b"
@@ -80,8 +80,8 @@ mod tests {
     );
 
     /// Frame 14 of `protocols/radius/radius_localhost.pcap` (Zeek test
-    /// corpus): captured on `lo`, LINKTYPE_NULL / IPv4 / UDP 1812 -> 52178,
-    /// an Access-Reject.
+    /// corpus): captured on the loopback interface, LINKTYPE_NULL / IPv4 /
+    /// UDP 1812 -> 52178, an Access-Reject.
     const LOCALHOST_ACCESS_REJECT_HEX: &str = concat!(
         "020000004500003085680000401100007f0000017f0000010714cbd2001cfe2f",
         "032b001442d5fe68699de5322f636f566bdd10f3"
@@ -316,7 +316,7 @@ mod tests {
     // ANCHOR: radius_loopback_reject
     #[test]
     fn radius_access_reject_without_attributes_on_loopback() {
-        // Captured on lo: LINKTYPE_NULL, then IPv4 and UDP.
+        // Captured on the loopback interface: LINKTYPE_NULL, then IPv4 and UDP.
         let raw = hex::decode(LOCALHOST_ACCESS_REJECT_HEX).unwrap();
         let flow = parse(LinkType::NULL, &raw).unwrap();
         assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RADIUS");
@@ -347,7 +347,7 @@ mod tests {
         let flow = parse(LinkType::ETHERNET, &values).unwrap();
         assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RADIUS");
 
-        // The structure is: an unknown code, a length that is not the
+        // The structure is checked: an unknown code, a length that is not the
         // datagram's, attributes that no longer tile it (a NAS-IP-Address one
         // byte longer makes the next attribute start on a length byte).
         for (offset, value, error) in [

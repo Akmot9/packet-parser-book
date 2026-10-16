@@ -149,6 +149,9 @@ mod tests {
         let raw = hex::decode(GOOSE_F650_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         assert_eq!(flow.data_link.network_protocol(), NetworkProtocol::Goose);
+        // EtherType 0x88B8 right after the MAC addresses: no VLAN tag.
+        let ethernet = flow.data_link.as_ethernet().unwrap();
+        assert!(ethernet.vlan.is_none());
 
         // No IP, no UDP: the frame is the internet layer, without addresses,
         // and nothing is parsed above it.

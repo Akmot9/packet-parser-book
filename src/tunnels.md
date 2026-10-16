@@ -44,6 +44,8 @@ Nesting is bounded by `MAX_TUNNEL_DEPTH = 4`, an anti-loop guard against malform
 | Geneve (RFC 8926) | UDP/6081 | Ethernet (0x6558) or bare IP, options skipped |
 | GTP-U (3GPP TS 29.281) | UDP/2152 | bare IP, no L2 |
 
+The encrypted encapsulations get a label but no `inner`: OpenVPN, [WireGuard](./wireguard.md) and [ESP](./esp.md) in UDP 4500 carry ciphertext, and native ESP, IP protocol 50, is a transport layer without a payload. A [PPPoE session](./pppoe.md) is not a tunnel either: the link layer peels it like a VLAN tag, and the IP packet it carries is the flow itself.
+
 ## Two detection points
 
 Tunnels are looked for at two places in the pipeline, because they live at two levels:
@@ -63,6 +65,6 @@ A fragmented outer datagram is never peeled: reassembly is stateful, and a tunne
 
 ## The inner link layer is honest
 
-The inner packet enters the pipeline through the same `DecodedLink` as a top-level packet: VXLAN produces an `Ethernet` link layer, GRE/Geneve/GTP-U produce a `RawIp` one, and CAPWAP produces an `Ieee80211Link` with the real 802.11 addresses and the SNAP protocol. Nothing fabricates an Ethernet header for a tunnel that does not carry one, which is the same principle as the [data link chapter](./data_link.md).
+The inner packet enters the pipeline through the same `DecodedLink` as a top-level packet: VXLAN produces an `Ethernet` link layer; GRE and Geneve an `Ethernet` one when they announce `0x6558`, a `RawIp` one for bare IP; IP-in-IP and GTP-U a `RawIp` one; and CAPWAP an `Ieee80211Link` with the real 802.11 addresses and the SNAP protocol. Nothing fabricates an Ethernet header for a tunnel that does not carry one, which is the same principle as the [data link chapter](./data_link.md).
 
 The "Decode As" configuration is propagated into the inner flows, so a declared port works inside a tunnel too.

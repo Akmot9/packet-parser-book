@@ -1,6 +1,6 @@
 # IKE
 
-Internet Key Exchange, in both its versions: IKEv1, the ISAKMP framework of RFC 2408 and RFC 2409, and IKEv2, RFC 7296. Added in 11.6.0 ([#124](https://github.com/Akmot9/Packet-parser/issues/124)) with its companion [ESP](./esp.md), as part of the defense lot ([#125](https://github.com/Akmot9/Packet-parser/issues/125)), which this release completes: on a defense network, the "black" side of the IP encryptors is made of IKE and ESP, and labelling IKE and exposing the SPIs is enough to map who negotiates with whom. The decoder reads the 28-byte header and the chain of top-level payloads without entering them; what is encrypted stays bytes. The module is `packet_parser::parse::application::protocols::ike`, the error type `IkeParseError` is in `packet_parser::errors::application::ike`.
+Internet Key Exchange, in both its versions: IKEv1, RFC 2409 on the ISAKMP framework of RFC 2408, and IKEv2, RFC 7296. Added in 11.6.0 ([#124](https://github.com/Akmot9/Packet-parser/issues/124)) with its companion [ESP](./esp.md), as part of the defense lot ([#125](https://github.com/Akmot9/Packet-parser/issues/125)), which this release completes: on a defense network, the "black" side of the IP encryptors is made of IKE and ESP, and labelling IKE and exposing the SPIs is enough to map who negotiates with whom. The decoder reads the 28-byte header and the chain of top-level payloads without entering them; what is encrypted stays bytes. The module is `packet_parser::parse::application::protocols::ike`, the error type `IkeParseError` is in `packet_parser::errors::application::ike`.
 
 ## On UDP 500 and 4500, by port
 
@@ -52,7 +52,7 @@ port_rule("ESP",           Guard::Udp, is_nat_t_udp_port, ProbeId::EspNatT),    
 port_rule("NAT-keepalive", Guard::Udp, is_nat_t_udp_port, ProbeId::NatKeepalive), // 4500
 ```
 
-The IKE probe does not go through `classify`: `IkePacket::from_udp` tries the bare message first, as on port 500, and if that fails while the marker is there with something after it, it decodes what follows the marker. A bare IKE message on 4500 is therefore accepted too. The ESP and keepalive rules, and what they label, are on the [ESP page](./esp.md#in-udp-4500-behind-a-nat); UDP 500 carries neither.
+The IKE probe does not go through `classify`: `IkePacket::from_udp` tries the bare message first, as on port 500, and if that fails while the marker is there with something after it, it decodes what follows the marker. A bare IKE message on 4500 is therefore accepted too. The other two rules give the labels `"ESP"` and `"NAT-keepalive"`, described on the [ESP page](./esp.md#in-udp-4500-behind-a-nat); UDP 500 carries neither.
 
 Frame 42 of `ipsec_isakmp_esp.pcap` is an INFORMATIONAL behind the marker. Read bare, the marker becomes the first half of an initiator SPI, every field slides by four bytes, and the length read is 0 (*tested*):
 
@@ -94,13 +94,13 @@ The flags byte is the same in both versions, its bits are not. Each accessor ret
 | Accessor | Version | Bit | Meaning |
 | --- | --- | --- | --- |
 | `encryption_flag()` | IKEv1 | E `0x01` | the payloads are encrypted |
-| `commit_flag()` | IKEv1 | C `0x02` | the sender waits for a confirmation before using the SA |
+| `commit_flag()` | IKEv1 | C `0x02` | the peer must wait for the sender's CONNECTED notification before using the SA |
 | `authentication_only_flag()` | IKEv1 | A `0x04` | authentication only, no encryption |
 | `initiator_flag()` | IKEv2 | I `0x08` | sent by the initiator of the IKE SA |
 | `version_flag()` | IKEv2 | V `0x10` | the sender can speak a higher major version |
 | `response_flag()` | IKEv2 | R `0x20` | a response |
 
-`ExchangeType` names the code according to the major version (RFC 2408, RFC 7296 and the IANA IKEv2 registry). Any other code is `None`, and the message is decoded all the same.
+`ExchangeType` names the code according to the major version (RFC 2408, RFC 2409 for quick mode and new group mode, RFC 7296 and the IANA IKEv2 registry). Any other code is `None`, and the message is decoded all the same. That includes the IKEv2 code 42, which the IANA registry assigns to GSA_INBAND_REKEY (RFC 9838): 11.6.0 has no variant for it.
 
 | `ExchangeType` | IKEv1 | IKEv2 |
 | --- | --- | --- |
@@ -134,7 +134,7 @@ After the header come the payloads, each with a 4-byte generic header (RFC 7296 
 pub struct IkePayload<'a> {
     pub payload_type: u8,           // raw code, as the previous payload (or the header) names it
     pub kind: Option<PayloadType>,  // the code named, by the version of the message
-    pub next_payload: u8,           // 0 for the last one
+    pub next_payload: u8,           // 0 for the last one; in an IKEv2 SK, the first payload under the encryption
     pub critical: bool,             // IKEv2 only: always false in IKEv1, where the byte is reserved
     pub length: u16,                // declared, generic header included
     pub body: &'a [u8],             // the bytes after the generic header, borrowed
@@ -146,15 +146,15 @@ pub struct IkePayload<'a> {
 | 0 | `next_payload` |
 | 1 | critical bit `0x80`, then reserved |
 | 2–3 | `length` |
-| 4 to `length` | `body` |
+| 4 to `length` − 1 | `body` |
 
 A payload does not carry its own type: the header's `next_payload` names the first one, and each payload names the next. `IkePacket::payloads` keeps them in message order, and `payload_types()` iterates their raw codes. The walk checks each length, and the chain must end with the message:
 
 - a length below the 4 bytes of the generic header is `InvalidPayloadLength { payload_type, length }`, a length beyond what remains is `PayloadOverflow { payload_type, needed, available }`;
 - the chain ends on a `next_payload` of 0, and bytes left after it are `UnexpectedTrailingBytes { trailing }`;
-- the chain also ends with the message when the last payload announces another one, as tshark reads it: frame 192 of `ipsec_isakmp_esp.pcap` is an IKE_AUTH whose only payload, of the private type 127 and 784 bytes, announces a 35. One to three bytes left for an announced payload cannot hold its header, though: `PayloadOverflow` with `needed: 4`.
+- the chain also ends with the message when the last payload announces another one, as tshark reads it: frame 192 of `ipsec_isakmp_esp.pcap` is an IKE_AUTH whose only payload, of the unassigned type 127 and 784 bytes, announces a 35. One to three bytes left for an announced payload cannot hold its header, though: `PayloadOverflow` with `needed: 4`.
 
-Only the top level is walked: Proposal and Transform live inside a Security Association, and no body is decoded. `payloads` is the decoder's one allocation; the bodies borrow the packet. `PayloadType` names the codes according to the version (RFC 2408, RFC 3947 and the IANA IKEv2 registry); an unknown code, such as the private 127, is `None` and its payload is kept like the others.
+Only the top level is walked: Proposal and Transform live inside a Security Association, and no body is decoded. `payloads` is the decoder's one allocation; the bodies borrow the packet. `PayloadType` names the codes according to the version (RFC 2408, RFC 3947 and the IANA IKEv2 registry); an unknown code, such as the unassigned 127, is `None` and its payload is kept like the others.
 
 | `PayloadType` | IKEv1 | IKEv2 |
 | --- | --- | --- |
@@ -196,7 +196,7 @@ pub struct IkePacket<'a> {
 The two versions encrypt differently, and `encrypted_body` covers both:
 
 - **IKEv1** sets the E flag, and everything after the header is encrypted. `payloads` is empty, `encrypted_body` is the rest of the message, and `header.next_payload` names the first payload under the encryption. In the main mode capture of the corpus, the eight messages after the key exchange, frames 5 to 12, are sent that way.
-- **IKEv2** encrypts in a payload, SK (46), or SKF (53) for a fragment, which must be the last of the message (RFC 7296 §3.14). The walk stops on it, so a byte after it is `UnexpectedTrailingBytes`. It is the last entry of `payloads` and its body is `encrypted_body`; its `next_payload` names the first payload under the encryption, not a top-level one. In the corpus, 241 IKEv2 messages end with an SK: every IKE_AUTH and every INFORMATIONAL, except frame 192 and its private payload.
+- **IKEv2** encrypts in a payload, SK (46), or SKF (53) for a fragment, which must be the last of the message (RFC 7296 §3.14). The walk stops on it, so a byte after it is `UnexpectedTrailingBytes`. It is the last entry of `payloads` and its body is `encrypted_body`; its `next_payload` names the first payload under the encryption, not a top-level one. In the corpus, 241 IKEv2 messages end with an SK: every IKE_AUTH and every INFORMATIONAL, except frame 192 and its payload of type 127.
 
 The IKE_AUTH response of the VPN, then the first and fifth messages of an IKEv1 main mode (*tested*):
 
@@ -231,7 +231,7 @@ The golden test `tests/ipsec_golden.rs` runs the three captures of `pcaps_exempl
 | `ikev2_s2s_ipsec_vpn_aes_gcm.pcapng` | 12 | a site-to-site VPN: IKEv2 on UDP 500 (4), then native ESP (8) | Wireshark wiki |
 | `ipsec_isakmp_esp.pcap` | 834 | a client behind a NAT: IKEv2 on UDP 500 (279), IKEv2 (240) and ESP (315) on UDP 4500 | nDPI test corpus |
 
-In the golden histogram, `"IKE"` went from 0 to 535 and `"ESP"` from 0 to 315, and `"Unknown"` lost those 850 frames (8 754 to 7 904). `The-Ultimate-PCAP.pcapng`, at the root of `pcaps_exemple/`, is not read by this test; a run of 11.6.0 over it labels 719 frames `"IKE"`, as many as the ISAKMP frames tshark counts there. The fuzz target `parse_ipsec` runs nightly on `IkePacket`, `UdpEncapsulation::classify` and `EspPacket`.
+In the golden histogram of `pcaps_exemple/protocols/` (`tests/golden_pcaps.rs`), `"IKE"` went from 0 to 535 and `"ESP"` from 0 to 315 with 11.6.0, all 850 frames taken from `"Unknown"`. `The-Ultimate-PCAP.pcapng`, at the root of `pcaps_exemple/`, is read by neither test; a run of 11.6.0 over it labels 719 frames `"IKE"`, as many as the ISAKMP frames tshark counts there. The fuzz target `parse_ipsec` runs nightly on `IkePacket`, `UdpEncapsulation::classify` and `EspPacket`.
 
 ## What is left out
 

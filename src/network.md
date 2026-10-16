@@ -1,6 +1,6 @@
 # Internet
 
-The internet layer is the first *optional* layer: it is parsed from `LinkLayer::network_payload()`, and the link layer says which protocol to expect through `NetworkProtocol`: `Ipv4` (EtherType `0x0800`), `Ipv6` (`0x86DD`), `Arp` (`0x0806`), `Profinet` (`0x8892`), `Ptp` (`0x88F7`, since 11.5.0), `Goose` (`0x88B8`) and `Lldp` (`0x88CC`), both since 11.6.0, or `Other(u16)` for any other value. The enum is `#[non_exhaustive]`, and its three late variants are declared after `Other(u16)`, at its end. A RAW-IP capture announces `Ipv4` or `Ipv6` directly, without inventing an EtherType.
+The internet layer is the first *optional* layer: it is parsed from `LinkLayer::network_payload()`, and the link layer says which protocol to expect through `NetworkProtocol`: `Ipv4` (EtherType `0x0800`), `Ipv6` (`0x86DD`), `Arp` (`0x0806`), `Profinet` (`0x8892`), `Ptp` (`0x88F7`, since 11.5.0), `Goose` (`0x88B8`) and `Lldp` (`0x88CC`), both since 11.6.0, or `Other(u16)` for any other value. The enum is `#[non_exhaustive]`, and its three late variants are declared after `Other(u16)`, at its end. A RAW-IP capture announces `Ipv4` or `Ipv6` directly, without inventing an EtherType. Since 11.6.0, an IPv4 or IPv6 packet in a [PPPoE session](./pppoe.md) is announced `Ipv4` or `Ipv6` too, once the Ethernet decoder has peeled the session.
 
 PTP on `0x88F7`, GOOSE and LLDP travel straight over Ethernet, without IP: for them, the frame itself *is* the internet layer, decoded, without addresses, and nothing is parsed above it.
 
@@ -60,7 +60,7 @@ Addresses use the standard `std::net::IpAddr`, and each one is classified by `Ip
 | `Unknown` | `0.0.0.0` | `::` |
 | `Public` | anything else | anything else |
 
-`Public` is the fallback, not a proof of global reachability: the shared address space `100.64.0.0/10` (carrier-grade NAT), the benchmarking range `198.18.0.0/15`, and the reserved `240.0.0.0/4` all come out `Public`.
+`Public` is the fallback, not a proof of global reachability: the shared address space `100.64.0.0/10` (carrier-grade NAT), the benchmarking range `198.18.0.0/15`, and the reserved `240.0.0.0/4`, `255.255.255.255` aside, all come out `Public`.
 
 `IpType` is a property of the address alone. It says which range an address belongs to, never where the host sits relative to the capture point: a `Private` peer can be across a VPN or a routed WAN, a `Public` one can be on the same LAN, and the directed broadcast `192.168.1.255` comes out `Private`, because recognizing it needs the subnet mask, which a packet parser does not have. What the enum saves a consumer is re-implementing the RFC 1918 and special-range tables; a filter such as "traffic leaving the site" still needs the site's own prefixes.
 

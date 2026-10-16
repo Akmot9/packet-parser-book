@@ -256,9 +256,14 @@ mod tests {
         // The same bytes, on a port the table does not guard: no IKE.
         assert_eq!(label(&raw, &ParseConfig::new()), Some("Unknown"));
 
-        // Declared, the port is guarded too, and the content still decides.
+        // Declared, the port is guarded too...
         let config = ParseConfig::new().decode_as(4501, DecodeAsProtocol::Ike);
         assert_eq!(label(&raw, &config), Some("IKE"));
+
+        // ...and the content still decides: one bit off in the IKE length
+        // (bytes 70 to 73 of the frame, 76 becomes 77), and no label.
+        raw[73] ^= 0x01;
+        assert_eq!(label(&raw, &config), Some("Unknown"));
     }
     // ANCHOR_END: ike_decode_as
 
@@ -285,10 +290,27 @@ mod tests {
         assert_eq!(esp.sequence, 1);
         assert_eq!(esp.payload.len(), 112); // IV, ciphertext, trailer and ICV
 
-        // The JSON names the protocol; the SPI, in details, is not serialized.
-        let json = serde_json::to_value(flow.to_owned_flow()).unwrap();
-        assert_eq!(json["protocol_transport"], "ESP");
-        assert!(json.get("spi").is_none());
+        // The JSON names the protocol; the SPI, in details, is serialized
+        // neither with the flow nor with its owned copy.
+        for json in [
+            serde_json::to_value(&flow).unwrap(),
+            serde_json::to_value(flow.to_owned_flow()).unwrap(),
+        ] {
+            assert_eq!(json["protocol_transport"], "ESP");
+            let text = json.to_string();
+            assert!(!text.contains("spi") && !text.contains(&esp.spi.to_string()));
+        }
+
+        // Nor is it compared: under the SPI of the VPN's other SA, the same
+        // packet has other details but the same transport layer.
+        let mut other_sa = raw.clone();
+        other_sa[34..38].copy_from_slice(&0xa70b_bb39_u32.to_be_bytes());
+        let other_flow = parse(LinkType::ETHERNET, &other_sa).unwrap();
+        assert!(matches!(
+            &other_flow.transport.as_ref().unwrap().details,
+            Some(TransportDetails::Esp(other)) if other.spi != esp.spi
+        ));
+        assert_eq!(other_flow.transport, flow.transport);
 
         // Over IPv6, next header 50 ends the extension walk: same layer.
         let raw = hex::decode(NATIVE_ESP_IPV6_HEX).unwrap();

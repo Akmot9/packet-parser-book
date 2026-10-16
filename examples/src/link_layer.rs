@@ -150,6 +150,9 @@ mod tests {
         // The tags are consumed first, then the session...
         let tags: Vec<u16> = ethernet.vlan_stack.iter().map(|tag| tag.id).collect();
         assert_eq!(tags, [3704, 2474]);
+        // (the inner tag keeps the EtherType that followed it on the wire)
+        let inner_tag = ethernet.vlan.as_ref().unwrap();
+        assert_eq!(inner_tag.inner_ethertype.0, PPPOE_SESSION_ETHERTYPE);
         let session = ethernet.pppoe.expect("a PPPoE session");
         assert_eq!(session.session_id, 0x0f07);
         assert_eq!(session.length, 66); // the PPP protocol field and the packet
@@ -316,6 +319,15 @@ mod tests {
         // ...and holds no trace of the session.
         assert!(!serde_json::to_string(&flow).unwrap().contains("pppoe"));
         // The owned model, which cannot carry it, gives the same JSON.
+        assert_eq!(serde_json::to_value(flow.to_owned_flow()).unwrap(), json);
+
+        // A SYN has no application layer. The DHCPv6 Solicit of frame 10 415
+        // of The-Ultimate-PCAP.pcapng has one, serialized like any other.
+        let raw = hex::decode(PPPOE_IPV6_DHCPV6_SOLICIT_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        let json = serde_json::to_value(&flow).unwrap();
+        assert_eq!(json["data_link"]["link_details"]["ethertype"], "IPv6");
+        assert_eq!(json["application_protocol"], "DHCPv6");
         assert_eq!(serde_json::to_value(flow.to_owned_flow()).unwrap(), json);
     }
     // ANCHOR_END: pppoe_json

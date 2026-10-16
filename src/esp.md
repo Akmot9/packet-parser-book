@@ -1,6 +1,6 @@
 # ESP
 
-Encapsulating Security Payload, RFC 4303: the IPsec packet that encrypts and authenticates. Decoded since 11.6.0 ([#124](https://github.com/Akmot9/Packet-parser/issues/124)), with [IKE](./ike.md) and as part of the defense lot ([#125](https://github.com/Akmot9/Packet-parser/issues/125)). Only two fields are in clear, the SPI and the sequence number; everything after them (initialization vector, data, padding, next header, ICV) depends on the algorithm IKE negotiated, and stays bytes. The module is `packet_parser::parse::transport::protocols::esp`, the error type `EspError` is in `packet_parser::errors::transport::esp`.
+Encapsulating Security Payload, RFC 4303: the IPsec packet that encrypts and authenticates. Decoded since 11.6.0 ([#124](https://github.com/Akmot9/Packet-parser/issues/124)), with [IKE](./ike.md) and as part of the defense lot ([#125](https://github.com/Akmot9/Packet-parser/issues/125)). Only two fields can be read without the SA, the SPI and the sequence number; everything after them (initialization vector, data, padding, next header, ICV) depends on the algorithm IKE negotiated, and stays bytes. The module is `packet_parser::parse::transport::protocols::esp`, the error type `EspError` is in `packet_parser::errors::transport::esp`.
 
 ESP travels two ways, and the crate follows both:
 
@@ -16,7 +16,7 @@ Before 11.6.0, protocol 50 already had its name, `TransportProtocol::Esp`, like 
 pub struct EspPacket<'a> {
     pub spi: u32,          // identifies the security association, with the destination address
     pub sequence: u32,     // anti-replay counter, increasing per association
-    pub payload: &'a [u8], // the rest: encrypted data, padding, next header, ICV
+    pub payload: &'a [u8], // the rest: IV, encrypted data, padding, next header, ICV
 }
 ```
 
@@ -24,7 +24,7 @@ pub struct EspPacket<'a> {
 | --- | --- | --- |
 | 0–3 | `spi` | big-endian; 0 is reserved and never sent (RFC 4303 §2.1) |
 | 4–7 | `sequence` | big-endian |
-| 8 to the end | `payload` | borrowed; its parts cannot be told apart without the key |
+| 8 to the end | `payload` | borrowed; its parts cannot be told apart without the algorithm and the key of the SA |
 
 Two checks, both `EspError`: fewer than the 8 bytes of SPI and sequence number is `PacketTooShort { expected, actual }`, an SPI of zero is `ReservedSpi`. Eight bytes are enough, `payload` is then empty.
 
@@ -48,7 +48,7 @@ The consequences are those of [ICMP](./icmp.md):
 - An **unreadable packet does not corrupt the flow**: the IP header named the protocol, so `protocol` is `Esp`, `details` falls back to `None` and `corrupted` stays `None`. `EspPacket::try_from(internet.payload)` gives the reason.
 - The **SPI is not part of the identity** of the transport layer, which is the protocol and the ports, both `None` here: `PartialEq`, `Hash` and serialization ignore `details`, and `to_owned_flow` drops it. Two ESP packets of different SAs between the same hosts compare equal at the transport layer.
 
-Over IPv6, next header 50 ends the walk of the extension headers ([IPv6](./ipv6.md)), and the same arm decodes the packet. Frame 5 of the corpus's site-to-site VPN, then an IPv6 packet of `The-Ultimate-PCAP.pcapng` (*tested*):
+Over IPv6, next header 50 ends the walk of the extension headers ([IPv6](./ipv6.md)), and the same arm decodes the packet. Frame 5 of the corpus's site-to-site VPN, the same packet under the SPI of the VPN's other SA, then an IPv6 packet of `The-Ultimate-PCAP.pcapng` (*tested*):
 
 ```rust
 {{#include ../examples/src/ipsec.rs:esp_native}}

@@ -1,6 +1,6 @@
 # Runnable examples for the Packet Parser book. Every snippet a chapter
-# shows with `{{#include}}` comes from src/lib.rs, so what the reader sees
-# is what `cargo test` compiles and runs.
+# shows with `{{#include}}` comes from src/ (lib.rs and its modules), so
+# what the reader sees is what `cargo test` compiles and runs.
 [package]
 name = "packet-parser-book-examples"
 version = "0.1.0"

@@ -122,7 +122,7 @@ All of them are `GooseParseError`, in `packet_parser::errors::internet::goose`:
 | `InvalidBerLength(usize)` | at that offset, a BER length cut short, in the indefinite form, or of more than four octets |
 | `ElementOverflow { tag, declared, available }` | an element declares more bytes than remain |
 | `UnexpectedTrailingBytes(usize)` | bytes after the goosePdu |
-| `IntegerTooLong { tag, length }` | an integer field of zero bytes, or one that does not fit in 32 bits |
+| `IntegerTooLong { tag, length }` | an integer field of zero bytes, or of more than four, unless it is a zero followed by four |
 | `InvalidBoolean { tag, length }` | `simulation` or `nds_com` not on one byte |
 | `InvalidTimestamp(usize)` | a timestamp not on eight bytes |
 | `MissingField(u8)` | a mandatory field, named by its tag |
@@ -152,7 +152,7 @@ The four come from the ICS-Security-Tools repository of ITI (CC-BY-4.0); `pcaps_
 
 ## What is left out
 
-- **Sampled Values** (IEC 61850-9-2, EtherType `0x88BA`) is not decoded: its EtherType is `Other(0x88BA)` and the internet layer stays `None`.
+- **Sampled Values** (IEC 61850-9-2, EtherType `0x88BA`) is not decoded: it maps to `NetworkProtocol::Other(0x88BA)`, and the internet layer stays `None`.
 - **Only EtherType `0x88B8`**: no rule of the [dispatch table](./application.md) recognizes GOOSE carried over UDP.
 - **Values are not interpreted**: `allData` keeps tags and bytes; arrays and structures are not walked, a bit string keeps its unused-bits byte, floats and times are not converted.
 - **No subscriber state**: the crate does not follow `stNum` and `sqNum` from one frame to the next, does not time `timeAllowedtoLive` out, and does not check `confRev` or `numDatSetEntries` against a data set. One frame at a time, like the rest of the crate.

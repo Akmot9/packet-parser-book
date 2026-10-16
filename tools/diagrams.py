@@ -610,9 +610,9 @@ def outcomes_diagram():
               "parse returns Err only when the link layer fails: an unsupported LINKTYPE or a truncated link "
               "header. Otherwise it returns a PacketFlow, in one of four shapes: every layer decoded (a TCP "
               "pure ACK, no application); an unsupported protocol above the link layer, the upper layers None "
-              "and nothing corrupted (LLDP); a recognized layer with invalid bytes, None and reported in "
-              "corrupted (an IPv4 header cut after 6 bytes); a readable header no conforming stack sends, kept "
-              "and reported (TCP with SYN and FIN).")
+              "and nothing corrupted (the experimental EtherType 0x88B5); a recognized layer with invalid bytes, "
+              "None and reported in corrupted (an IPv4 header cut after 6 bytes); a readable header no "
+              "conforming stack sends, kept and reported (TCP with SYN and FIN).")
     svg.text(40, 62, "What parse returns", 22, weight=600, anchor="start")
     svg.text(40, 88, "Only the link layer can fail the parse. Above it, a layer is decoded, absent, or reported.",
              14, anchor="start", opacity=0.6)
@@ -645,7 +645,7 @@ def outcomes_diagram():
             filled("data_link", "Ethernet", GREY_LIGHT), filled("internet", "IPv4", BLUE_LIGHT),
             filled("transport", "TCP 443 → 49416", GREEN_LIGHT), none("application", "None: empty payload"),
             none("corrupted")]),
-        ("Not supported", "EtherType 0x88CC (LLDP)", [
+        ("Not supported", "EtherType 0x88B5", [
             filled("data_link", "Ethernet", GREY_LIGHT), none("internet"), none("transport"),
             none("application"), none("corrupted")]),
         ("Corrupted", "IPv4 cut after 6 bytes", [
@@ -1086,8 +1086,8 @@ def nesting_diagram():
 def packetflow_layers_diagram():
     rows = [("data_link", "link", None), ("internet", "internet", None), ("transport", "transport", None),
             ("application", "application", None), ("inner", "inner", None), ("corrupted", "corrupted", None)]
-    chips = [["Ethernet", "Linux SLL", "RAW IP", "…"], ["IPv4", "IPv6", "ARP", "Profinet"],
-             ["TCP", "UDP", "ICMP", "ICMPv6"], ["DNS", "TLS", "S7Comm", "…"], ["GRE", "VXLAN", "GTP-U", "…"],
+    chips = [["Ethernet", "Linux SLL", "RAW IP", "…"], ["IPv4", "IPv6", "ARP", "…"],
+             ["TCP", "UDP", "ICMP", "…"], ["DNS", "TLS", "S7Comm", "…"], ["GRE", "VXLAN", "GTP-U", "…"],
              ["Internet", "Transport"]]
     sy, rh = 112, 52
     height = sy + TITLE_H + len(rows) * (rh + GAP) + GAP + 40

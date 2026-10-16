@@ -25,8 +25,8 @@ mod tests {
         "c7c8013c02063c03063c04063c010642ac"
     );
 
-    /// Frame 5 of `dnp3/dnp3_udp_read.pcap`: the same read, over UDP
-    /// 1128 -> 20000, from master 100 to outstation 1.
+    /// Frame 5 of `dnp3/dnp3_udp_read.pcap`: a read of the same four classes,
+    /// over UDP 1128 -> 20000, from master 100 to outstation 1.
     const DNP3_UDP_READ_REQUEST_HEX: &str = concat!(
         "0050c24f9464001676c7cedb080045000037cb93000080114d25c0a850a0c0a8",
         "500c04684e200023915f056414c40100640067d6c6c7013c02063c03063c0406",
@@ -60,7 +60,8 @@ mod tests {
     );
 
     /// Frame 6 of `dnp3/dnp3_udp_read.pcap`: UDP 20000 -> 1128, the first of
-    /// the nine transport segments (frames 6 to 14) of one response.
+    /// the nine transport segments (frames 6 to 14) of the first fragment of
+    /// a response; frames 15 to 21 carry its second and last fragment.
     const DNP3_UDP_FIRST_SEGMENT_HEX: &str = concat!(
         "001676c7cedb0050c24f94640800450001400cd9000040114ad7c0a8500cc0a8",
         "50a04e200468012c5b200564ff4464000100ff2f60878190000101010000ff03",
@@ -177,12 +178,17 @@ mod tests {
         assert!(application.objects.iter().all(|object| object.data.is_empty()));
         assert!(application.undecoded.is_empty());
 
-        // Frame 5 of dnp3_udp_read.pcap: the same read over UDP 1128 -> 20000,
-        // labelled by the same rule.
+        // Frame 5 of dnp3_udp_read.pcap: a read of the same four classes, over
+        // UDP 1128 -> 20000, labelled by the same rule.
         let raw = hex::decode(DNP3_UDP_READ_REQUEST_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.transport.as_ref().unwrap().protocol, TransportProtocol::Udp);
+        let transport = flow.transport.as_ref().unwrap();
+        assert_eq!(transport.protocol, TransportProtocol::Udp);
         assert_eq!(flow.application.as_ref().unwrap().application_protocol, "DNP3");
+        let udp = Dnp3Packet::try_from(transport.payload.unwrap()).unwrap();
+        let udp_read = udp.frames[0].application.as_ref().unwrap();
+        assert_eq!(udp_read.header.function(), Some(ApplicationFunction::Read));
+        assert_eq!(udp_read.objects, application.objects);
     }
     // ANCHOR_END: dnp3_blind_probe
 
@@ -254,7 +260,8 @@ mod tests {
         assert!(status.transport.is_none() && status.application.is_none());
 
         // Frame 6 of dnp3_udp_read.pcap: a full link frame (LENGTH 255, 250
-        // bytes of user data), first of the nine segments of one response.
+        // bytes of user data), first of the nine segments of the first
+        // fragment of a response.
         let raw = hex::decode(DNP3_UDP_FIRST_SEGMENT_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
@@ -267,7 +274,7 @@ mod tests {
 
         // FIR: the application fragment starts here, and its header is read.
         let application = first.application.as_ref().unwrap();
-        assert_eq!(application.header.control, 0x87); // FIR, not FIN, sequence 7
+        assert_eq!(application.header.control, 0x87); // FIR, not FIN: fragment 1 of 2
         assert_eq!(application.header.function(), Some(ApplicationFunction::Response));
         assert_eq!(application.header.internal_indications, Some([0x90, 0x00]));
         // 1 024 packed binary inputs fit in 128 bytes; the next header is

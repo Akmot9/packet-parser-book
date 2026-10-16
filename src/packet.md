@@ -57,7 +57,7 @@ pub struct PacketFlow<'a> {
 Two fields were not in the original design and deserve a word:
 
 - **`inner`**: some packets carry a *whole other packet* inside their payload. When a tunnel is recognized, its name goes into `application` and the encapsulated packet is parsed recursively into `inner`. See the [tunnels chapter](./tunnels.md).
-- **`corrupted`**: a layer that was *recognized* (the EtherType said IPv4, the IP header said TCP) but whose bytes are invalid does not fail the whole parse. The layers above it are kept, the problem is reported here. See [getting started](./getting_started.md#reading-the-outcome).
+- **`corrupted`**: a layer that was *recognized* (the EtherType said IPv4, the IP header said TCP) but whose bytes are invalid does not fail the whole parse. The lower layers are kept (the link layer, for a corrupt IPv4 header), that layer and the ones it would have carried stay `None`, and the problem is reported here. See [getting started](./getting_started.md#reading-the-outcome).
 
 ---
 
@@ -65,7 +65,7 @@ Two fields were not in the original design and deserve a word:
 Each layer contains specific information to identify **source and destination addresses**.
 ![The flow identity of the DNS query: source and destination MAC, IP and port, the protocol of each layer and the application label](images/packet/flow_identity.svg)
 
-This is what I call the **flow identity**: MAC addresses, IP addresses, protocols, ports. `PacketFlow` implements `PartialEq`, `Eq` and `Hash` on this identity only, **not on the raw bytes**: payloads are deliberately ignored. Two packets of the same conversation carrying different data compare equal and hash identically, which is exactly what you want to build a flow table with a `HashMap<PacketFlowOwned, Stats>`.
+This is what I call the **flow identity**: MAC addresses, IP addresses, protocols, ports. `PacketFlow` implements `PartialEq`, `Eq` and `Hash` on this identity only, **not on the raw bytes**: payloads are deliberately ignored. Two packets of the same conversation carrying different data compare equal and hash identically, which is exactly what you want to build a flow table with a `HashMap<PacketFlowOwned, Stats>`. Since 11.6.0 the identity of an Ethernet frame also holds the session and the PPP protocol of a PPPoE session, which the owned form does not keep ([PPPoE session](./pppoe.md#flow-identity)).
 
 ---
 
