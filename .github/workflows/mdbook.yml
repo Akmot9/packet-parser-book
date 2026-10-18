@@ -50,6 +50,9 @@ jobs:
       - name: Check the book sources
         run: python3 tools/check_book.py
 
+      - name: Check the generated diagrams are up to date
+        run: python3 tools/diagrams/build.py --check
+
       - name: Build the book
         run: mdbook build
 

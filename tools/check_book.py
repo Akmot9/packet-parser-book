@@ -9,7 +9,10 @@ on:
 - a chapter under src/ that SUMMARY.md does not reference (drafts);
 - a Markdown or HTML link/image whose local target does not exist;
 - a `{{#include path[:anchor]}}` whose file (or anchor) does not exist;
-- an anchor link (`chapter.md#heading`) whose heading does not exist.
+- an anchor link (`chapter.md#heading`) whose heading does not exist;
+- a protocol page (a chapter nested under Data link, Internet, Transport or
+  Application in SUMMARY.md) without a single image: every protocol gets a
+  diagram.
 
 It reads the sources only and never writes anything.
 
@@ -23,6 +26,9 @@ import sys
 from pathlib import Path
 
 SUMMARY_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+SUMMARY_ITEM = re.compile(r"^( *)- \[([^\]]*)\]\(([^)]+)\)\s*$", re.MULTILINE)
+IMAGE = re.compile(r"!\[[^\]]*\]\([^)]+\)|<img\b")
+LAYER_SECTIONS = ("Data link", "Internet", "Transport", "Application")
 MD_LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 HTML_SRC = re.compile(r"""(?:src|href)=["']([^"']+)["']""")
 INCLUDE = re.compile(r"\{\{#include\s+([^}\s]+)\s*\}\}")
@@ -40,6 +46,18 @@ def heading_id(text: str) -> str:
 
 def strip_fences(text: str) -> str:
     return FENCE.sub("", text)
+
+
+def protocol_pages(summary: str) -> list[Path]:
+    """The chapters nested under the four layer sections of SUMMARY.md."""
+    pages: list[Path] = []
+    in_layer = False
+    for indent, title, link in SUMMARY_ITEM.findall(summary):
+        if not indent:
+            in_layer = title in LAYER_SECTIONS
+        elif in_layer:
+            pages.append(Path(link))
+    return pages
 
 
 def check(root: Path) -> list[str]:
@@ -87,6 +105,12 @@ def check(root: Path) -> list[str]:
                 continue
             if anchor and not re.search(rf"ANCHOR:\s*{re.escape(anchor)}\b", target.read_text(encoding="utf-8")):
                 errors.append(f"{chapter}: anchor {anchor} not found in {file_part}")
+
+    for page in protocol_pages(summary):
+        if page not in on_disk:
+            continue
+        if not IMAGE.search(strip_fences((src / page).read_text(encoding="utf-8"))):
+            errors.append(f"{page}: protocol page without a diagram (every protocol gets one)")
 
     return errors
 
