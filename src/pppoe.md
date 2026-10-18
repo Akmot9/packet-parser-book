@@ -78,6 +78,8 @@ An IPv4 session under two VLAN tags, then an IPv6 one under a single tag that re
 
 ## The session: `PppoeSession`
 
+![Frame 10395 of The-Ultimate-PCAP.pcapng, 32 bits per row: the two MAC addresses, a VLAN tag with VID 7, the EtherType 0x8864, then the PPPoE session header (version 1, type 1, code 0, session ID 0x8f80, length 14), the PPP protocol 0xC021 (LCP) and the 12-byte LCP Echo-Request; PppoeSession keeps the session ID, the length and the PPP protocol, and since LCP is not IP the flow has no internet layer.](images/datalink/pppoe_session_struct.svg)
+
 Doc comments shortened:
 
 ```rust

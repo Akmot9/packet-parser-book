@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 864" width="900" height="864" role="img" aria-labelledby="t d">
+<title id="t">PPPoE session: six bytes before PPP</title>
+<desc id="d">Frame 10395 of The-Ultimate-PCAP.pcapng, 32 bits per row: the two MAC addresses, a VLAN tag with VID 7, the EtherType 0x8864, then the PPPoE session header (version 1, type 1, code 0, session ID 0x8f80, length 14), the PPP protocol 0xC021 (LCP) and the 12-byte LCP Echo-Request; PppoeSession keeps the session ID, the length and the PPP protocol, and since LCP is not IP the flow has no internet layer.</desc>
+<rect x="12" y="12" width="876" height="840" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="60" y="84" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">PPPoE session: six bytes before PPP</text>
+<text x="60" y="110" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="start">frame 10395 of The-Ultimate-PCAP.pcapng · 64 bytes with its FCS ·</text>
+<text x="60" y="130" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="start">VLAN 7, session 0x8f80, LCP Echo-Request</text>
+<clipPath id="g"><rect x="60" y="230" width="384" height="600" rx="12"/></clipPath>
+<g clip-path="url(#g)">
+<rect x="60" y="230" width="384" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="256" x2="156" y2="290" stroke="#93D9A0" stroke-width="1"/>
+<line x1="252" y1="256" x2="252" y2="290" stroke="#93D9A0" stroke-width="1"/>
+<line x1="348" y1="256" x2="348" y2="290" stroke="#93D9A0" stroke-width="1"/>
+<text x="252.0" y="249" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Destination MAC</text>
+<text x="108.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">BC</text>
+<text x="204.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">05</text>
+<text x="300.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">43</text>
+<text x="396.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">CC</text>
+<rect x="60" y="290" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="316" x2="156" y2="350" stroke="#93D9A0" stroke-width="1"/>
+<text x="156.0" y="309" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Destination MAC, continued</text>
+<text x="108.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">C2</text>
+<text x="204.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">A9</text>
+<rect x="252" y="290" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="316" x2="348" y2="350" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="309" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Source MAC</text>
+<text x="300.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">44</text>
+<text x="396.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">2B</text>
+<rect x="60" y="350" width="384" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="376" x2="156" y2="410" stroke="#93D9A0" stroke-width="1"/>
+<line x1="252" y1="376" x2="252" y2="410" stroke="#93D9A0" stroke-width="1"/>
+<line x1="348" y1="376" x2="348" y2="410" stroke="#93D9A0" stroke-width="1"/>
+<text x="252.0" y="369" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Source MAC, continued</text>
+<text x="108.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">03</text>
+<text x="204.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">19</text>
+<text x="300.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">03</text>
+<text x="396.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">44</text>
+<rect x="60" y="410" width="192" height="60" fill="#FFC943" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="436" x2="156" y2="470" stroke="#93D9A0" stroke-width="1"/>
+<text x="156.0" y="429" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">VLAN TPID</text>
+<text x="108.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">81</text>
+<text x="204.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="252" y="410" width="192" height="60" fill="#FFC943" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="436" x2="348" y2="470" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="429" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">TCI · VID 7</text>
+<text x="300.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">C0</text>
+<text x="396.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">07</text>
+<rect x="60" y="470" width="192" height="60" fill="#FF9E42" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="496" x2="156" y2="530" stroke="#93D9A0" stroke-width="1"/>
+<text x="156.0" y="489" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.0" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">EtherType · PPPoE session</text>
+<text x="108.0" y="519" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">88</text>
+<text x="204.0" y="519" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">64</text>
+<rect x="252" y="470" width="96" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<text x="300.0" y="489" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Ver · Type</text>
+<text x="300.0" y="519" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">11</text>
+<rect x="348" y="470" width="96" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<text x="396.0" y="489" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Code</text>
+<text x="396.0" y="519" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="60" y="530" width="192" height="60" fill="#FF9E42" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="556" x2="156" y2="590" stroke="#93D9A0" stroke-width="1"/>
+<text x="156.0" y="549" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Session ID</text>
+<text x="108.0" y="579" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">8F</text>
+<text x="204.0" y="579" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">80</text>
+<rect x="252" y="530" width="192" height="60" fill="#FF9E42" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="556" x2="348" y2="590" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="549" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Length</text>
+<text x="300.0" y="579" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="396.0" y="579" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">0E</text>
+<rect x="60" y="590" width="192" height="60" fill="#FF9E42" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="616" x2="156" y2="650" stroke="#93D9A0" stroke-width="1"/>
+<text x="156.0" y="609" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">PPP protocol · LCP</text>
+<text x="108.0" y="639" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">C0</text>
+<text x="204.0" y="639" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">21</text>
+<rect x="252" y="590" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="616" x2="348" y2="650" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="609" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">LCP: code, identifier</text>
+<text x="300.0" y="639" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">09</text>
+<text x="396.0" y="639" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">14</text>
+<rect x="60" y="650" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="676" x2="156" y2="710" stroke="#93D9A0" stroke-width="1"/>
+<text x="156.0" y="669" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">LCP length</text>
+<text x="108.0" y="699" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<text x="204.0" y="699" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">0C</text>
+<rect x="252" y="650" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="676" x2="348" y2="710" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="669" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Magic number</text>
+<text x="300.0" y="699" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">7E</text>
+<text x="396.0" y="699" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">0B</text>
+<rect x="60" y="710" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="736" x2="156" y2="770" stroke="#93D9A0" stroke-width="1"/>
+<text x="108.0" y="759" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">A9</text>
+<text x="204.0" y="759" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">DE</text>
+<rect x="252" y="710" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="736" x2="348" y2="770" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="729" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Data</text>
+<text x="300.0" y="759" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">01</text>
+<text x="396.0" y="759" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">D9</text>
+<rect x="60" y="770" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="796" x2="156" y2="830" stroke="#93D9A0" stroke-width="1"/>
+<text x="108.0" y="819" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">D5</text>
+<text x="204.0" y="819" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">38</text>
+<rect x="252" y="770" width="192" height="60" fill="#CDF4D3"/>
+<line x1="252" y1="770" x2="252" y2="830" stroke="#93D9A0" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="348.0" y="805" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">… 22 bytes of padding, then the 4-byte FCS</text>
+</g>
+<rect x="60" y="230" width="384" height="600" rx="12" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="60" y="470" width="192" height="60" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="60" y="530" width="192" height="60" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="60" y="590" width="192" height="60" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="610" y="48" width="250" height="424" rx="10" fill="#1E1E1E"/>
+<text x="735.0" y="87" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">PppoeSession</text>
+<rect x="614" y="112" width="242" height="56" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="137" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">DataLink.ethertype</text>
+<text x="735.0" y="158" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0x8864 → PppoeSession</text>
+<rect x="614" y="172" width="242" height="56" rx="6" fill="#FFC943"/>
+<text x="735.0" y="197" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">DataLink.vlan</text>
+<text x="735.0" y="218" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">Some(7) · peeled first</text>
+<rect x="614" y="232" width="242" height="56" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="257" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">session_id</text>
+<text x="735.0" y="278" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0x8f80</text>
+<rect x="614" y="292" width="242" height="56" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="317" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">length</text>
+<text x="735.0" y="338" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">14 · the PPP payload</text>
+<rect x="614" y="352" width="242" height="56" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="377" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">ppp_protocol</text>
+<text x="735.0" y="398" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0xC021 → LCP</text>
+<rect x="614" y="412" width="242" height="56" rx="6" fill="#CDF4D3"/>
+<text x="735.0" y="437" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">Internet</text>
+<text x="735.0" y="458" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">None · not IP, not ARP</text>
+<path d="M 598 140 L 502 140 Q 488 140 488 154 L 488 486.0 Q 488 500.0 474 500.0 L 262 500.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="271,491.0 262,500.0 271,509.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 200 L 520 200 Q 506 200 506 214 L 506 426.0 Q 506 440.0 492 440.0 L 454 440.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="463,431.0 454,440.0 463,449.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 260 L 538 260 Q 524 260 524 274 L 524 546.0 Q 524 560.0 510 560.0 L 262 560.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="271,551.0 262,560.0 271,569.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 320 L 556 320 Q 542 320 542 334 L 542 546.0 Q 542 560.0 528 560.0 L 454 560.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="463,551.0 454,560.0 463,569.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 380 L 574 380 Q 560 380 560 394 L 560 606.0 Q 560 620.0 546 620.0 L 262 620.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="271,611.0 262,620.0 271,629.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
