@@ -11,6 +11,8 @@ Before 11.6.0, protocol 50 already had its name, `TransportProtocol::Esp`, like 
 
 ## The packet
 
+![The native ESP packet of frame 5 of ikev2_s2s_ipsec_vpn_aes_gcm.pcapng, IP protocol 50: the SPI 0x5fbd60dc and the sequence number 1 are the only fields the crate can read; the 8-byte AES-GCM IV that follows is in clear too, then 88 bytes of ciphertext (the inner packet, its padding and the next-header byte) and the 16-byte ICV; EspPacket keeps the SPI, the sequence and the 112 bytes after them as payload, and nothing is probed above it.](images/transport/esp_struct.svg)
+
 ```rust
 #[non_exhaustive]
 pub struct EspPacket<'a> {

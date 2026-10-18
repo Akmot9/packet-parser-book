@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 544" width="900" height="544" role="img" aria-labelledby="t d">
+<title id="t">ICMPv4 Echo request: header, then body</title>
+<desc id="d">The ICMPv4 Echo request of frame 1 of icmp_echo.pcapng, 32 bits per row: type 8, code 0, checksum 0x145c, then the Echo body with identifier 0x0500, sequence 0x3400 and 32 bytes of pattern data; IcmpPacket keeps the common header as fields and the body as IcmpBody::Echo, and the transport payload stays None so nothing is probed above it.</desc>
+<rect x="12" y="12" width="876" height="520" rx="18" fill="#FFEAD6" stroke="#FF9E42" stroke-width="2.5"/>
+<text x="60" y="84" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#1E1E1E" text-anchor="start">ICMPv4 Echo request: header, then body</text>
+<text x="60" y="110" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.55" text-anchor="start">frame 1 of icmp_echo.pcapng, IP protocol 1 · 40 bytes</text>
+<clipPath id="g"><rect x="60" y="230" width="384" height="280" rx="12"/></clipPath>
+<g clip-path="url(#g)">
+<rect x="60" y="230" width="96" height="60" fill="#FF9E42" stroke="#93D9A0" stroke-width="1.5"/>
+<text x="108.0" y="249" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Type</text>
+<text x="108.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">08</text>
+<rect x="156" y="230" width="96" height="60" fill="#FF9E42" stroke="#93D9A0" stroke-width="1.5"/>
+<text x="204.0" y="249" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Code</text>
+<text x="204.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="252" y="230" width="192" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="256" x2="348" y2="290" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="249" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Checksum</text>
+<text x="300.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">14</text>
+<text x="396.0" y="279" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">5C</text>
+<rect x="60" y="290" width="192" height="60" fill="#FFC943" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="316" x2="156" y2="350" stroke="#93D9A0" stroke-width="1"/>
+<text x="156.0" y="309" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Identifier</text>
+<text x="108.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">05</text>
+<text x="204.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="252" y="290" width="192" height="60" fill="#FFC943" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="348" y1="316" x2="348" y2="350" stroke="#93D9A0" stroke-width="1"/>
+<text x="348.0" y="309" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Sequence number</text>
+<text x="300.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">34</text>
+<text x="396.0" y="339" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">00</text>
+<rect x="60" y="350" width="384" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="376" x2="156" y2="410" stroke="#93D9A0" stroke-width="1"/>
+<line x1="252" y1="376" x2="252" y2="410" stroke="#93D9A0" stroke-width="1"/>
+<line x1="348" y1="376" x2="348" y2="410" stroke="#93D9A0" stroke-width="1"/>
+<text x="252.0" y="369" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Data · abcdefgh</text>
+<text x="108.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">61</text>
+<text x="204.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">62</text>
+<text x="300.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">63</text>
+<text x="396.0" y="399" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">64</text>
+<rect x="60" y="410" width="384" height="60" fill="#CDF4D3" stroke="#93D9A0" stroke-width="1.5"/>
+<line x1="156" y1="436" x2="156" y2="470" stroke="#93D9A0" stroke-width="1"/>
+<line x1="252" y1="436" x2="252" y2="470" stroke="#93D9A0" stroke-width="1"/>
+<line x1="348" y1="436" x2="348" y2="470" stroke="#93D9A0" stroke-width="1"/>
+<text x="252.0" y="429" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="500" fill="#1E1E1E" fill-opacity="0.62" text-anchor="middle">Data · abcdefgh, continued</text>
+<text x="108.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">65</text>
+<text x="204.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">66</text>
+<text x="300.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">67</text>
+<text x="396.0" y="459" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1E1E1E" text-anchor="middle">68</text>
+<rect x="60" y="470" width="384" height="40" fill="#CDF4D3"/>
+<line x1="60" y1="470" x2="444" y2="470" stroke="#93D9A0" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="252.0" y="495" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#1E1E1E" fill-opacity="0.7" text-anchor="middle">… 24 more bytes: ijklmnopqrstuvwabcdefghi</text>
+</g>
+<rect x="60" y="230" width="384" height="280" rx="12" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="60" y="230" width="96" height="60" rx="5" fill="none" stroke="#1E1E1E" stroke-width="3.5"/>
+<rect x="610" y="48" width="250" height="364" rx="10" fill="#1E1E1E"/>
+<text x="735.0" y="87" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">IcmpPacket</text>
+<rect x="614" y="112" width="242" height="56" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="137" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">message_type</text>
+<text x="735.0" y="158" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">8 → Echo request</text>
+<rect x="614" y="172" width="242" height="56" rx="6" fill="#FF9E42"/>
+<text x="735.0" y="197" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">code</text>
+<text x="735.0" y="218" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0 · the only one for type 8</text>
+<rect x="614" y="232" width="242" height="56" rx="6" fill="#CDF4D3"/>
+<text x="735.0" y="257" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">checksum</text>
+<text x="735.0" y="278" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">0x145c</text>
+<rect x="614" y="292" width="242" height="56" rx="6" fill="#FFC943"/>
+<text x="735.0" y="317" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">body</text>
+<text x="735.0" y="338" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">Echo { 1280, 13312, 32 bytes }</text>
+<rect x="614" y="352" width="242" height="56" rx="6" fill="#CDF4D3"/>
+<text x="735.0" y="377" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">Transport.payload</text>
+<text x="735.0" y="398" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">None · nothing stacks above</text>
+<path d="M 598 140 L 119.0 140 Q 108.0 140 108.0 151 L 108.0 222" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="99.0,213 108.0,222 117.0,213" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 200 L 215.0 200 Q 204.0 200 204.0 211 L 204.0 222" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="195.0,213 204.0,222 213.0,213" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 260 L 454 260" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="463,251 454,260 463,269" fill="none" stroke="#757575" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 598 320 L 502 320 Q 488 320 488 306 L 488 334.0 Q 488 320.0 474 320.0 L 262 320.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="271,311.0 262,320.0 271,329.0" fill="none" stroke="#3A3A3A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
