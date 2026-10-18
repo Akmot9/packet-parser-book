@@ -27,6 +27,8 @@ The guard on a real S_PDU moved to port 5067 (*tested*):
 
 ## The S_PDU
 
+![The S_BIND_REQUEST of frame 25 of S5066-HFChat-1.pcap, 32 bits per row: the sync preamble 90 EB, version 0, a primitive size of 4, the PDU type 1, then the primitive itself, SAP 5 (HF Chat) and rank 1 in one byte, the service type byte 0x14 (ARQ, node delivery confirmation) and an unused byte; SisPdu keeps the SisHeader, the named type and the typed primitive.](images/application/stanag5066_struct.svg)
+
 ```rust
 #[non_exhaustive]
 pub struct SisHeader {

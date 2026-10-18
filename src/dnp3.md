@@ -20,6 +20,8 @@ The read request of `dnp3_read.pcap` on a port no rule knows, then a read of the
 
 ## The link frame
 
+![The DNP3 link frame of frame 4 of dnp3_read.pcap, 32 bits per row: the start bytes 05 64, length 20, control 0xc4 (DIR, PRM, unconfirmed user data), destination 2 and source 3 in little-endian, the header CRC 0x0345, then the transport byte 0xc7 (FIR, FIN, sequence 7), the application control 0xc8 and function 1 (Read), four object headers for classes 1, 2, 3 and 0 with qualifier 0x06, and the block CRC 0xac42; Dnp3Packet keeps one LinkFrame with its LinkHeader, its transport header and its application fragment.](images/application/dnp3_struct.svg)
+
 ```rust
 pub struct Dnp3Packet<'a> {
     pub frames: Vec<LinkFrame<'a>>,    // one or more, tiling the payload

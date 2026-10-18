@@ -42,6 +42,8 @@ In the corpus, the 263 frames on UDP 3000 get their label from the port rule, an
 
 ## The datagram and its PDUs
 
+![The Transmitter PDU of frame 1 of wireshark_12043_dis_v7_transmitter.pcap, 32 bits per row: the 12-byte header with protocol version 7 (IEEE 1278.1-2012), exercise 1, PDU type 25 (Transmitter), protocol family 4 (Radio Communications), the timestamp, length 104, status 0 and a padding byte, then the first fields of the body, the entity identifier site 64128, application 61467, entity 65534, and radio ID 65534, the 88 remaining bytes summarised; DisHeader on the right holds the header fields.](images/application/dis_struct.svg)
+
 ```rust
 #[non_exhaustive]
 pub struct DisPacket<'a> {

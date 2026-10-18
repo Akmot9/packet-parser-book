@@ -22,6 +22,8 @@ The Connection Request of frame 6 of `rdp-x509.pcap`, on its port, moved to anot
 
 ## The segment: TPKTs
 
+![The Connection Request of frame 6 of rdp-x509.pcap, 32 bits per row: the TPKT header (version 3, length 47), the X.224 CR TPDU (length indicator 42, type 0xE0, zero references, class 0), the routing cookie Cookie: mstshash=JOHN-PC ended by CR LF, then the 8-byte RDP_NEG_REQ (type 1, flags 0, length 8, requestedProtocols 0); RdpPdu keeps the TPKT length, the X224Tpdu and a ConnectionRequest payload with the token and the NegotiationRequest.](images/application/rdp_struct.svg)
+
 ```rust
 pub struct RdpPacket<'a> {
     pub pdus: Vec<RdpPdu<'a>>,
