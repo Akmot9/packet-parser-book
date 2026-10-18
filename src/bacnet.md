@@ -30,6 +30,8 @@ Since the two rules share the probe, a datagram on 47808 that fails it is not pr
 
 ## The datagram
 
+![The readProperty request of frame 3 of iti_bacnet_test.pcap, 32 bits per row: the BVLC header (type 0x81, function 0x0a Original-Unicast-NPDU, length 17), the NPDU (version 1, control 0x04 expecting a reply), the APDU (type 0 Confirmed-REQ with flags 0, max segments and APDU size 0x05, invoke ID 1, service choice 12) and the service data, a context-tagged object identifier device 4194303 and property 75; BacnetPacket keeps the BvlcHeader, the Npdu and, inside it, the Apdu with its named service.](images/application/bacnet_struct.svg)
+
 ```rust
 pub struct BacnetPacket<'a> {
     pub bvlc: BvlcHeader,

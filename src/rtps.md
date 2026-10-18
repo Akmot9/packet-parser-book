@@ -29,6 +29,8 @@ Cyclone DDS on the macOS loopback, between two random ports (*tested*):
 
 ## The message
 
+![The RTPS message of frame 9 of talker-listener-rtps.pcapng, 32 bits per row: the magic RTPS, protocol version 2.1, vendorId 0x0110 (Cyclone DDS) and the 12-byte guidPrefix, then four submessages each introduced by its id, its flags and octetsToNextHeader in the byte order the E flag announces: INFO_DST (12 bytes), INFO_TS (8), DATA (48) and HEARTBEAT (28); RtpsMessage keeps the RtpsHeader and a Vec of RtpsSubmessage with their typed details.](images/application/rtps_struct.svg)
+
 ```rust
 pub enum RtpsPacket<'a> {
     Message(RtpsMessage<'a>),

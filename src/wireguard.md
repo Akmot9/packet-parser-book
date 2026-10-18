@@ -59,6 +59,8 @@ The blind probe on real traffic: a ProtonVPN keepalive on UDP 443, and a Zoom da
 
 ## The message
 
+![The Handshake Initiation of frame 1 of wireshark_wireguard-ping-tcp.pcap, 32 bits per row: type 1, three reserved zero bytes, the sender index 0x30d037d8 in little-endian, then fixed-size fields the crate borrows without decrypting, the 32-byte unencrypted ephemeral, the 48-byte encrypted static, the 28-byte encrypted timestamp, mac1 and a zero mac2; WireGuardPacket keeps the type, the reserved bytes and a HandshakeInitiation message.](images/application/wireguard_struct.svg)
+
 ```rust
 pub struct WireGuardPacket<'a> {
     /// 1 to 4.

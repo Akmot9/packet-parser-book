@@ -29,6 +29,8 @@ Since the two rules share the probe, a datagram on 1812 that fails it is not pro
 
 ## The packet
 
+![The Access-Request of frame 1 of radius.pcap, 32 bits per row: code 1, identifier 5, length 139, the 16-byte request authenticator, then the attributes as type-length-value triplets, NAS-IP-Address 10.0.0.1, NAS-Port 50012, NAS-Port-Type 15 and User-Name John.McGuirk shown, six more summarised; RadiusPacket keeps the header fields and the list of RadiusAttribute, each with its raw type, its named kind, its length and its value bytes.](images/application/radius_struct.svg)
+
 ```rust
 pub struct RadiusPacket<'a> {
     pub code: u8,

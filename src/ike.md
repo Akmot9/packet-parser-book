@@ -62,6 +62,8 @@ Frame 42 of `ipsec_isakmp_esp.pcap` is an INFORMATIONAL behind the marker. Read 
 
 ## The header
 
+![The 28-byte IKE header of the IKE_SA_INIT request of frame 1 of ikev2_s2s_ipsec_vpn_aes_gcm.pcapng, 32 bits per row: the initiator SPI 62f94c9887715a34 and a zero responder SPI, then next payload 33 (SA), version byte 20, exchange type 34 (IKE_SA_INIT), flags 08 (Initiator), message ID 0 and length 374; the IkeHeader struct on the right holds the same values, and the 346 bytes after the header are the nine payloads.](images/application/ike_header.svg)
+
 ```rust
 #[non_exhaustive]
 pub struct IkeHeader {
