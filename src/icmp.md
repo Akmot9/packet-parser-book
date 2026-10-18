@@ -2,6 +2,10 @@
 
 IP protocol 1 and IPv6 next header 58, parsed by the [transport layer](./transport.md).
 
+![The ICMPv4 Echo request of frame 1 of icmp_echo.pcapng, 32 bits per row: type 8, code 0, checksum 0x145c, then the Echo body with identifier 0x0500, sequence 0x3400 and 32 bytes of pattern data; IcmpPacket keeps the common header as fields and the body as IcmpBody::Echo, and the transport payload stays None so nothing is probed above it.](images/transport/icmp_echo_struct.svg)
+
+![The ICMPv6 Neighbor Solicitation of frame 1 of icmpv6_neighbor_solicitation.pcapng, 32 bits per row: type 135, code 0, checksum 0x44b7, a reserved word, the target address 2001:db8:1:2::1000 and one option, Source Link-Layer Address (type 1, length 1) carrying 00:0c:29:2f:80:31; Icmpv6Packet keeps the common header as fields and the body as Icmpv6Body::NeighborSolicitation.](images/transport/icmpv6_ns_struct.svg)
+
 ICMP has neither ports nor sessions. It is reached through the IP protocol number (1, or next header 58 for ICMPv6), **never through probing**, and the two versions have separate parsers: their type numbering is disjoint (128 is an echo request in ICMPv6, 8 is undefined there).
 
 Two deliberate choices:

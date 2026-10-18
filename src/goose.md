@@ -22,6 +22,8 @@ Frame 1 of `iti_GOOSE.pcap`, a GE F650 relay, without VLAN tag (*tested*):
 
 ## The frame: `GoosePacket`
 
+![The GOOSE frame of a GE F650 relay, frame 1 of iti_GOOSE.pcap, after the EtherType 0x88B8: APPID 1, length 145, two zero reserved fields, then the BER-encoded goosePdu (tag 61, length 134) whose fields are shown with their tag and length bytes: gocbRef, timeAllowedtoLive 40000, datSet, goID, the timestamp, stNum 1, sqNum 10, simulation false, confRev 1, ndsCom false, numDatSetEntries 8 and the 32-byte allData; GoosePacket and GoosePdu on the right carry the decoded values.](images/network/goose_struct.svg)
+
 ```rust
 pub struct GoosePacket<'a> {
     pub app_id: u16,

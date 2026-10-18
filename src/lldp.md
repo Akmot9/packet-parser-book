@@ -22,6 +22,8 @@ Frame 29 of `cisagov_profinet_io_cm_mixed_1.pcap`, a Siemens SCALANCE X208 switc
 
 ## The LLDPDU: `LldpPacket`
 
+![The LLDPDU of frame 29 of cisagov_profinet_io_cm_mixed_1.pcap, after the EtherType 0x88CC: each TLV starts with two bytes, 7 bits of type and 9 of length; Chassis ID (type 1, subtype 7, siemens-x208-switch), Port ID (type 2, subtype 7, port-004), Time To Live 20 seconds, System Description, System Capabilities 0x0080, Management Address 0.0.0.0, three organization-specific TLVs and the End of LLDPDU; LldpPacket exposes the two identifiers and the TTL as typed fields and the rest as a list of TLVs.](images/network/lldp_struct.svg)
+
 ```rust
 pub struct LldpPacket<'a> {
     pub chassis_id: LldpId<'a>,
