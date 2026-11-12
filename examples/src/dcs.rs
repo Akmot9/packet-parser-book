@@ -100,7 +100,7 @@ mod tests {
         assert_eq!((status.tick, status.previous_tick), (0x540f_5bf1, 0x5405_9702));
         assert_eq!(status.tick.wrapping_sub(status.previous_tick), 640_239);
 
-        // The clock, rewritten by the anonymization on the frame's rebased
+        // The clock, rewritten by the anonymization from the frame's rebased
         // timestamp: 2020-01-01 00:00:00.0000, weekday 3.
         let clock = status.clock.expect("a valid date");
         assert_eq!((clock.year, clock.month, clock.day, clock.weekday), (2020, 1, 1, 3));

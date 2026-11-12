@@ -1,6 +1,6 @@
 # Valmet DNA
 
-Valmet DNA (Metso DNA), the process network of the distributed control systems of Metso and Valmet, added in 11.8.0, the only decoder of that release ([PR #229](https://github.com/Akmot9/Packet-parser/pull/229)). On the network the crate was built from, the nodes send UDP datagrams to a multicast group: periodic status telegrams, messages that name a tag, and a beacon. The module is `packet_parser::parse::application::protocols::valmet_dna`, its error `packet_parser::errors::application::valmet_dna::ValmetDnaParseError`.
+Valmet DNA (Metso DNA), the process network of the distributed control systems of Metso and Valmet, added in 11.8.0 ([`8ffdec1`](https://github.com/Akmot9/Packet-parser/commit/8ffdec19cf2de9781688817f4dca33a4412b0dcd), released by [PR #229](https://github.com/Akmot9/Packet-parser/pull/229)), the only decoder of that release. On the network the crate was built from, the nodes send UDP datagrams to a multicast group: periodic status telegrams, messages that name a tag, and a beacon. The module is `packet_parser::parse::application::protocols::valmet_dna`, its error `packet_parser::errors::application::valmet_dna::ValmetDnaParseError`.
 
 ## Observed, not specified
 
@@ -28,7 +28,7 @@ The corpus capture, `valmet-dna-multicast-anon.pcap`, is the first twelve second
 - 719 on UDP 2517 → 2517: 319 status telegrams of 126 bytes, sent every 640 ms by each of 17 nodes, `0x8008` to `0x802D`, 18 or 19 each; and 400 tag messages of 82 to 116 bytes from 14 of those nodes;
 - 1 on UDP 4516 → 4517: the 42-byte beacon, frame 591.
 
-The anonymization renumbered the unicast MAC and IPv4 addresses (the IPv4 ones into `10.0.2.0/24`, with the node address inside the payload), substituted the site-specific part of the tags letter by letter and digit by digit, and rewrote the clocks on the timestamp of their frame, rebased to 2020-01-01 00:00:00 UTC. Everything else in the payloads, headers, families, lengths, counters and bytes not identified, is identical byte for byte to the original, according to the folder's `SOURCE.md`.
+The anonymization renumbered the unicast MAC and IPv4 addresses (the IPv4 ones into `10.0.2.0/24`, with the node address inside the payload), substituted the site-specific part of the tags letter by letter and digit by digit, and rewrote the clocks from the timestamp of their frame, rebased to 2020-01-01 00:00:00 UTC. Everything else in the payloads, headers, families, lengths, counters and bytes not identified, is identical byte for byte to the original, according to the folder's `SOURCE.md`.
 
 ## Detection: three ports, then a blind probe
 
@@ -36,7 +36,7 @@ As for [PTP](./ptp.md) on UDP, the pipeline gives the datagram a label, `"Valmet
 
 | Where | Probe | Accepts |
 | --- | --- | --- |
-| UDP 2517, 4516 or 4517, on either side | `ProbeId::ValmetDna` | a message with a coherent header, of a known family or not, or a beacon |
+| UDP 2517, 4516 or 4517, on either side | `ProbeId::ValmetDna` | a message with a coherent header, of a known family at its exact size or of an unknown one, or a beacon |
 | a port declared with `ParseConfig::decode_as(port, DecodeAsProtocol::ValmetDna)` | `ProbeId::ValmetDna` | the same |
 | any other UDP port | `ProbeId::ValmetDnaBlind` | a message of one of the two known families, at its exact size |
 
@@ -208,7 +208,7 @@ pub struct DnaClock {
 | 7 | `month` | 1 to 12 |
 | 8–9 | `year` | two BCD bytes, low byte first: `26 20` is 2026; no range |
 
-**How the order was established.** On the original capture, not on the corpus one: the seconds go from 59 to 00 with a carry into the minutes, the fraction advances by 6 400 per telegram, the 640 ms of the period, and the hour and the weekday are those of the day of the capture. The corpus capture cannot show this again. Its clocks were rewritten on the timestamps of the frames, which start at midnight on 2020-01-01 and last twelve seconds: no minute rolls over, and the year is `20 20`, which does not show the order of its two bytes. On the original capture, the clocks of the nodes were twenty-nine minutes off the legal time, by the same amount on every node: the clock dates the exchanges between nodes, not the outside world.
+**How the order was established.** On the original capture, not on the corpus one: the seconds go from 59 to 00 with a carry into the minutes, the fraction advances by 6 400 per telegram, the 640 ms of the period, and the hour and the weekday are those of the day of the capture. The corpus capture cannot show this again. Its clocks were rewritten from the timestamps of the frames, which start at midnight on 2020-01-01 and last twelve seconds: no minute rolls over, and the year is `20 20`, which does not show the order of its two bytes. On the original capture, the clocks of the nodes were twenty-nine minutes off the official time, by the same amount on every node: the clock dates the exchanges between nodes, not the outside world.
 
 **The weekday** was 2 on the day of the original capture, a Tuesday: Monday is 1 (ISO 8601), or Sunday is 0. With a single day observed, the two conventions agree, and the crate does not choose. The rewritten clocks of the corpus say 3, 2020-01-01 being a Wednesday.
 
@@ -256,7 +256,7 @@ impl<'a> TagMessage<'a> {
 
 The decoder checks that the datagram holds the 72 bytes of the header, that the two lengths are equal, and that 72 plus the tag length is the datagram; the tag is borrowed, not copied. An empty tag, two zero lengths in 72 bytes, is accepted.
 
-The tags of the capture start with `:e:`. 360 of the 400 are readable text of the form `:e:<class>:<path>`, with a class of two letters: `di` 286 times, `pr` 57, `sn` 9, `hw` 6 and `li` 2. `class()` and `path()` answer when the text starts with `:e:`, has a non-empty class and a second colon; the path may be empty. The 40 others are ten bytes that are not UTF-8: frame 2, in the crate's unit tests, is `:e:A2`, then `0xC1`, `1`, a NUL and `0xFE 0xFF`; `tag_text`, `class` and `path` are `None` for them, and `tag` keeps the bytes. The crate calls the two letters a class, after their place in the tag; what they mean is not known. In the corpus, the path is the anonymized one: the marker, the class, the delimiters and the length are the original ones, the letters and digits of the path are not.
+The tags of the capture start with `:e:`. 360 of the 400 are readable text of the form `:e:<class>:<path>`, with a class of two letters: `di` 286 times, `pr` 57, `sn` 9, `hw` 6 and `li` 2. `class()` and `path()` answer when the text starts with `:e:`, has a non-empty class and a colon after it; the path may be empty. The 40 others are ten bytes that are not UTF-8: frame 2, in the crate's unit tests, is `:e:A2`, then `0xC1`, `1`, a NUL and `0xFE 0xFF`; `tag_text`, `class` and `path` are `None` for them, and `tag` keeps the bytes. The crate calls the two letters a class, after their place in the tag; what they mean is not known. In the corpus, the path is the anonymized one: the marker, the class, the delimiters and the length are the original ones, the letters and digits of the path are not.
 
 A tag of class `di` sent by node `0x8028`, frame 9 of the capture (*tested*):
 
