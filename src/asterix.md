@@ -185,7 +185,7 @@ The drawing of the datagram shows three refusals. The CAT 034 block relabelled C
 {{#include ../examples/src/defense_b.rs:asterix_all_or_nothing}}
 ```
 
-Since 11.7.0 the probe reads the whole datagram ([#184](https://github.com/Akmot9/Packet-parser/issues/184)). Until 11.6.0 it saw only the first `PROBE_CAP` bytes, 18 KiB. Blocks that ended exactly at byte 18 432 were then enough, whatever came after, and a valid datagram with a block across that bound stayed `"Unknown"`. The label now vouches for the datagram that `AsterixPacket::try_from` decodes. The cost stays linear: decoding 65 505 bytes of ASTERIX records takes 2.7 ms in release, 3.8 times the 18 432 bytes of the old cap. Surveillance datagrams are far smaller, 1 393 bytes at most in the corpus.
+Since 11.7.0 the probe reads the whole datagram ([#184](https://github.com/Akmot9/Packet-parser/issues/184)). Until 11.6.0 it saw only the first `PROBE_CAP` bytes, 18 KiB. Blocks that ended exactly at byte 18 432 were then enough, whatever came after, and a valid datagram with a block across that bound stayed `"Unknown"`. The label now vouches for the datagram that `AsterixPacket::try_from` decodes. The cost stays linear: decoding 65 505 bytes of ASTERIX records takes 2.7 ms in release, 3.8 times the cost of the 18 432 bytes of the old cap. Surveillance datagrams are far smaller, 1 393 bytes at most in the corpus.
 
 ## Verified against tshark, record by record
 
