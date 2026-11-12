@@ -13,7 +13,7 @@ port_rule("RADIUS", Guard::Udp, is_radius_udp_port, ProbeId::Radius), // 1812, 1
 rule("RADIUS", Guard::Udp, ProbeId::Radius),
 ```
 
-`is_radius_udp_port` matches, on either side, 1812 and 1813, the IANA ports, 1645 and 1646, their historical numbers (the switch of `radius.pcap` still sends from 1645), and 3799, the port of RFC 5176. On UDP 1700, which tshark also dissects as RADIUS, the crate relies on the blind rule. The probe is `RadiusPacket::try_from(full_payload).is_ok()`, run on the whole payload and not on its first `PROBE_CAP` bytes, because the declared length is compared with the real datagram. It accepts a datagram only if:
+`is_radius_udp_port` matches, on either side, 1812 and 1813, the IANA ports, 1645 and 1646, their historical numbers (the switch of `radius.pcap` still sends from 1645), and 3799, the port of RFC 5176. On UDP 1700, which tshark also dissects as RADIUS, the crate relies on the blind rule. The probe is `RadiusPacket::try_from(payload).is_ok()`, run on the whole payload, as every probe but the four text ones since 11.7.0 ([#185](https://github.com/Akmot9/Packet-parser/issues/185)): the declared length is compared with the real datagram. It accepts a datagram only if:
 
 - the code is one of the fourteen of RFC 2865, 2866 and 5176;
 - the declared length is between 20 and 4096 and equals the datagram;
