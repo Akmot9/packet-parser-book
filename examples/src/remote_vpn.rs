@@ -5,7 +5,7 @@
 //! Every frame comes from the crate's tracked corpus,
 //! `pcaps_exemple/protocols/rdp/` and `pcaps_exemple/protocols/wireguard/`
 //! (provenance in each folder's `SOURCE.md`); the bytes were extracted with
-//! tshark, frame by frame.
+//! tshark, frame by frame. Where a test alters a frame, its comments say how.
 
 #[cfg(test)]
 mod tests {
@@ -292,6 +292,84 @@ mod tests {
         );
     }
     // ANCHOR_END: rdp_negotiation
+
+    // ANCHOR: rdp_correlation_info
+    #[test]
+    fn a_correlation_info_after_the_negotiation_request() {
+        // No capture of the corpus carries one. This Connection Request is the
+        // 47-byte segment of frame 6 of rdp-x509.pcap, with the flag 0x08 set
+        // and a correlation info appended (MS-RDPBCGR §2.2.1.1.2).
+        let raw = hex::decode(RDP_COOKIE_REQUEST_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        let frame_6 = flow.transport.as_ref().unwrap().payload.unwrap();
+        let correlation_id = [
+            0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18, 0x29, 0x3a, 0x4b, 0x5c, 0x6d, 0x7e,
+            0x8f, 0x90,
+        ];
+        let mut segment = frame_6.to_vec();
+        segment[40] = 0x08; // flags of the request: CORRELATION_INFO_PRESENT
+        segment.extend_from_slice(&[0x06, 0x00, 36, 0x00]); // type 0x06, length 36
+        segment.extend_from_slice(&correlation_id);
+        segment.extend_from_slice(&[0; 16]); // reserved
+        segment[3] = 47 + 36; // TPKT length
+        segment[4] = 42 + 36; // length indicator
+
+        let packet = RdpPacket::try_from(segment.as_slice()).unwrap();
+        let payload = &packet.pdus[0].payload;
+        assert_eq!(payload.cookie_user(), Some("JOHN-PC  ")); // the cookie is kept
+        let RdpPayload::ConnectionRequest { negotiation: Some(request), .. } = payload else {
+            panic!("expected a negotiation request, got {payload:?}");
+        };
+        assert!(request.correlation_info_present());
+        assert_eq!(request.correlation_id, Some(correlation_id));
+        assert!(request.standard_security_only());
+
+        // The flag without the structure is accepted, without an id.
+        let mut flag_only = frame_6.to_vec();
+        flag_only[40] = 0x08;
+        let packet = RdpPacket::try_from(flag_only.as_slice()).unwrap();
+        let RdpPayload::ConnectionRequest { negotiation: Some(request), .. } =
+            &packet.pdus[0].payload
+        else {
+            panic!("expected a negotiation request, got {:?}", packet.pdus[0].payload);
+        };
+        assert!(request.correlation_info_present());
+        assert_eq!(request.correlation_id, None);
+
+        // The structure without the flag: 36 bytes after the request.
+        let mut no_flag = segment.clone();
+        no_flag[40] = 0x00;
+        assert_eq!(
+            RdpPacket::try_from(no_flag.as_slice()),
+            Err(RdpParseError::UnexpectedX224Data(36))
+        );
+        // A correlation info that declares 32 bytes...
+        let mut length_32 = segment.clone();
+        length_32[49] = 32;
+        assert_eq!(
+            RdpPacket::try_from(length_32.as_slice()),
+            Err(RdpParseError::InvalidCorrelationInfo { structure_type: 0x06, length: 32 })
+        );
+        // ... and one that TCP cuts 13 bytes in.
+        assert_eq!(
+            RdpPacket::try_from(&segment[..60]),
+            Err(RdpParseError::Truncated { expected: 36, actual: 13 })
+        );
+
+        // InvalidNegotiation is left to a request that does not declare 8
+        // bytes; a request cut before its eighth byte is Truncated.
+        let mut length_12 = frame_6.to_vec();
+        length_12[41] = 12;
+        assert_eq!(
+            RdpPacket::try_from(length_12.as_slice()),
+            Err(RdpParseError::InvalidNegotiation { structure_type: 0x01, length: 12 })
+        );
+        assert_eq!(
+            RdpPacket::try_from(&frame_6[..44]),
+            Err(RdpParseError::Truncated { expected: 8, actual: 5 })
+        );
+    }
+    // ANCHOR_END: rdp_correlation_info
 
     // ANCHOR: rdp_mcs
     #[test]

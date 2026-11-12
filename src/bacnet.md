@@ -161,7 +161,11 @@ The type says which fixed fields follow the first byte; whatever comes after the
 
 `flags` is the low nibble of the first byte: SEG `0x08` and MOR `0x04` in a ConfirmedRequest or a ComplexACK, SA `0x02` in a ConfirmedRequest, NAK `0x02` and SRV `0x01` in a SegmentACK, SRV `0x01` in an Abort. The decoder itself reads only SEG, which says whether a sequence number and a window follow; the other bits are left to the caller.
 
-`confirmed_service()` names the service of a ConfirmedRequest, SimpleAck, ComplexAck or Error among the 34 of `ConfirmedService` (0 `AcknowledgeAlarm` to 33 `AuditLogQuery`), and `unconfirmed_service()` that of an UnconfirmedRequest among the 15 of `UnconfirmedService` (0 `IAm` to 14 `YouAre`). An unknown code is not an error: `service` keeps the byte and the method returns `None`. Both enums have a public `from_code`. A readProperty and the ComplexACK that answers it (*tested*):
+`confirmed_service()` names the service of a ConfirmedRequest, SimpleAck, ComplexAck or Error among the 36 of `ConfirmedService` (0 `AcknowledgeAlarm` to 35 `DirectoryQuery`), and `unconfirmed_service()` that of an UnconfirmedRequest among the 15 of `UnconfirmedService` (0 `IAm` to 14 `YouAre`). An unknown code is not an error: `service` keeps the byte and the method returns `None`. Both enums have a public `from_code`.
+
+The last two confirmed services came in 11.7.0 ([#190](https://github.com/Akmot9/Packet-parser/issues/190)), at the end of the enum: 34 `AuthRequest`, auth-request, from addendum 135-2020cp (protocol revision 29, taken into ANSI/ASHRAE 135-2024), and 35 `DirectoryQuery`, directory-query, from addendum 135-2024cu (protocol revision 31). Before, `from_code` returned `None` for both codes. tshark 4.6.6 names the first, `authRequest (34)`, and not the second. No datagram of the corpus carries either.
+
+A readProperty, the ComplexACK that answers it, and the two new codes (*tested*):
 
 ```rust
 {{#include ../examples/src/building_aaa.rs:bacnet_read_property}}

@@ -1,7 +1,8 @@
 //! Examples of the RTPS and ASTERIX chapters (defense lot, packet_parser
 //! 11.6.0). Every frame comes from the crate's tracked corpus,
 //! `pcaps_exemple/protocols/`, byte for byte: the comment above each constant
-//! names the capture and the frame number.
+//! names the capture and the frame number. Where a test alters a frame, its
+//! comments say how.
 
 #[cfg(test)]
 mod tests {
@@ -15,7 +16,7 @@ mod tests {
         cat247,
     };
     use packet_parser::parse::application::protocols::rtps::{
-        RtpsPacket, SubmessageDetails, SubmessageKind,
+        RtpsChecksum, RtpsPacket, SubmessageDetails, SubmessageKind,
     };
     use packet_parser::{LinkType, parse};
 
@@ -267,10 +268,19 @@ mod tests {
             RtpsPacket::try_from(reserved.as_slice()),
             Err(RtpsParseError::ReservedSubmessageId { id: 0x02, offset: 20 })
         );
-        reserved[20] = 0x00; // the HeaderExtension of RTPS 2.5, unknown to the crate
+        // 0x00 is the HEADER_EXTENSION of RTPS 2.5: the first submessage or none.
+        let mut misplaced = payload.to_vec();
+        misplaced[36] = 0x00; // the INFO_TS at offset 36
         assert_eq!(
-            RtpsPacket::try_from(reserved.as_slice()),
-            Err(RtpsParseError::ReservedSubmessageId { id: 0x00, offset: 20 })
+            RtpsPacket::try_from(misplaced.as_slice()),
+            Err(RtpsParseError::MisplacedHeaderExtension { offset: 36 })
+        );
+        let mut wrong_length = payload.to_vec();
+        wrong_length[20..22].copy_from_slice(&[0x00, 0x03]); // first, with flags L and E
+        wrong_length[24..28].copy_from_slice(&131u32.to_le_bytes()); // its messageLength
+        assert_eq!(
+            RtpsPacket::try_from(wrong_length.as_slice()),
+            Err(RtpsParseError::HeaderExtensionLengthMismatch { declared: 131, actual: 132 })
         );
         let mut overflow = payload.to_vec();
         overflow[22] = 200; // INFO_DST declares 200 bytes instead of 12
@@ -310,6 +320,62 @@ mod tests {
         assert!(flow.corrupted.is_none());
     }
     // ANCHOR_END: rtps_refusals
+
+    // ANCHOR: rtps_header_extension
+    #[test]
+    fn a_header_extension_right_after_the_header() {
+        // No capture of the corpus carries a HEADER_EXTENSION. This one is put
+        // by hand between the header and the first submessage of frame 9,
+        // little-endian like the rest of the message, with flags L and C2.
+        let raw = hex::decode(CYCLONE_FRAME_9_HEX).unwrap();
+        let frame_9 = &raw[4 + 20 + 8..];
+        let mut payload = frame_9[..20].to_vec();
+        payload.extend_from_slice(&[0x00, 0x23, 8, 0]); // id, flags C2 | L | E, 8 bytes
+        payload.extend_from_slice(&144u32.to_le_bytes()); // messageLength, in the order of E
+        payload.extend_from_slice(&[0xde, 0xad, 0xbe, 0xef]); // a CRC-32C nobody computed
+        payload.extend_from_slice(&frame_9[20..]);
+        assert_eq!(payload.len(), 144);
+
+        let packet = RtpsPacket::try_from(payload.as_slice()).unwrap();
+        let message = packet.message().expect("a message, not a ping");
+        assert_eq!(message.submessages.len(), 5);
+        let extension = &message.submessages[0];
+        assert_eq!(extension.kind, SubmessageKind::HeaderExtension);
+        let SubmessageDetails::HeaderExtension(fields) = extension.details else {
+            panic!("expected a HEADER_EXTENSION, got {:?}", extension.details);
+        };
+        assert_eq!(fields.message_length, Some(144)); // the length of the datagram
+        // Read big-endian whatever E, and not verified: the message is accepted.
+        assert_eq!(fields.checksum, Some(RtpsChecksum::Crc32c(0xdead_beef)));
+        assert_eq!(fields.send_timestamp, None); // no flag T
+        assert_eq!((fields.u_extension, fields.w_extension), (None, None));
+        assert!(!fields.parameters);
+        assert_eq!(extension.header_extension_parameters(), None);
+        assert_eq!(message.submessages[1].kind, SubmessageKind::InfoDestination);
+
+        // Flag P alone: a ParameterList, here its PID_SENTINEL only, kept raw.
+        let mut payload = frame_9[..20].to_vec();
+        payload.extend_from_slice(&[0x00, 0x81, 4, 0, 0x01, 0x00, 0x00, 0x00]);
+        payload.extend_from_slice(&frame_9[20..]);
+        let packet = RtpsPacket::try_from(payload.as_slice()).unwrap();
+        let extension = &packet.message().unwrap().submessages[0];
+        assert_eq!(extension.header_extension_parameters(), Some(&[0x01, 0x00, 0x00, 0x00][..]));
+
+        // Every flag but P, on the INFO_DST of frame 9 turned HEADER_EXTENSION:
+        // 4 + 8 + 4 + 8 + 16 bytes of fields, in a body of 12.
+        let mut too_short = frame_9.to_vec();
+        too_short[20..22].copy_from_slice(&[0x00, 0x7f]);
+        assert_eq!(
+            RtpsPacket::try_from(too_short.as_slice()),
+            Err(RtpsParseError::SubmessageTooShort {
+                id: 0x00,
+                offset: 20,
+                expected: 40,
+                actual: 12,
+            })
+        );
+    }
+    // ANCHOR_END: rtps_header_extension
 
     // ANCHOR: asterix_typed_values
     #[test]

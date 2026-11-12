@@ -136,6 +136,11 @@ mod tests {
         assert_eq!(ack.max_segments_and_apdu, None); // a request field
         assert_eq!(ack.segment, None);
         assert_eq!(ack.data.len(), 14); // object and property again, then the value
+
+        // Past the corpus: the codes 34 and 35 are named since 11.7.0, 36 is not.
+        assert_eq!(ConfirmedService::from_code(34), Some(ConfirmedService::AuthRequest));
+        assert_eq!(ConfirmedService::from_code(35), Some(ConfirmedService::DirectoryQuery));
+        assert_eq!(ConfirmedService::from_code(36), None);
     }
     // ANCHOR_END: bacnet_read_property
 
