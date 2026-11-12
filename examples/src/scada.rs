@@ -1,7 +1,9 @@
 //! The SCADA chapters: DNP3 (IEEE 1815) and IEC 60870-5-104. Every frame
 //! comes from the crate's corpus, `pcaps_exemple/protocols/dnp3/` (the Zeek
 //! test corpus) and `pcaps_exemple/protocols/iec104/` (Wireshark wiki), see
-//! their `SOURCE.md`. The bytes were taken with tshark, never by hand.
+//! their `SOURCE.md`. The bytes were taken with tshark, never by hand, except
+//! the bare DNP3 frames of the object-range examples: synthetic frames with
+//! valid CRCs, said so above each constant.
 
 #[cfg(test)]
 mod tests {
@@ -91,6 +93,31 @@ mod tests {
         "0101010101010101010101010101bbc301010101010101010101010101010101",
         "bbc3010101010101010101018d7b"
     );
+
+    /// Synthetic DNP3 frames, without the transport layers below them: the
+    /// first five come from the crate's unit tests for #180, #181 and #182
+    /// (`src/parse/application/protocols/dnp3.rs`). A read of 32-bit analog
+    /// inputs (g30v1) over the full range, 0 to 0xFFFFFFFF on four bytes
+    /// (qualifier 0x02), then a read of class 0 (g60v1, qualifier 0x06).
+    const DNP3_FULL_RANGE_READ_HEX: &str =
+        "056416c402000100173ec0c1011e010200000000ffffffff3c018ef4063b4a";
+
+    /// A response with the same g30v1 header, then the same class 0 header.
+    const DNP3_FULL_RANGE_RESPONSE_HEX: &str =
+        "05641844010002008c14c0c48100001e010200000000ffffffff5dd13c0106277c";
+
+    /// A read of g30v1 points 3 and 7 by index (qualifier 0x17), then of class 0.
+    const DNP3_READ_BY_INDEX_HEX: &str = "056411c40200010029e0c0c3011e01170203073c0106d12a";
+
+    /// Reads of g30v1 from 5 to 4 and from 5 to 2 (qualifier 0x00), each
+    /// followed by a read of class 0.
+    const DNP3_EMPTY_RANGE_READ_HEX: &str = "056410c402000100ce55c0c0011e010005043c0106f33c";
+    const DNP3_INVERTED_RANGE_READ_HEX: &str = "056410c402000100ce55c0c5011e010005023c01061031";
+
+    /// Built for the book like the five above: a read of g30v1 from 0 to
+    /// 0xFFFFFFFE, one object short of the full range, then of class 0.
+    const DNP3_ALMOST_FULL_RANGE_READ_HEX: &str =
+        "056416c402000100173ec0c1011e010200000000feffffff3c016941063b4a";
 
     /// Frame 9 of `iec104/wireshark_iec104.pcap` (Wireshark wiki): TCP
     /// 46413 -> 2404, the general interrogation of station 10.
@@ -244,6 +271,94 @@ mod tests {
         assert_eq!(point(3), (0x01, -11989));
     }
     // ANCHOR_END: dnp3_response_objects
+
+    // ANCHOR: dnp3_full_range
+    #[test]
+    fn dnp3_the_full_range_has_no_u32_count() {
+        // A read of g30v1 over the full range, then of class 0.
+        let bytes = hex::decode(DNP3_FULL_RANGE_READ_HEX).unwrap();
+        let packet = Dnp3Packet::try_from(bytes.as_slice()).unwrap();
+        let read = packet.frames[0].application.as_ref().unwrap();
+        assert_eq!(read.header.function(), Some(ApplicationFunction::Read));
+        let [analogs, class_0] = &read.objects[..] else {
+            panic!("expected two object headers");
+        };
+        assert_eq!(
+            analogs.range,
+            RangeSpecifier::StartStop { start: 0, stop: u32::MAX, octets: 4 }
+        );
+        // 2^32 objects do not fit in a u32: no count, and no overflow.
+        assert_eq!(analogs.range.object_count(), None);
+        // A read carries no objects: nothing follows the header, and the chain
+        // goes on to the class 0 header.
+        assert!(analogs.data.is_empty());
+        assert_eq!((class_0.group, class_0.variation), (60, 1));
+        assert!(read.undecoded.is_empty());
+
+        // One object fewer, and the count is a u32 again.
+        let bytes = hex::decode(DNP3_ALMOST_FULL_RANGE_READ_HEX).unwrap();
+        let packet = Dnp3Packet::try_from(bytes.as_slice()).unwrap();
+        let read = packet.frames[0].application.as_ref().unwrap();
+        assert_eq!(read.objects[0].range.object_count(), Some(u32::MAX));
+        assert_eq!(read.objects.len(), 2);
+
+        // The full range in a response: 2^32 analog inputs of five bytes fit in
+        // no frame. The chain stops on that header, which is still listed, and
+        // the class 0 header after it stays undecoded.
+        let bytes = hex::decode(DNP3_FULL_RANGE_RESPONSE_HEX).unwrap();
+        let packet = Dnp3Packet::try_from(bytes.as_slice()).unwrap();
+        let frame = &packet.frames[0];
+        let response = frame.application.as_ref().unwrap();
+        assert_eq!(response.header.function(), Some(ApplicationFunction::Response));
+        let [analogs] = &response.objects[..] else {
+            panic!("expected one object header");
+        };
+        assert_eq!(analogs.range.object_count(), None);
+        assert!(analogs.data.is_empty());
+        assert_eq!(frame.user_data[response.undecoded.clone()], [60, 1, 0x06]);
+    }
+    // ANCHOR_END: dnp3_full_range
+
+    // ANCHOR: dnp3_ranges_and_indexes
+    #[test]
+    fn dnp3_requested_points_and_inverted_ranges() {
+        // A read of points 3 and 7 by index: a one-byte count, then each point
+        // as its one-byte index, without objects.
+        let bytes = hex::decode(DNP3_READ_BY_INDEX_HEX).unwrap();
+        let packet = Dnp3Packet::try_from(bytes.as_slice()).unwrap();
+        let frame = &packet.frames[0];
+        let read = frame.application.as_ref().unwrap();
+        let [points, class_0] = &read.objects[..] else {
+            panic!("expected two object headers");
+        };
+        assert_eq!(points.qualifier, 0x17);
+        assert_eq!(points.prefix, PrefixCode::Index { octets: 1 });
+        assert_eq!(points.range, RangeSpecifier::Count { count: 2, octets: 1 });
+        // `data` is the list of the indexes, and the chain goes on after it.
+        assert_eq!(frame.object_data(points), [3, 7]);
+        assert_eq!((class_0.group, class_0.variation), (60, 1));
+        assert!(read.undecoded.is_empty());
+
+        // From 5 to 4, the range is empty: zero objects, and the chain goes on.
+        let bytes = hex::decode(DNP3_EMPTY_RANGE_READ_HEX).unwrap();
+        let packet = Dnp3Packet::try_from(bytes.as_slice()).unwrap();
+        let read = packet.frames[0].application.as_ref().unwrap();
+        assert_eq!(read.objects[0].range.object_count(), Some(0));
+        assert_eq!(read.objects.len(), 2);
+
+        // From 5 to 2, the range is inverted: no count, and the chain stops.
+        let bytes = hex::decode(DNP3_INVERTED_RANGE_READ_HEX).unwrap();
+        let packet = Dnp3Packet::try_from(bytes.as_slice()).unwrap();
+        let frame = &packet.frames[0];
+        let read = frame.application.as_ref().unwrap();
+        let [inverted] = &read.objects[..] else {
+            panic!("expected one object header");
+        };
+        assert_eq!(inverted.range, RangeSpecifier::StartStop { start: 5, stop: 2, octets: 1 });
+        assert_eq!(inverted.range.object_count(), None);
+        assert_eq!(frame.user_data[read.undecoded.clone()], [60, 1, 0x06]);
+    }
+    // ANCHOR_END: dnp3_ranges_and_indexes
 
     // ANCHOR: dnp3_transport
     #[test]

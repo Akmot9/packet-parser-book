@@ -138,11 +138,35 @@ pub enum RangeSpecifier {
 }
 ```
 
-The qualifier is two codes (§4.2.2.7.1). Its low nibble is the range code, and the range fields that follow the header are 1, 2 or 4 bytes wide according to it. Bits 4 to 6 are the prefix code: 1 to 3 an index, 4 to 6 a size, each on 1, 2 or 4 bytes, and 7 is reserved; bit 7 of the qualifier is reserved too and is not read. `range.object_count()` gives the number of objects the range announces: stop − start + 1, or the count. It is `None` for `All` and `Reserved`, and for a range whose stop is below its start, which the decoder then treats like `All`: the header is listed with an empty `data`, and the chain goes on.
+The qualifier is two codes (§4.2.2.7.1). Its low nibble is the range code, and the range fields that follow the header are 1, 2 or 4 bytes wide according to it. Bits 4 to 6 are the prefix code: 1 to 3 an index, 4 to 6 a size, each on 1, 2 or 4 bytes, and 7 is reserved; bit 7 of the qualifier is reserved too and is not read. `range.object_count()` gives the number of objects the range announces: stop − start + 1, or the count. It is `None` for `All` and `Reserved`, for an inverted range, whose stop precedes its start by more than one index ([#181](https://github.com/Akmot9/Packet-parser/issues/181)), and for the full range, 0 to `0xFFFFFFFF` on four bytes (range codes 2 and 5), whose 2<sup>32</sup> objects do not fit in a `u32` ([#180](https://github.com/Akmot9/Packet-parser/issues/180)). A stop one index below the start, 5 to 4, is an empty range: `Some(0)`. Two of these answers changed in 11.7.0. On the full range, 11.6.0 overflowed: a panic with overflow checks (debug builds, `cargo fuzz`), `Some(0)` in release; the probe being blind, a 28-byte frame with valid CRCs was enough to make `parse()` panic on any TCP segment and almost any UDP datagram. And on the empty range, 11.6.0 returned `None`.
 
-Whether data follows a header depends on the function. Confirm, Read, the immediate freezes and freeze-and-clears (codes 7 to 10), the cold and warm restarts, enable and disable unsolicited, assign class, delay measurement and record current time carry headers only, unless the objects are prefixed by their size: a file block read (g70v5, qualifier `0x5b`) carries the file handle and the block number. For the other functions, the size of the objects comes from a table of IEEE 1815-2012 annex A in the crate: a fixed size in bytes, packed bits (one bit per point for g1v1, g10v1, g12v3 and g80v1, among them the binary inputs, binary outputs and internal indications, two bits for g3v1), or a size carried by the prefix, for files, device profiles, data sets and authentication among others. `data` is then the range of the objects in `user_data`, and `LinkFrame::object_data(&header)` the bytes.
+Whether data follows a header depends on the function. Confirm, Read, the immediate freezes and freeze-and-clears (codes 7 to 10), the cold and warm restarts, enable and disable unsolicited, assign class, delay measurement and record current time carry headers only, with two exceptions. Objects prefixed by their size carry their data: a file block read (g70v5, qualifier `0x5b`) carries the file handle and the block number. A header prefixed by indexes, qualifier `0x17`, `0x28` or `0x39` for instance, carries the list of the points the request asks for, without objects: since 11.7.0 ([#182](https://github.com/Akmot9/Packet-parser/issues/182)), `data` covers that list, the count times the width of an index, and the chain goes on after it. 11.6.0 did not step over the list and read the indexes as the next header, inventing headers. For the other functions, the size of the objects comes from a table of IEEE 1815-2012 annex A in the crate: a fixed size in bytes, packed bits (one bit per point for g1v1, g10v1, g12v3 and g80v1, among them the binary inputs, binary outputs and internal indications, two bits for g3v1), or a size carried by the prefix, for files, device profiles, data sets and authentication among others. `data` is then the range of the objects in `user_data`, and `LinkFrame::object_data(&header)` the bytes.
 
-The chain stops at a header whose prefix or range code is reserved, and, when the function carries data, at a group and variation the table does not know, at a variable-size object without a size prefix, or at data that goes beyond the frame. That header is still listed, with an empty `data`, and what follows it is `undecoded`; a header cut before its last range field is not listed at all. Frames 154 and 156 of `dnp3.pcap` show a real case: a Disable Unsolicited whose third header, g60v4, has the qualifier byte `0xed`, prefix code 6 and range code 13 once bit 7 is set aside. Range code 13 is not defined by the standard: the crate lists the header with `PrefixCode::Size { octets: 4 }` and `RangeSpecifier::Reserved(13)` and would read nothing past it (nothing follows it here), and tshark shows an "Unknown Range Type".
+The chain stops at a header whose prefix or range code is reserved, at an inverted range, and at a header whose objects, sizes or indexes cannot be delimited: when the function carries data, a group and variation the table does not know or a variable-size object without a size prefix, and data or an index list that goes beyond the frame. That header is still listed, with an empty `data`, and what follows it is `undecoded`; a header cut before its last range field is not listed at all. A header that announces no object, an empty range or a zero count, never stops the chain, whatever its group. Both rules changed in 11.7.0 ([#181](https://github.com/Akmot9/Packet-parser/issues/181)): 11.6.0 treated an inverted range like `All` and read what followed it as a new header, and it stopped on the zero count of an unknown group or of objects it could not delimit.
+
+On the full range, the decoder counts the 2<sup>32</sup> objects on 64 bits, and the size of their data, computed on 64 bits too, decides what follows ([#180](https://github.com/Akmot9/Packet-parser/issues/180)). When nothing follows the header, in a read without prefix, or for objects of size zero such as class 0 (g60v1) in a response, the chain goes on. When objects, sizes or indexes must follow, they fit in no frame, and the chain stops on that header. On a 32-bit target, an object prefixed by a 4-byte size close to `0xFFFFFFFF` made the computation of the position of the next size overflow in 11.6.0, another panic with overflow checks that `parse()` could reach; since 11.7.0 that computation is checked, and the chain stops on that header, as it did in release builds.
+
+Synthetic frames, most of them from the crate's unit tests: a read and a response over the full range (*tested*):
+
+```rust
+{{#include ../examples/src/scada.rs:dnp3_full_range}}
+```
+
+A read of two points by index, then an empty and an inverted range (*tested*):
+
+```rust
+{{#include ../examples/src/scada.rs:dnp3_ranges_and_indexes}}
+```
+
+tshark 4.6.6 stops at the same places on missing data, on an unknown group that announces objects, and on a negative count ("Negative number of items"). They differ in the cases below, which the comments of the decoder describe and, for most of them, its unit tests freeze on synthetic frames:
+
+- **The full range, range code 2.** tshark computes the count on 32 bits, where 2<sup>32</sup> wraps to zero, and reads the next header where the crate stops, when objects, sizes or indexes must follow the full range.
+- **Inverted ranges on four bytes.** From 10 to 5, tshark's count is −4, and it stops like the crate. When the start exceeds the stop by more than 2<sup>31</sup> + 1, from `0xFFFFFFFF` to 5, its 32-bit count is positive again, and it goes on where the crate stops. The other way round, a range of 2<sup>31</sup> objects or more, such as 0 to `0xFFFFFFFE`, has a negative count for tshark, which stops, while the crate goes on when nothing follows the header.
+- **Range codes 3 to 5.** tshark reads them as a single address, one object, and the bytes after it as a new header; the crate reads a start and a stop, counts them like codes 0 to 2, and stops on an inverted address range. The comparisons above hold for range code 2 only.
+- **Index lists.** In a read or a freeze of a precise variation (g30v1, g20v1...), tshark steps over the indexes, like the crate. For a default variation or a class (g1v0, g20v0, g60v1...), it steps over the first index only and reads the next ones as a header, and it decodes no object of an Assign Class.
+- **Reserved range codes.** tshark reads zero objects and the next header; the crate stops.
+
+Frames 154 and 156 of `dnp3.pcap` show a real case: a Disable Unsolicited whose third header, g60v4, has the qualifier byte `0xed`, prefix code 6 and range code 13 once bit 7 is set aside. Range code 13 is not defined by the standard: the crate lists the header with `PrefixCode::Size { octets: 4 }` and `RangeSpecifier::Reserved(13)` and would read nothing past it (nothing follows it here), and tshark shows an "Unknown Range Type".
 
 The values themselves are not decoded: the crate says where each object is, the caller reads it. A response with three object headers (*tested*):
 
@@ -164,6 +188,18 @@ All of them are `Dnp3ParseError`:
 | `ApplicationHeaderTooShort { actual }` | a FIR segment with less than 2 bytes of application header, 4 for a response |
 | `UnexpectedTrailingBytes { trailing }` | declared, never returned (see above) |
 
+The object headers never fail the decode, and 11.7.0 adds no error: a header the decoder cannot get past is listed, and the rest of the fragment is `undecoded`. What each kind of header gives:
+
+| Object header | `range.object_count()` | Object chain |
+| --- | --- | --- |
+| range code 6, `All` | `None` | goes on |
+| reserved prefix or range code | `None` for a reserved range code | stops |
+| empty range (5 to 4) or zero count | `Some(0)`; `None` for 5 to 4 in 11.6.0 | goes on, whatever the group (11.7.0) |
+| inverted range (5 to 2) | `None` | stops (11.7.0; 11.6.0 went on) |
+| full range, 0 to `0xFFFFFFFF` (codes 2 and 5) | `None` (11.7.0; overflow in 11.6.0) | goes on when nothing follows the header, stops otherwise |
+| index prefix in a request without object data | the count | goes on after the index list (11.7.0); stops when the list goes beyond the frame |
+| objects that cannot be delimited, or data beyond the frame | the count | stops |
+
 A refused payload is not labelled DNP3: it goes on to the next rules of the table and usually comes out `"Unknown"`, with nothing in `corrupted`, since no layer announced DNP3. One altered bit is enough (*tested*):
 
 ```rust
@@ -174,11 +210,11 @@ A refused payload is not labelled DNP3: it goes on to the next rules of the tabl
 
 The golden test `tests/dnp3_golden.rs` runs the sixteen captures of `pcaps_exemple/protocols/dnp3/`, taken from the test corpus of Zeek (BSD 3-clause, see the folder's `SOURCE.md`), and compares every segment and datagram that has a payload with tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/dnp3_oracle.sh`, frozen in `tests/data/dnp3_tshark_oracle.tsv`). Of 220 payloads, 218 are DNP3 frames, 179 on TCP and 39 on UDP, all labelled by the blind probe; the other two are the `05 05` segments of `dnp3.pcap`. On the 218 frames the link and transport headers match field by field: length, control, function, addresses, header CRC, FIR, FIN and sequence. 16 frames carry no user data; 159 application fragments fit in one frame, and their application header and 160 object headers, group, variation and the prefix and range codes of the qualifier, match too, except the objects of the four STOP_APPL of `dnp3.pcap`, which tshark does not dissect for that function; 7 first segments and 36 continuations belong to fragments spread over several frames.
 
-A second test alters, one at a time, ten bytes of frame 4 of `dnp3_read.pcap`, from the second start byte to the block CRC: every altered frame is refused, by the decoder and by the probe, while the intact frame, moved to port 40000, stays DNP3. The fuzz target `parse_dnp3` runs nightly on the same parser: the frames must tile the input, the user data have the length `length` announces, every object lies within the user data, and a single altered byte in any of four real frames must be refused.
+A second test alters, one at a time, ten bytes of frame 4 of `dnp3_read.pcap`, from the second start byte to the block CRC: every altered frame is refused, by the decoder and by the probe, while the intact frame, moved to port 40000, stays DNP3. The fuzz target `parse_dnp3` runs nightly on the same parser: the frames must tile the input, the user data have the length `length` announces, every object lies within the user data, and a single altered byte in any of four real frames must be refused. Since 11.7.0 it also mutates the user data alone, recomputing the CRCs, so that its mutations reach the transport, application and object headers; the frames of #180 and #182 are among its seeds, since its mutations do not forge the full range in practice.
 
 | Capture | Frames | Content |
 | --- | --- | --- |
-| `dnp3.pcap` | 214 | nine TCP sessions between three pairs of hosts, eight in 2004 and one in 2007: class reads, writes, selects, restarts, stop application, enable and disable unsolicited, confirmations, solicited and unsolicited responses |
+| `dnp3.pcap` | 214 | nine TCP sessions between three pairs of hosts, eight in 2004 and one in 2007: class and object reads, writes, five selects of a CROB (g12v1) without an operate, restarts, stop application, enable and disable unsolicited, confirmations, solicited and unsolicited responses |
 | `dnp3_read.pcap` | 10 | read of classes 1, 2, 3 and 0, response with binary inputs, binary outputs and analog inputs |
 | `dnp3_read_p20001.pcap` | 10 | the same bytes, port rewritten to 20001 |
 | `dnp3_write.pcap` | 10 | write of the time and date (g50v1) |
@@ -192,7 +228,7 @@ A second test alters, one at a time, ten bytes of frame 4 of `dnp3_read.pcap`, f
 | `dnp3_link_only.pcap` | 35 | link status requests and replies, then a read whose response spans two application fragments over sixteen link frames |
 | `dnp3_udp_read.pcap` | 23 | a read over UDP 20000, whose response spans two application fragments over sixteen link frames |
 | `dnp3_udp_write.pcap` | 2 | write of g80v1 over UDP, clearing the restart indication |
-| `dnp3_udp_select_operate.pcap` | 10 | select then operate over UDP, then a read whose response spans three link frames |
+| `dnp3_udp_select_operate.pcap` | 10 | select then operate over UDP (g12v1), then a read whose response spans three link frames, and a link status request with its reply; no application confirmation |
 | `dnp3_udp_en_spon.pcap` | 4 | enable unsolicited over UDP (g60v2 to g60v4) |
 
 One capture of the same Zeek folder is left out, `dnp3-flowbuffer-overflow-assert.pcap`: a scapy script generated it, and the corpus admits only real traffic.

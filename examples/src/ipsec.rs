@@ -163,6 +163,37 @@ mod tests {
     }
     // ANCHOR_END: ike_sa_init
 
+    // ANCHOR: ike_registry_codes
+    #[test]
+    fn exchange_and_payload_codes_follow_the_iana_registries() {
+        // The first argument is the major version, 1 or 2.
+        assert_eq!(ExchangeType::from_code(2, 42), Some(ExchangeType::GsaInbandRekey));
+        assert_eq!(ExchangeType::from_code(1, 6), Some(ExchangeType::Transaction));
+        assert_eq!(ExchangeType::from_code(1, 7), None); // ISAKMP Future Use
+        assert_eq!(ExchangeType::from_code(2, 6), None); // IKEv1 only
+
+        // IKEv1 15 and 16 are GDOI's SA KEK and SA TEK, no longer NAT-T.
+        assert_eq!(PayloadType::from_code(1, 15), Some(PayloadType::SaKek));
+        assert_eq!(PayloadType::from_code(1, 16), Some(PayloadType::SaTek));
+        // NAT-D and NAT-OA: 20 and 21 of RFC 3947, 130 and 131 of the drafts.
+        for code in [20, 130] {
+            assert_eq!(PayloadType::from_code(1, code), Some(PayloadType::NatDetection));
+        }
+        for code in [21, 131] {
+            assert_eq!(PayloadType::from_code(1, code), Some(PayloadType::NatOriginalAddress));
+        }
+        // The other GDOI types; Key Download has a code in each version.
+        assert_eq!(PayloadType::from_code(1, 17), Some(PayloadType::KeyDownload));
+        assert_eq!(PayloadType::from_code(2, 52), Some(PayloadType::KeyDownload));
+        assert_eq!(PayloadType::from_code(1, 18), Some(PayloadType::SequenceNumber));
+        assert_eq!(PayloadType::from_code(1, 19), Some(PayloadType::ProofOfPossession));
+        assert_eq!(PayloadType::from_code(1, 22), Some(PayloadType::GroupAssociatedPolicy));
+        // A code is read by the version of the message: 15 means nothing in IKEv2.
+        assert_eq!(PayloadType::from_code(2, 15), None);
+        assert_eq!(PayloadType::from_code(2, 127), None); // unassigned
+    }
+    // ANCHOR_END: ike_registry_codes
+
     // ANCHOR: ike_encrypted
     #[test]
     fn what_is_encrypted_stays_bytes() {
