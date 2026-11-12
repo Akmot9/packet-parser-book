@@ -2,13 +2,13 @@
 
 This chapter is the "how do I use it" part. The rest of the book is the "how is it built" part.
 
-> **Reference version: `packet_parser` 11.6.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 11.8.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "11.6.0"
+packet_parser = "11.8.0"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 
@@ -157,7 +157,7 @@ And the two link-layer failures, the only ones that return `Err` (*tested*):
 
 ## "Decode As": my FTP runs on port 2121
 
-Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 27 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)). The port never replaces the content check: it only gives the probe its chance before the rest of the table.
+Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 28 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)). The port never replaces the content check: it only gives the probe its chance before the rest of the table.
 
 ```rust
 use packet_parser::{DecodeAsProtocol, LinkType, ParseConfig, parse_with};
@@ -182,7 +182,7 @@ What `PacketFlowOwned` keeps, layer by layer:
 
 Dropped: every payload, every `details`, `Internet::payload_protocol`, and the PPPoE session of an Ethernet frame (`DataLink::pppoe`, since 11.6.0). Every owned type derives `PartialEq`, `Eq` and `Hash` over what it keeps, which makes `PacketFlowOwned` usable as the key of a flow table. That key is coarser than the borrowed identity: without the session, two PPPoE sessions that agree on everything else are one owned flow ([PPPoE session](./pppoe.md#flow-identity)).
 
-`PacketFlow` and `PacketFlowOwned` both implement `serde::Serialize` and produce the **same JSON** object (its members may come in another order): the link layer is nested and tagged, the upper layers are flattened, payloads and `details` are not serialized.
+`PacketFlow` and `PacketFlowOwned` both implement `serde::Serialize` and produce the **same JSON** text: since 11.7.0 ([#193](https://github.com/Akmot9/Packet-parser/issues/193)), the borrowed model writes its members in the order of the owned one, so the two strings are equal byte for byte. Before that, the keys and the values were already the same, but the borrowed model wrote `protocol_transport` before the ports and `ethertype` after the VLAN tags. The link layer is nested and tagged, the upper layers are flattened, payloads and `details` are not serialized.
 
 ```json
 {
@@ -201,13 +201,13 @@ Dropped: every payload, every `details`, `Internet::payload_protocol`, and the P
   "destination_ip": "172.20.10.2",
   "ip_destination_type": "Private",
   "protocol_internet": "IPv4",
-  "protocol_transport": "TCP",
   "source_port": 443,
-  "destination_port": 49416
+  "destination_port": 49416,
+  "protocol_transport": "TCP"
 }
 ```
 
-The owned form is what you keep once the capture buffer is gone (*tested*):
+The owned form is what you keep once the capture buffer is gone, and its text is the borrowed one (*tested*):
 
 ```rust
 {{#include ../examples/src/lib.rs:owned_and_json}}
