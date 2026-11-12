@@ -6,6 +6,7 @@
 #![allow(clippy::unwrap_used)]
 
 mod building_aaa;
+mod dcs;
 mod defense_a;
 mod defense_b;
 mod internet_layer;
@@ -242,12 +243,17 @@ mod tests {
     fn owned_flows_serialize_like_borrowed_ones() -> Result<(), Box<dyn std::error::Error>> {
         let raw = hex::decode(ETHERNET_IPV4_TCP_ACK_HEX)?;
         let flow = parse(LinkType::ETHERNET, &raw)?;
+        let borrowed_json = serde_json::to_string(&flow)?;
 
         // The owned form outlives the buffer; it drops payloads and details.
         let owned = flow.to_owned_flow();
         drop(raw);
 
-        let json: serde_json::Value = serde_json::from_str(&serde_json::to_string(&owned)?)?;
+        // Since 11.7.0, both models write the same text, members in the same order.
+        let owned_json = serde_json::to_string(&owned)?;
+        assert_eq!(owned_json, borrowed_json);
+
+        let json: serde_json::Value = serde_json::from_str(&owned_json)?;
         assert_eq!(json["data_link"]["link_type"], 1);
         assert_eq!(json["data_link"]["link_kind"], "ethernet");
         assert_eq!(json["source_ip"], "54.230.112.13");

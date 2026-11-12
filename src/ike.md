@@ -10,7 +10,7 @@ IKE travels over UDP: port 500 (IANA `isakmp`), and port 4500 (IANA `ipsec-nat-t
 port_rule("IKE", Guard::Udp, is_ike_udp_port, ProbeId::Ike),   // 500, 4500
 ```
 
-There is no blind probe: a 28-byte header with a plausible version and length is not a signature strong enough to try on every datagram. The probe is `IkePacket::from_udp`, run on the whole datagram rather than on the `PROBE_CAP` prefix, since the header's length must cover the message exactly. The rule sits among the port rules, after PostgreSQL's and right before the two other rules of port 4500, ESP and NAT-keepalive; the WireGuard rule of UDP 51820 comes later, so that an IKE packet whose peer drew 51820 as its ephemeral port keeps its label.
+There is no blind probe: a 28-byte header with a plausible version and length is not a signature strong enough to try on every datagram. The probe is `IkePacket::from_udp`, run on the whole datagram, as every probe but the four text ones since 11.7.0: the header's length must cover the message exactly. The rule sits among the port rules, after PostgreSQL's and right before the two other rules of port 4500, ESP and NAT-keepalive; the WireGuard rule of UDP 51820 comes later, so that an IKE packet whose peer drew 51820 as its ephemeral port keeps its label.
 
 One side is enough. In `ipsec_isakmp_esp.pcap`, a client behind a NAT, `192.168.2.100`, talks to nine gateways from ports 10500, 14500 and a few ephemeral ones: only the gateway's side is 500 or 4500. The capture's 279 IKE_SA_INIT messages are on UDP 500, its 240 IKE_AUTH and INFORMATIONAL messages on UDP 4500, with its 315 ESP packets.
 
@@ -102,7 +102,7 @@ The flags byte is the same in both versions, its bits are not. Each accessor ret
 | `version_flag()` | IKEv2 | V `0x10` | the sender can speak a higher major version |
 | `response_flag()` | IKEv2 | R `0x20` | a response |
 
-`ExchangeType` names the code according to the major version (RFC 2408, RFC 2409 for quick mode and new group mode, RFC 7296 and the IANA IKEv2 registry). Any other code is `None`, and the message is decoded all the same. That includes the IKEv2 code 42, which the IANA registry assigns to GSA_INBAND_REKEY (RFC 9838): 11.6.0 has no variant for it.
+`ExchangeType` names the code according to the major version (RFC 2408, RFC 2409 for quick mode and new group mode, RFC 7296 and the IANA registry *IKEv2 Exchange Types*). Since 11.7.0 ([#189](https://github.com/Akmot9/Packet-parser/issues/189)), every IKEv2 code the registry assigns, 34 to 44, has a variant: `GsaInbandRekey` names 42, the GSA_INBAND_REKEY of G-IKEv2 (RFC 9838 §2.4.2), which tshark 4.6.6 still shows as "Unassigned". In IKEv1, `Transaction` names code 6, the Transaction exchange of mode-config (draft-dukes-ike-mode-cfg-02), as tshark does: the registry lists 6 to 31 as "ISAKMP Future Use", and the draft was never standardized, like payload 14 below. Any other code is `None`, and the message is decoded all the same.
 
 | `ExchangeType` | IKEv1 | IKEv2 |
 | --- | --- | --- |
@@ -111,6 +111,7 @@ The flags byte is the same in both versions, its bits are not. Each accessor ret
 | `AuthenticationOnly` | 3 | — |
 | `Aggressive` | 4 | — |
 | `Informational` | 5 | 37 |
+| `Transaction` (mode-config, 11.7.0) | 6 | — |
 | `QuickMode` | 32 | — |
 | `NewGroupMode` | 33 | — |
 | `IkeSaInit` | — | 34 |
@@ -118,6 +119,7 @@ The flags byte is the same in both versions, its bits are not. Each accessor ret
 | `CreateChildSa` | — | 36 |
 | `IkeSessionResume` | — | 38 |
 | `GsaAuth`, `GsaRegistration`, `GsaRekey` | — | 39, 40, 41 |
+| `GsaInbandRekey` (11.7.0) | — | 42 |
 | `IkeIntermediate` | — | 43 |
 | `IkeFollowupKe` | — | 44 |
 
@@ -156,7 +158,7 @@ A payload does not carry its own type: the header's `next_payload` names the fir
 - the chain ends on a `next_payload` of 0, and bytes left after it are `UnexpectedTrailingBytes { trailing }`;
 - the chain also ends with the message when the last payload announces another one, as tshark reads it: frame 192 of `ipsec_isakmp_esp.pcap` is an IKE_AUTH whose only payload, of the unassigned type 127 and 784 bytes, announces a 35. One to three bytes left for an announced payload cannot hold its header, though: `PayloadOverflow` with `needed: 4`.
 
-Only the top level is walked: Proposal and Transform live inside a Security Association, and no body is decoded. `payloads` is the decoder's one allocation; the bodies borrow the packet. `PayloadType` names the codes according to the version (RFC 2408, RFC 3947 and the IANA IKEv2 registry); an unknown code, such as the unassigned 127, is `None` and its payload is kept like the others.
+Only the top level is walked: Proposal and Transform live inside a Security Association, and no body is decoded. `payloads` is the decoder's one allocation; the bodies borrow the packet. `PayloadType` names the codes according to the version: for IKEv1, RFC 2408, RFC 3947 for NAT-T, RFC 3547 and RFC 6407 for GDOI, and the IANA registry *Next Payload Types*; for IKEv2, RFC 7296 and the IANA registry *IKEv2 Payload Types*. An unknown code, such as the unassigned 127, is `None` and its payload is kept like the others.
 
 | `PayloadType` | IKEv1 | IKEv2 |
 | --- | --- | --- |
@@ -172,17 +174,29 @@ Only the top level is walked: Proposal and Transform live inside a Security Asso
 | `Notification` | 11 | 41 |
 | `Delete` | 12 | 42 |
 | `VendorId` | 13 | 43 |
-| `Attributes` | 14 | — |
-| `NatDetection` | 20 (RFC 3947); 15 and 130 (drafts) | — |
-| `NatOriginalAddress` | 21 (RFC 3947); 16 and 131 (drafts) | — |
+| `Attributes` (mode-config) | 14 | — |
+| `SaKek`, `SaTek` (GDOI, 11.7.0) | 15, 16 | — |
+| `KeyDownload` | 17 (GDOI, 11.7.0) | 52 |
+| `SequenceNumber`, `ProofOfPossession` (GDOI, 11.7.0) | 18, 19 | — |
+| `NatDetection` | 20 (RFC 3947); 130 (drafts) | — |
+| `NatOriginalAddress` | 21 (RFC 3947); 131 (drafts) | — |
+| `GroupAssociatedPolicy` (GDOI, 11.7.0) | 22 | — |
 | `TrafficSelectorInitiator`, `TrafficSelectorResponder` | — | 44, 45 |
 | `Encrypted` (SK) | — | 46 |
 | `Configuration` | — | 47 |
 | `ExtensibleAuthentication` | — | 48 |
 | `GenericSecurePasswordMethod` | — | 49 |
-| `GroupIdentification`, `GroupSecurityAssociation`, `KeyDownload` | — | 50, 51, 52 |
+| `GroupIdentification`, `GroupSecurityAssociation` | — | 50, 51 |
 | `EncryptedFragment` (SKF, RFC 7383) | — | 53 |
 | `PuzzleSolution` | — | 54 |
+
+Payload 14, the attributes of mode-config, comes from a draft that was never standardized: the IANA registry marks it "Reserved, not to be used". Codes 130 and 131 are those of the NAT-T drafts draft-ietf-ipsec-nat-t-ike-00 to -03.
+
+In IKEv1, codes 15 and 16 changed meaning in 11.7.0 ([#189](https://github.com/Akmot9/Packet-parser/issues/189)). 11.6.0 read them as `NatDetection` and `NatOriginalAddress`, after the drafts draft-ietf-ipsec-nat-t-ike-04 to -08, which used them without registering them. The *Next Payload Types* registry gives them to GDOI since RFC 3547: 15 is SA KEK (SAK), 16 SA TEK (SAT), and RFC 3947 took 20 and 21 for NAT-T. `PayloadType::from_code(1, 15)` now returns `Some(SaKek)` and `from_code(1, 16)` `Some(SaTek)`, as tshark ("SA KEK Payload", "SA TEK Payload"), libreswan and strongSwan read them. A caller that matches on `NatDetection` or `NatOriginalAddress` no longer sees 15 or 16, including from a peer that still follows those drafts. The other GDOI types, 17 to 19 and 22, were `None` in 11.6.0. None of the 1 254 ISAKMP frames of the crate's corpus carries these codes in clear: apart from a peer that follows those drafts, a GDOI type appears in clear at the top level only in the header of an encrypted message, whose `next_payload` names the first payload under the encryption (a GROUPKEY-PUSH announces a Sequence Number). The codes of both tables, as `from_code` reads them (*tested*):
+
+```rust
+{{#include ../examples/src/ipsec.rs:ike_registry_codes}}
+```
 
 ## What is encrypted
 
@@ -191,14 +205,14 @@ Only the top level is walked: Proposal and Transform live inside a Security Asso
 pub struct IkePacket<'a> {
     pub header: IkeHeader,
     pub payloads: Vec<IkePayload<'a>>,    // top level, in message order
-    pub encrypted_body: Option<&'a [u8]>, // the encrypted bytes, as they are
+    pub encrypted_body: Option<&'a [u8]>, // the protected bytes, as they are
 }
 ```
 
 The two versions encrypt differently, and `encrypted_body` covers both:
 
-- **IKEv1** sets the E flag, and everything after the header is encrypted. `payloads` is empty, `encrypted_body` is the rest of the message, and `header.next_payload` names the first payload under the encryption. In the main mode capture of the corpus, the eight messages after the key exchange, frames 5 to 12, are sent that way.
-- **IKEv2** encrypts in a payload, SK (46), or SKF (53) for a fragment, which must be the last of the message (RFC 7296 §3.14). The walk stops on it, so a byte after it is `UnexpectedTrailingBytes`. It is the last entry of `payloads` and its body is `encrypted_body`; its `next_payload` names the first payload under the encryption, not a top-level one. In the corpus, 241 IKEv2 messages end with an SK: every IKE_AUTH and every INFORMATIONAL, except frame 192 and its payload of type 127.
+- **IKEv1** sets the E flag, and everything after the header is encrypted. `payloads` is empty, `encrypted_body` is the rest of the message, all of it encrypted, and `header.next_payload` names the first payload under the encryption. In the main mode capture of the corpus, the eight messages after the key exchange, frames 5 to 12, are sent that way.
+- **IKEv2** encrypts in a payload, SK (46), or SKF (53) for a fragment, which must be the last of the message (RFC 7296 §3.14). The walk stops on it, so a byte after it is `UnexpectedTrailingBytes`. It is the last entry of `payloads` and its body is `encrypted_body`; its `next_payload` names the first payload under the encryption, not a top-level one. Not every byte of that body is encrypted: it holds the IV in clear, then the encrypted payloads with their padding, then the integrity checksum data, in clear too (RFC 7296 §3.14), and an SKF puts its fragment number and total fragments before the IV (RFC 7383 §2.5). The crate does not split them; their sizes depend on the negotiated algorithms. In the corpus, 241 IKEv2 messages end with an SK: every IKE_AUTH and every INFORMATIONAL, except frame 192 and its payload of type 127.
 
 The IKE_AUTH response of the VPN, then the first and fifth messages of an IKEv1 main mode (*tested*):
 
@@ -238,7 +252,7 @@ In the golden histogram of `pcaps_exemple/protocols/` (`tests/golden_pcaps.rs`),
 ## What is left out
 
 - **Payload contents**: proposals and transforms, key exchange data, nonces, identities, certificates, notifications and vendor IDs are bytes in `body`. A vendor ID is recognizable by its bytes, the `CISCO-DELETE-REASON` of the example, not named.
-- **Decryption**: none, in either version; `encrypted_body` is the ciphertext as it is.
+- **Decryption**: none, in either version; `encrypted_body` is the bytes as they are, with the clear IV and integrity data of an IKEv2 SK or SKF.
 - **No state**: no pairing of a request with its response, no SA table, no link between an IKE SA and the ESP SPIs it negotiates. One message at a time, like the rest of the crate.
 - **IKEv2 fragments** (SKF) are decoded one message at a time, never reassembled; an IKE message split by IP fragmentation has no transport layer, as everywhere in the crate.
 - **IKE over TCP** is not recognized: the rule is `Guard::Udp`.

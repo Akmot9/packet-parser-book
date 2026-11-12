@@ -46,6 +46,7 @@
     - [RDP](./rdp.md)
     - [RTPS](./rtps.md)
     - [STANAG 5066 SIS](./stanag5066.md)
+    - [Valmet DNA](./valmet_dna.md)
     - [WireGuard](./wireguard.md)
 
 - [Tunnels](./tunnels.md)

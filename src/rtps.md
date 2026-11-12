@@ -6,18 +6,18 @@ Real-Time Publish-Subscribe, the wire protocol of DDS (OMG DDSI-RTPS 2.x), added
 
 An RTPS message fills one UDP datagram. As for [PTP](./ptp.md) on UDP, the pipeline gives the datagram a label, `"RTPS"`, and nothing more: the decode is `RtpsPacket::try_from` on the transport payload.
 
-The rule is a **blind probe**, `rule("RTPS", Guard::Udp, ProbeId::Rtps)`, in the blind cascade of the [dispatch table](./application.md#reading-the-table), right after the blind NTP rule and before ASTERIX. There is no port guard: Cyclone DDS and Connext Micro send between random unicast ports, which is why the dispatch probes blind (frame 9 below goes from 54020 to 58584, the Connext Micro capture of the corpus to 21914). What identifies RTPS is its first four bytes, then its structure:
+The rule is a **blind probe**, `rule("RTPS", Guard::Udp, ProbeId::Rtps)`, in the blind cascade of the [dispatch table](./application.md#reading-the-table), right after the blind NTP rule and, since 11.8.0, before the blind [Valmet DNA](./valmet_dna.md) rule, then ASTERIX. There is no port guard: Cyclone DDS and Connext Micro send between random unicast ports, which is why the dispatch probes blind (frame 9 below goes from 54020 to 58584, the Connext Micro capture of the corpus to 21914). What identifies RTPS is its first four bytes, then its structure:
 
 ```rust
 ProbeId::Rtps => {
-    (full_payload.starts_with(b"RTPS") || full_payload.starts_with(b"RTPX"))
-        && RtpsPacket::try_from(full_payload).is_ok()
+    (payload.starts_with(b"RTPS") || payload.starts_with(b"RTPX"))
+        && RtpsPacket::try_from(payload).is_ok()
 }
 ```
 
 - the magic is a **constant-cost guard**, as for GIOP: the decoder only runs on a datagram that starts with `RTPS`, or with `RTPX`, a variant RTI Connext emits;
-- the decoder reads the **whole payload**, not only the first `PROBE_CAP` = 18 KiB that most probes, ASTERIX's among them, see: a 60 KB `DATA_FRAG` is still RTPS, and the six of `wireshark_15227_reassembly_one_each.pcapng`, up to 65 064 bytes of payload, are labelled;
-- the submessages must **tile the datagram exactly**; a reserved `submessageId` or a body too short for its kind refuses the message.
+- the decoder reads the **whole payload**, never a `PROBE_CAP` prefix of 18 KiB, which since 11.7.0 only the probes of the four text protocols keep: a 60 KB `DATA_FRAG` is still RTPS, and the six of `wireshark_15227_reassembly_one_each.pcapng`, up to 65 064 bytes of payload, are labelled;
+- the submessages must **tile the datagram exactly**; a reserved `submessageId`, a body too short for its kind, or a HEADER_EXTENSION out of place or with a wrong `messageLength` refuses the message.
 
 A refused message is not a corruption: the label is not given, the datagram goes on down the table and usually comes out `"Unknown"`, with nothing in `corrupted`. RTPS is probed on UDP only, and there is no `DecodeAsProtocol` variant for it: a rule without a port guard has no port to extend.
 
@@ -107,7 +107,7 @@ pub struct RtpsSubmessage<'a> {
 
 ### Byte order: one flag per submessage
 
-`little_endian` is flag E, `flags & 0x01`. Each submessage chooses its own byte order, and the crate reads in it every number of the submessage: `octetsToNextHeader`, sequence numbers, counts, fragment numbers and sizes, `numBits`, timestamps. A `SequenceNumber_t` is a signed high half then an unsigned low half, each in that order, returned as an `i64`. Two fields do not follow E: the entity ids, kept as the four octets of the `EntityId_t` read big-endian (`0x000003c2` for the built-in publications writer, for instance), and the vendorId, big-endian in `INFO_SRC` as in the header. All 544 submessages of the corpus set E: only the crate's unit tests, on synthetic bytes, read big-endian ones.
+`little_endian` is flag E, `flags & 0x01`. Each submessage chooses its own byte order, and the crate reads in it every number of the submessage: `octetsToNextHeader`, sequence numbers, counts, fragment numbers and sizes, `numBits`, timestamps. A `SequenceNumber_t` is a signed high half then an unsigned low half, each in that order, returned as an `i64`. Three fields do not follow E: the entity ids, kept as the four octets of the `EntityId_t` read big-endian (`0x000003c2` for the built-in publications writer, for instance), the vendorId, big-endian in `INFO_SRC` as in the header, and the checksum of a [HEADER_EXTENSION](#the-header-extension), big-endian too. All 544 submessages of the corpus set E: only the crate's unit tests, on synthetic bytes, read big-endian ones.
 
 ### `octetsToNextHeader`: a length, or zero
 
@@ -121,10 +121,11 @@ The sequence number of that DATA has a high half of −1, like those of frames 1
 
 ### Kinds and their fields
 
-`SubmessageKind` names the identifiers of the specification up to RTPS 2.4, of DDS Security 1.1 and of the vendor range; the HeaderExtension that RTPS 2.5 adds at `0x00` is not among them. `SubmessageDetails` decodes, for the kinds of the specification, the entity ids, sequence numbers, counters, timestamps and fragmentation fields, once the body has been checked to be long enough for them:
+`SubmessageKind` names the identifiers of DDSI-RTPS 2.5, of DDS Security 1.1 and of the vendor range; the HEADER_EXTENSION that RTPS 2.5 adds at `0x00` has been among them since 11.7.0 ([#186](https://github.com/Akmot9/Packet-parser/issues/186)), and has [its own section](#the-header-extension). `SubmessageDetails` decodes, for the kinds of the specification, the entity ids, sequence numbers, counters, timestamps and fragmentation fields, once the body has been checked to be long enough for them:
 
 | `submessageId` | `SubmessageKind` | `SubmessageDetails` | Minimum body |
 | --- | --- | --- | --- |
+| `0x00` HEADER_EXTENSION | `HeaderExtension` | `HeaderExtension(RtpsHeaderExtension)` | the fields its flags announce, 0 to 40 |
 | `0x15` DATA | `Data` | `Data { reader_id, writer_id, writer_sequence_number, inline_qos, serialized_payload, serialized_key }` | 20 |
 | `0x16` DATA_FRAG | `DataFrag` | `DataFrag { reader_id, writer_id, writer_sequence_number, fragment_starting_number, fragments_in_submessage, fragment_size, sample_size }` | 32 |
 | `0x07` HEARTBEAT | `Heartbeat` | `Heartbeat { reader_id, writer_id, first_sequence_number, last_sequence_number, count }` | 28 |
@@ -140,11 +141,57 @@ The sequence number of that DATA has a high half of −1, like those of frames 1
 | `0x01` PAD | `Pad` | `Opaque` | — |
 | `0x30`–`0x34` | `SecureBody`, `SecurePrefix`, `SecurePostfix`, `SecureRtpsPrefix`, `SecureRtpsPostfix` | `Opaque` | — |
 | `0x80`–`0xff` | `VendorSpecific(id)` | `Opaque` | — |
-| `0x00` (HeaderExtension, RTPS 2.5) and any other | — | — | `ReservedSubmessageId` |
+| any other | — | — | `ReservedSubmessageId` |
 
 The bitmap of a `SequenceNumberSet` or a `FragmentNumberSet` is `numBits` rounded up to 32-bit words, 4 × ⌈`numBits` / 32⌉ bytes, and the count of an ACKNACK or a NACK_FRAG comes after it: the crate checks that the bitmap fits before reading the count. An `RtpsTime` is `seconds: u32` and `fraction: u32`, in 2⁻³² s. Of the flags, `details` exposes Q, D and K of a DATA (`inline_qos`, `serialized_payload`, `serialized_key`), F of an ACKNACK (`final_flag`) and I of an INFO_TS (`timestamp: None`); the others stay in `flags`. What follows the fixed fields, the serialized data, the inline QoS, the locator lists, stays in `body`, as raw bytes.
 
-Nine kinds occur in the corpus, a list the golden test checks; over its 223 messages, INFO_TS appears 159 times, DATA 153, INFO_DST 96, HEARTBEAT 64, ACKNACK 61, DATA_FRAG 6, GAP 3, INFO_SRC once and the vendor submessage `0x80` of CoreDX once. HEARTBEAT_FRAG, NACK_FRAG, PAD, the two INFO_REPLY and the security submessages occur in no capture.
+Nine kinds occur in the corpus, a list the golden test checks; over its 223 messages, INFO_TS appears 159 times, DATA 153, INFO_DST 96, HEARTBEAT 64, ACKNACK 61, DATA_FRAG 6, GAP 3, INFO_SRC once and the vendor submessage `0x80` of CoreDX once. HEADER_EXTENSION, HEARTBEAT_FRAG, NACK_FRAG, PAD, the two INFO_REPLY and the security submessages occur in no capture.
+
+### The header extension
+
+RTPS 2.5 adds a submessage that extends the header (§8.3.3.2, §8.3.7 and §9.4.5.2): the length of the message, a send timestamp, two extension fields of 4 and 8 bytes, a checksum and parameters. In 11.6.0 the crate refused it as `ReservedSubmessageId { id: 0, offset: 20 }`, and the datagram came out `"Unknown"`. Since 11.7.0 its fields are in `SubmessageDetails::HeaderExtension`:
+
+```rust
+pub struct RtpsHeaderExtension {
+    pub message_length: Option<u32>,      // L
+    pub send_timestamp: Option<RtpsTime>, // T
+    pub u_extension: Option<[u8; 4]>,     // U
+    pub w_extension: Option<[u8; 8]>,     // W
+    pub checksum: Option<RtpsChecksum>,   // C1, C2
+    pub parameters: bool,                 // P
+}
+
+pub enum RtpsChecksum {
+    Crc32c(u32),   // C2 alone
+    Crc64Xz(u64),  // C1 alone
+    Md5([u8; 16]), // C1 and C2
+}
+```
+
+Each field is present when its flag is set, in this order on the wire:
+
+| Flag | Bit | Field | Bytes | Read as |
+| --- | --- | --- | --- | --- |
+| E | `0x01` | — | — | the byte order of the submessage |
+| L | `0x02` | `message_length` | 4 | `u32`, in the order of E |
+| T | `0x04` | `send_timestamp` | 8 | `RtpsTime`, in the order of E |
+| U | `0x08` | `u_extension` | 4 | raw bytes |
+| W | `0x10` | `w_extension` | 8 | raw bytes |
+| C2, C1 | `0x20`, `0x40` | `checksum` | 4, 8 or 16 | big-endian whatever E (Table 9.8): CRC-32C, CRC-64/XZ or MD5 |
+| P | `0x80` | `parameters` | the rest of the body | a ParameterList, raw: `header_extension_parameters()` |
+
+A body shorter than the fields its flags announce is `SubmessageTooShort`. Bytes after them, without P, are accepted and stay in `body`. `RtpsSubmessage::header_extension_parameters()` returns the ParameterList of a HEADER_EXTENSION whose P flag is set, as raw bytes: its parameters, the final PID_SENTINEL included, are neither decoded nor checked. Any other submessage, or no P flag, gives `None`.
+
+**The checksum is not verified**: the decoder reads it and keeps it, it does not compute a CRC or an MD5 over the message. Two other things are checked, which tshark 4.6.6 does not check:
+
+- the **position**: a HEADER_EXTENSION comes right after the header, at offset 20, or not at all (§8.3.3.2, §8.3.7.3); anywhere else it is `MisplacedHeaderExtension { offset }`;
+- the **`messageLength`**, when L is set: one message per UDP datagram (§9.5), so it must equal the length of the datagram, else `HeaderExtensionLengthMismatch { declared, actual }`.
+
+No capture of the corpus carries a HEADER_EXTENSION (`rtps.sm.id == 0x00`: no frame), so the golden test and the histogram did not move. One, put by hand into frame 9 (*tested*):
+
+```rust
+{{#include ../examples/src/defense_b.rs:rtps_header_extension}}
+```
 
 ## Validations
 
@@ -156,9 +203,13 @@ All of them are `RtpsParseError`, in `packet_parser::errors::application::rtps`:
 | `InvalidMagic([u8; 4])` | the first four bytes are neither `RTPS` nor `RTPX` |
 | `UnsupportedVersion { major, minor }` | the major version is not 2 |
 | `NoSubmessage` | a header and nothing after it |
-| `ReservedSubmessageId { id, offset }` | an identifier that is neither one of the specification up to RTPS 2.4, nor `0x30`–`0x34` (DDS Security), nor `0x80`–`0xff`; `0x00`, the HeaderExtension of RTPS 2.5, is refused too |
+| `ReservedSubmessageId { id, offset }` | an identifier that is neither one of DDSI-RTPS 2.5, HEADER_EXTENSION included, nor `0x30`–`0x34` (DDS Security), nor `0x80`–`0xff` |
 | `SubmessageOverflow { id, offset, declared, available }` | `octetsToNextHeader` beyond the end of the message |
-| `SubmessageTooShort { id, offset, expected, actual }` | a body shorter than its kind requires (entity ids, sequence numbers, bitmap) |
+| `SubmessageTooShort { id, offset, expected, actual }` | a body shorter than its kind requires (entity ids, sequence numbers, bitmap, the fields of a HEADER_EXTENSION) |
+| `MisplacedHeaderExtension { offset }` | a HEADER_EXTENSION that is not the first submessage (added in 11.7.0) |
+| `HeaderExtensionLengthMismatch { declared, actual }` | a HEADER_EXTENSION whose `messageLength` is not the length of the datagram (added in 11.7.0) |
+
+The refusal of an unknown identifier departs from the specification: rule 3 of DDSI-RTPS 2.5 §8.3.4.1 asks a receiver to ignore a submessage whose `submessageId` it does not know and to go on with the next one. The crate refuses the message instead, because the closed table of identifiers is part of the signature its blind probe relies on.
 
 The probe only asks whether the decode succeeds, so any of them means "not RTPS". Each one on the bytes of frame 9, one modification at a time (*tested*):
 
@@ -188,6 +239,7 @@ Two oracle details: tshark lists the identifier of a vendor submessage but not i
 - **User data**: the serialized payload (CDR), the inline QoS parameter lists and the locator lists stay raw in `body`; no topic, type or QoS policy is decoded, and the `extraFlags` and `octetsToInlineQos` of a DATA are not exposed.
 - **Names**: entity ids and GUID prefixes are numbers and bytes; tshark calls `0x000200c2` `ENTITYID_P2P_BUILTIN_PARTICIPANT_MESSAGE_WRITER`, the crate does not.
 - **DDS Security**: the secure submessages are recognized by their identifier, their bodies stay opaque.
-- **HeaderExtension**: RTPS 2.5 adds this submessage, `0x00`, right after the header. The crate does not know it: a message that carries one is `ReservedSubmessageId` and is not labelled. No capture of the corpus has one.
+- **The HEADER_EXTENSION checksum** is read, not verified, and its ParameterList stays raw and unchecked.
+- **Unknown submessages** refuse the message, where rule 3 of §8.3.4.1 asks to skip them.
 - **Reassembly**: `DATA_FRAG` fragments are not put back together, nor are the IPv4 fragments of a datagram. One message at a time, as everywhere in the crate.
 - **RTPS 1.x** is `UnsupportedVersion`, and RTPS is only looked for on UDP.

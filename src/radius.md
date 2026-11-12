@@ -13,7 +13,7 @@ port_rule("RADIUS", Guard::Udp, is_radius_udp_port, ProbeId::Radius), // 1812, 1
 rule("RADIUS", Guard::Udp, ProbeId::Radius),
 ```
 
-`is_radius_udp_port` matches, on either side, 1812 and 1813, the IANA ports, 1645 and 1646, their historical numbers (the switch of `radius.pcap` still sends from 1645), and 3799, the port of RFC 5176. On UDP 1700, which tshark also dissects as RADIUS, the crate relies on the blind rule. The probe is `RadiusPacket::try_from(full_payload).is_ok()`, run on the whole payload and not on its first `PROBE_CAP` bytes, because the declared length is compared with the real datagram. It accepts a datagram only if:
+`is_radius_udp_port` matches, on either side, 1812 and 1813, the IANA ports, 1645 and 1646, their historical numbers (the switch of `radius.pcap` still sends from 1645), and 3799, the port of RFC 5176. On UDP 1700, which tshark also dissects as RADIUS, the crate relies on the blind rule. The probe is `RadiusPacket::try_from(payload).is_ok()`, run on the whole payload, as every probe but the four text ones since 11.7.0 ([#185](https://github.com/Akmot9/Packet-parser/issues/185)): the declared length is compared with the real datagram. It accepts a datagram only if:
 
 - the code is one of the fourteen of RFC 2865, 2866 and 5176;
 - the declared length is between 20 and 4096 and equals the datagram;
@@ -90,7 +90,19 @@ pub struct RadiusAttribute<'a> {
 }
 ```
 
-`AttributeType` names 127 types of the IANA registry *RADIUS Attribute Types*: 1 to 125 except 17, 21, 54 and 93, and the extended types 241 to 246 (`ExtendedType1` to `ExtendedType4`, `LongExtendedType1`, `LongExtendedType2`). Two names do not follow the registry: 124 and 125, MIP6-Feature-Vector and MIP6-Home-Link-Prefix for IANA (RFC 5447), are `MipHomeAgentAddress` and `MipHomeAgentHost` in the crate. Any other type is kept, with `kind: None` and its value. `AttributeType::from_code` is public. Four accessors read a value:
+`AttributeType` names every assigned type of the IANA registry *RADIUS Attribute Types*, 192 of them: 1 to 190 except 17, 21, 54 and 93, which are unassigned, and the extended types 241 to 246. Types 126 to 190 have been named since 11.7.0 ([#192](https://github.com/Akmot9/Packet-parser/issues/192)): Operator-Name and location (RFC 5580), management (RFC 5607), PKM (RFC 5904), DS-Lite (RFC 6519), PMIPv6 (RFC 6572), EAP-Lower-Layer (RFC 6677), GSS-EAP (RFC 7055), IPv6 (RFC 6911, RFC 6930) and IEEE 802 (RFC 7268); 11.6.0 named 127 types and returned `None` for them. Code 191, the experimental 192 to 223, the implementation-specific 224 to 240 and the reserved 247 to 255 are `None`: any such type is kept, with `kind: None` and its value. `AttributeType::from_code` is public.
+
+The variants carry the registry's names, in CamelCase (173, IPv6-6rd-Configuration, is `Ipv6SixRdConfiguration`), with ten exceptions. 89, 101 and 241 to 246 carry the names of their RFC: `ChargeableUserIdentity` (CUI in the registry), `ErrorCause` ("Error-Cause Attribute"), `ExtendedType1` to `ExtendedType4`, `LongExtendedType1` and `LongExtendedType2` (Extended-Attribute-1 to -6). 124 and 125 carry the names of two Diameter AVPs, `MipHomeAgentAddress` and `MipHomeAgentHost`, which do not exist in RADIUS: 124 is MIP6-Feature-Vector, a field of 64 flags, not an address, and 125 MIP6-Home-Link-Prefix, a prefix length and an IPv6 prefix, not a host name (RFC 5447). The registry's name of 89, 124, 125, 173 and 241 to 246 is a search alias in the rustdoc.
+
+Since 11.7.0 ([#191](https://github.com/Akmot9/Packet-parser/issues/191)), those two variants are deprecated, and two associated constants equal to them, `AttributeType::Mip6FeatureVector` and `AttributeType::Mip6HomeLinkPrefix`, carry the registry's names. They work as an argument of `RadiusPacket::attribute` and as a `match` pattern. `from_code(124)` and `from_code(125)` return the same values as in 11.6.0, so `{:?}` still prints the old names, `MipHomeAgentAddress` and `MipHomeAgentHost`, until 12.0: the CHANGELOG announces that 12.0 renames the variants in place, at the same position, and that code written with the constants compiles unchanged.
+
+No capture of the corpus carries a type above 95. A packet built by hand, with the two types of RFC 5447 and an Operator-Name (*tested*):
+
+```rust
+{{#include ../examples/src/building_aaa.rs:radius_registry_names}}
+```
+
+Four accessors read a value:
 
 | Method | Returns | `Some` when |
 | --- | --- | --- |
@@ -127,7 +139,7 @@ The golden test `tests/radius_golden.rs` runs the two captures of `pcaps_exemple
 | Capture | Packets | Content | Origin |
 | --- | --- | --- | --- |
 | `protocols/radius/radius.pcap` | 4 | a Cisco switch, from port 1645, authenticates `John.McGuirk` in EAP: Access-Request, Access-Challenge, Access-Request, Access-Accept | Zeek test corpus, BSD 3-clause |
-| `protocols/radius/radius_localhost.pcap` | 19 | on the loopback interface, LINKTYPE_NULL: Access-Requests to port 1812 carrying EAP-Message, User-Password or CHAP-Password, and their Access-Challenge, Access-Accept and Access-Reject | Zeek test corpus, BSD 3-clause |
+| `protocols/radius/radius_localhost.pcap` | 19 | loopback traffic, `127.0.0.1` to `127.0.0.1`, LINKTYPE_NULL (a classic pcap does not record the interface): a client that tries EAP, PAP and CHAP from seven ephemeral ports, one per authentication; eleven Access-Requests to port 1812 carrying EAP-Message, User-Password or CHAP-Password, and their two Access-Challenge, four Access-Accept and two Access-Reject | Zeek test corpus, BSD 3-clause |
 | `The-Ultimate-PCAP.pcapng` | 72 of 51 328 frames | December 2022, a switch and VMware machines over IPv4 and IPv6: EAP-PEAP and EAP-TTLS exchanges, Microsoft Vendor-Specific attributes | Johannes Weber, *The Ultimate PCAP* |
 
 Over the 95: 49 Access-Request, 26 Access-Challenge, 18 Access-Accept and 2 Access-Reject, carrying 28 Vendor-Specific attributes, all of Microsoft (311). None of the other 51 256 frames of the Ultimate PCAP is labelled RADIUS. A second test moves frame 1 of `radius.pcap` to ports 40000 and 40001, then alters the code (to 6, outside the fourteen), the length and the length of the first attribute (twice): each is refused and loses the label, while an altered authenticator and an altered attribute value keep it.

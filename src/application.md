@@ -30,7 +30,7 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 ## Supported protocols
 
-The dispatch table gives 44 labels: DNS (plus its mDNS and LLMNR forms), TLS, SNMP, [NTP](#ntp), DHCP, DHCPv6, HTTP, MQTT, [PostgreSQL](#postgresql), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](#modbustcp-and-umas), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive. STP gets its label from the link layer (see below).
+The dispatch table gives 45 labels: DNS (plus its mDNS and LLMNR forms), TLS, SNMP, [NTP](#ntp), DHCP, DHCPv6, [HTTP](#http) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](#postgresql), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](#modbustcp-and-umas), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems. STP gets its label from the link layer (see below).
 
 Some protocols are decoded below the table and get no label: PTP straight over Ethernet (EtherType `0x88F7`), [GOOSE](./goose.md) (`0x88B8`) and [LLDP](./lldp.md) (`0x88CC`) are [internet layers](./network.md), and native ESP, IP protocol 50, is a transport layer whose SPI and sequence number are in `TransportDetails::Esp`, with no application payload, like ICMP.
 
@@ -60,8 +60,10 @@ struct Rule {
 and the invariants are:
 
 1. **A rule with a port guard labels only if port *and* content agree.** The port alone never decides. `OPC UA` on port 4840 is still checked by `OpcuaPacket::try_from`.
-2. **Every probe runs at most once per payload.** Failures are memoized by `ProbeId` in a bitmask, one bit of a `u64` for each of the 57 probes: a rule sharing a probe with an earlier one (port-priority then blind fallback) never re-runs it.
-3. **Probes read at most `PROBE_CAP` = 18 KiB.** Classification is a verdict on the application header, not on the whole segment; the cap is above the largest legitimate message a probe must see in full (an encrypted TLS record: 5 + 16 KiB + tag). The exceptions are the probes that read the real payload, not a prefix: the length prefix of OpenVPN over TCP; the structures that must end exactly with their datagram or segment, the extension fields and MAC of the NTP blind probe, RTPS (a 60 KB `DATA_FRAG` is still RTPS), DIS, DNP3, RADIUS, BACnet/IP, IKE and WireGuard; and RDP and IEC 104, whose TPKTs and APDUs are read on the whole segment, the last one possibly cut by the segmentation. The DNS blind probe stays on the capped prefix: a datagram longer than the cap cannot prove that its sections consume it exactly, and stays `"Unknown"`.
+2. **Every probe runs at most once per payload.** Failures are memoized by `ProbeId` in a bitmask, one bit of a `u64` for each of the 59 probes: a rule sharing a probe with an earlier one (port-priority then blind fallback) never re-runs it.
+3. **A probe judges the bytes its decoder will read; only the text probes stop at `PROBE_CAP`.** Since 11.7.0 every other probe runs on the real payload ([#184](https://github.com/Akmot9/Packet-parser/issues/184), [#185](https://github.com/Akmot9/Packet-parser/issues/185)): most decoders want it tiled to the last byte (SNMP, Modbus/TCP, ASTERIX, DIS, RTPS...) or covered by a declared length that must fit in it (NBSS, DNS over TCP, TLS...), and a prefix proves neither. The probes of the four text protocols, FTP, SMTP, NNTP and HTTP, keep the cap, `PROBE_CAP` = 18 432 bytes (18 KiB). They validate their text over its whole length: in UTF-8 for FTP and SMTP, the first line in UTF-8 and the octets of what follows for NNTP, the head in UTF-8 for HTTP. The fuzz oracle of FTP, SMTP and NNTP off their ports, `fuzz/oracles/text_protocols.rs`, copies the cap so that it judges the same bytes as their probes. What lies beyond the cap is not seen: a text message is judged on its first 18 432 bytes alone.
+
+   Before 11.7.0, 43 of the 57 probes read only that prefix, the bound that [#20](https://github.com/Akmot9/Packet-parser/issues/20) put on the cost of 64 KiB GRO segments. Beyond it a probe labelled what its decoder refuses (an SNMP GetResponse of 18 432 bytes followed by a hundred null bytes was `"SNMP"`), or missed a complete message (an exact DNS response of 20 041 bytes, or a TLS 1.2 record of 18 437 bytes, the maximum of RFC 5246 §6.2.3, stayed `"Unknown"`). Reading everything keeps the cost linear: a UDP payload is bounded by its datagram, and on TCP each decoder stops at its first structural error. Measured in release by [#185](https://github.com/Akmot9/Packet-parser/issues/185), a 60 000-byte TCP segment costs at most 31 µs to `parse()`. On the largest datagrams, [#184](https://github.com/Akmot9/Packet-parser/issues/184) measured 2.7 ms to decode 65 505 bytes of ASTERIX records, 3.8 times the cost of the 18 432 bytes of the cap, and 39 ms for the worst DNS case, a 255-byte name pointed at by 10 871 questions in 65 497 bytes, a cost that the bound on names keeps linear (see [Tightening a blind probe](#tightening-a-blind-probe)). No label of the corpus moved: apart from six RTPS datagrams, already read whole, none of its 210 captures carries a payload longer than the cap.
 4. **The order of the table is the priority**, inspectable, testable, and locked by a golden snapshot over the reference captures.
 
 ![One rule of the table: the transport payload, a TLS ClientHello on TCP 54322 to 443, passes the transport guard, then the port guard, then the content probe, and gets the label TLS; a failed gate moves on to the next rule, the last rule falls through to Unknown, an empty payload is not probed](images/application/dispatch_rule.svg)
@@ -70,7 +72,7 @@ Each rule is three gates in a row, and a payload stops at the first rule whose t
 
 ### Reading the table
 
-In 11.6.0 the table has 62 rules in two blocks: the 38 rules of the port block, then a blind cascade of 24. The port block also holds four rules without a port guard that must come early: the blind S7Comm rule, which must beat COTP even on port 102, and the three rules that recognize FTP, SMTP and NNTP off their ports. The source writes a rule with one of two constructors, or with the whole struct when a field differs from their defaults:
+In 11.8.0 the table has 64 rules in two blocks: the 39 rules of the port block, then a blind cascade of 25. 11.8.0 inserted the two rules of Valmet DNA, one after BACnet/IP among the port rules and one after RTPS in the cascade, so the rules that follow the first have moved down one place since 11.6.0, and those that follow the second two places; 11.7.0 moved no rule. The port block also holds four rules without a port guard that must come early: the blind S7Comm rule, which must beat COTP even on port 102, and the three rules that recognize FTP, SMTP and NNTP off their ports. The source writes a rule with one of two constructors, or with the whole struct when a field differs from their defaults:
 
 ```rust
 static RULES: &[Rule] = &[
@@ -95,7 +97,7 @@ static RULES: &[Rule] = &[
 ];
 ```
 
-Here is the whole table, in order. A port guard matches when either port of the segment or datagram is in its list; a veto skips the rule when either port is in the veto list. "Whole payload" marks the probes of invariant 3 that do not stop at `PROBE_CAP`.
+Here is the whole table, in order. A port guard matches when either port of the segment or datagram is in its list; a veto skips the rule when either port is in the veto list. Every probe reads the whole payload, except the text probes of rules 5 to 10 and 56, which read its first `PROBE_CAP` bytes (invariant 3).
 
 **Port rules**
 
@@ -105,10 +107,10 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 2 | DHCPv6 | `Udp` | 546, 547 | `Dhcpv6` | `Dhcpv6Packet::try_from` |
 | 3 | S7Comm | `Tcp` | none | `S7Comm` | `S7CommPacket::try_from`: TPKT, COTP DT and S7 header together |
 | 4 | COTP | `Tcp` | 102 | `CotpTpkt` | a COTP TPDU behind the first TPKT header (`cotp_from_tpkt`) |
-| 5 | FTP | `Tcp` | 21 | `Ftp` | `FtpMessage::try_from` |
-| 6 | SMTP | `Tcp` | 25, 587 | `Smtp` | `SmtpMessage::try_from` |
-| 7 | NNTP | `Tcp` | 119 | `Nntp` | `NntpMessage::try_from` |
-| 8 | FTP | `Tcp` | vetoed on 21, 25, 587, 119 | `FtpUnambiguous` | a complete command whose verb only FTP has: RETR, STOR, PASV, APPE, RNFR, RNTO, MKD, CDUP, EPSV, EPRT, NLST |
+| 5 | FTP | `Tcp` | 21 | `Ftp` | `FtpMessage::try_from`, first `PROBE_CAP` bytes |
+| 6 | SMTP | `Tcp` | 25, 587 | `Smtp` | `SmtpMessage::try_from`, first `PROBE_CAP` bytes |
+| 7 | NNTP | `Tcp` | 119 | `Nntp` | `NntpMessage::try_from`, first `PROBE_CAP` bytes |
+| 8 | FTP | `Tcp` | vetoed on 21, 25, 587, 119 | `FtpUnambiguous` | a complete command whose verb only FTP has: RETR, STOR, PASV, APPE, RNFR, RNTO, MKD, CDUP, EPSV, EPRT, NLST; first `PROBE_CAP` bytes |
 | 9 | SMTP | `Tcp` | vetoed on 21, 25, 587, 119 | `SmtpUnambiguous` | the same, for EHLO, HELO, MAIL, RCPT |
 | 10 | NNTP | `Tcp` | vetoed on 21, 25, 587, 119 | `NntpUnambiguous` | the same, for ARTICLE, XOVER, XHDR, IHAVE, LISTGROUP, NEWGROUPS, NEWNEWS |
 | 11 | mDNS | `Udp` | 5353, terminal | `Mdns` | `DnsPacket::try_from_mdns` |
@@ -117,7 +119,7 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 14 | NBNS | `Udp` | 137 | `Nbns` | `NbnsPacket::try_from` |
 | 15 | NBSS | `Tcp` | 139, 445 | `Nbss` | `NbssPacket::try_from` |
 | 16 | OpenVPN | `Udp` | 1194 | `OpenVpnUdp` | `OpenVpnPacket::try_from` |
-| 17 | OpenVPN | `Tcp` | 1194 | `OpenVpnTcp` | `OpenVpnPacket::from_tcp_stream`, whole payload |
+| 17 | OpenVPN | `Tcp` | 1194 | `OpenVpnTcp` | `OpenVpnPacket::from_tcp_stream`: the length-prefixed form |
 | 18 | AMS | `Tcp` | 48898 | `Ams` | `AmsPacket::try_from` |
 | 19 | AMS | `Udp` | 48899 | `Ams` | the same probe |
 | 20 | QUIC | `Udp` | 443 | `QuicShortHeader` | `is_plausible_short_header`: the 1-RTT header is opaque by design |
@@ -125,51 +127,53 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 22 | DNS | `Tcp` | 53 | `DnsTcp` | `DnsPacket::try_from_tcp`: the length-prefixed form |
 | 23 | DNS | `Udp` | 53 | `Dns` | `DnsPacket::try_from`: the datagram form |
 | 24 | [PTP](./ptp.md) | `Udp` | 319, 320 | `Ptp` | `PtpPacket::try_from_udp` |
-| 25 | [DIS](./dis.md) | `Udp` | 3000 | `DisLenient` | `DisPacket::try_from_lenient`, whole payload |
-| 26 | [RADIUS](./radius.md) | `Udp` | 1812, 1813, 1645, 1646, 3799 | `Radius` | `RadiusPacket::try_from`, whole payload |
-| 27 | [BACnet/IP](./bacnet.md) | `Udp` | 47808 to 47823 | `Bacnet` | `BacnetPacket::try_from`, whole payload |
-| 28 | [RDP](./rdp.md) | `Tcp` | 3389 | `Rdp` | `RdpPacket::try_from`, whole payload |
-| 29 | [IEC 104](./iec104.md) | `Tcp` | 2404 | `Iec104` | `Iec104Packet::try_from`, whole payload |
-| 30 | [PostgreSQL](#postgresql) | `Tcp` | 5432 | `PostgresqlPort` | `is_plausible_postgresql_payload`: a decode of compatible shape |
-| 31 | [IKE](./ike.md) | `Udp` | 500, 4500 | `Ike` | `IkePacket::from_udp`, bare or behind the non-ESP marker, whole payload |
-| 32 | [ESP](./esp.md) | `Udp` | 4500 | `EspNatT` | `UdpEncapsulation::classify` finds ESP and `EspPacket::try_from` accepts it |
-| 33 | [NAT-keepalive](./esp.md#in-udp-4500-behind-a-nat) | `Udp` | 4500 | `NatKeepalive` | `UdpEncapsulation::classify` finds the one byte `0xFF` |
-| 34 | [STANAG 5066](./stanag5066.md) | `Tcp` | 5066 | `Stanag5066` | `SisPdu::try_from` |
-| 35 | [UMAS](#modbustcp-and-umas) | `Tcp` | 502 | `Umas` | `UmasPacket::try_from` |
-| 36 | [ModbusTCP](#modbustcp-and-umas) | `Tcp` | 502 | `ModbusTcp` | `ModbusTcpPacket::try_from`: the envelope alone |
-| 37 | [WireGuard](./wireguard.md) | `Udp` | 51820 | `WireGuardPort` | `WireGuardPacket::is_port_udp_match`, whole payload |
-| 38 | [NTP](#ntp) | `Udp` | 123 | `Ntp` | `NtpPacket::try_from`: the decoder alone |
+| 25 | [DIS](./dis.md) | `Udp` | 3000 | `DisLenient` | `DisPacket::try_from_lenient` |
+| 26 | [RADIUS](./radius.md) | `Udp` | 1812, 1813, 1645, 1646, 3799 | `Radius` | `RadiusPacket::try_from` |
+| 27 | [BACnet/IP](./bacnet.md) | `Udp` | 47808 to 47823 | `Bacnet` | `BacnetPacket::try_from` |
+| 28 | [Valmet DNA](./valmet_dna.md) | `Udp` | 2517, 4516, 4517 | `ValmetDna` | `ValmetDnaPacket::is_port_udp_match`: a coherent header, with a known family at its exact size or an unknown one, or the 42-byte beacon (`TimeBeacon`) |
+| 29 | [RDP](./rdp.md) | `Tcp` | 3389 | `Rdp` | `RdpPacket::try_from` |
+| 30 | [IEC 104](./iec104.md) | `Tcp` | 2404 | `Iec104` | `Iec104Packet::try_from` |
+| 31 | [PostgreSQL](#postgresql) | `Tcp` | 5432 | `PostgresqlPort` | `is_plausible_postgresql_payload`: a decode of compatible shape |
+| 32 | [IKE](./ike.md) | `Udp` | 500, 4500 | `Ike` | `IkePacket::from_udp`, bare or behind the non-ESP marker |
+| 33 | [ESP](./esp.md) | `Udp` | 4500 | `EspNatT` | `UdpEncapsulation::classify` finds ESP and `EspPacket::try_from` accepts it |
+| 34 | [NAT-keepalive](./esp.md#in-udp-4500-behind-a-nat) | `Udp` | 4500 | `NatKeepalive` | `UdpEncapsulation::classify` finds the one byte `0xFF` |
+| 35 | [STANAG 5066](./stanag5066.md) | `Tcp` | 5066 | `Stanag5066` | `SisPdu::try_from` |
+| 36 | [UMAS](#modbustcp-and-umas) | `Tcp` | 502 | `Umas` | `UmasPacket::try_from` |
+| 37 | [ModbusTCP](#modbustcp-and-umas) | `Tcp` | 502 | `ModbusTcp` | `ModbusTcpPacket::try_from`: the envelope alone |
+| 38 | [WireGuard](./wireguard.md) | `Udp` | 51820 | `WireGuardPort` | `WireGuardPacket::is_port_udp_match` |
+| 39 | [NTP](#ntp) | `Udp` | 123 | `Ntp` | `NtpPacket::try_from`: the decoder alone |
 
 **Blind cascade**
 
 | # | Label | Guard | Ports | `ProbeId` | The probe |
 | --- | --- | --- | --- | --- | --- |
-| 39 | [NTP](#ntp) | `Udp` | none | `NtpBlind` | `NtpPacket::is_blind_udp_match`, whole payload |
-| 40 | [RTPS](./rtps.md) | `Udp` | none | `Rtps` | magic `RTPS` or `RTPX`, then `RtpsPacket::try_from`, whole payload |
-| 41 | [ASTERIX](./asterix.md) | `Udp` | none | `Asterix` | `AsterixPacket::try_from` |
-| 42 | [DIS](./dis.md) | `Udp` | none | `Dis` | `DisPacket::try_from`: the PDUs tile the datagram, whole payload |
-| 43 | [DNP3](./dnp3.md) | `Any` | none | `Dnp3` | `Dnp3Packet::try_from`, whole payload |
-| 44 | [RADIUS](./radius.md) | `Udp` | none | `Radius` | rule 26's probe |
-| 45 | [BACnet/IP](./bacnet.md) | `Udp` | none | `Bacnet` | rule 27's probe |
-| 46 | Bitcoin | `Tcp` | none | `Bitcoin` | `BitcoinPacket::try_from` |
-| 47 | OPC UA | `Tcp` | none | `Opcua` | rule 21's probe |
-| 48 | EtherNet/IP | `Any` | none | `EthernetIp` | `EtherNetIpPacket::try_from` |
-| 49 | [PostgreSQL](#postgresql) | `Tcp` | none | `Postgresql` | `is_likely_postgresql_payload`: compatible shape and a strong proof |
-| 50 | DNS | `Udp` | none | `DnsBlind` | `DnsPacket::is_blind_udp_match` |
-| 51 | SNMP | `Any` | none | `Snmp` | rule 1's probe |
-| 52 | TLS | `Tcp` | none | `Tls` | `TlsPacket::try_from` |
-| 53 | SSH | `Tcp` | none | `Ssh` | `SshPacket::try_from` |
-| 54 | HTTP | `Tcp` | none | `Http` | `HttpRequest::try_from` |
-| 55 | [GIOP](./giop.md) | `Tcp` | none | `Giop` | magic `GIOP`, then `GiopPacket::try_from` |
-| 56 | DHCP | `Udp` | none | `Dhcp` | `DhcpPacket::try_from` |
-| 57 | SRVLOC | `Any` | none | `Srvloc` | `SrvlocPacket::try_from` |
-| 58 | [UMAS](#modbustcp-and-umas) | `Tcp` | none | `Umas` | rule 35's probe |
-| 59 | [ModbusTCP](#modbustcp-and-umas) | `Tcp` | none | `ModbusTcpBlind` | `ModbusTcpPacket::is_blind_tcp_match` |
-| 60 | QUIC | `Udp` | none | `QuicLongHeader` | `QuicPacket::try_from` |
-| 61 | [WireGuard](./wireguard.md) | `Udp` | none | `WireGuardBlind` | `WireGuardPacket::is_blind_udp_match`, whole payload |
-| 62 | MQTT | `Tcp` | none | `Mqtt` | `MqttPacket::try_from` |
+| 40 | [NTP](#ntp) | `Udp` | none | `NtpBlind` | `NtpPacket::is_blind_udp_match` |
+| 41 | [RTPS](./rtps.md) | `Udp` | none | `Rtps` | magic `RTPS` or `RTPX`, then `RtpsPacket::try_from` |
+| 42 | [Valmet DNA](./valmet_dna.md) | `Udp` | none | `ValmetDnaBlind` | `ValmetDnaPacket::is_blind_udp_match`: one of the two known message families, at its exact size |
+| 43 | [ASTERIX](./asterix.md) | `Udp` | none | `Asterix` | `AsterixPacket::try_from` |
+| 44 | [DIS](./dis.md) | `Udp` | none | `Dis` | `DisPacket::try_from`: the PDUs tile the datagram |
+| 45 | [DNP3](./dnp3.md) | `Any` | none | `Dnp3` | `Dnp3Packet::try_from` |
+| 46 | [RADIUS](./radius.md) | `Udp` | none | `Radius` | rule 26's probe |
+| 47 | [BACnet/IP](./bacnet.md) | `Udp` | none | `Bacnet` | rule 27's probe |
+| 48 | Bitcoin | `Tcp` | none | `Bitcoin` | `BitcoinPacket::try_from` |
+| 49 | OPC UA | `Tcp` | none | `Opcua` | rule 21's probe |
+| 50 | EtherNet/IP | `Any` | none | `EthernetIp` | `EtherNetIpPacket::try_from` |
+| 51 | [PostgreSQL](#postgresql) | `Tcp` | none | `Postgresql` | `is_likely_postgresql_payload`: compatible shape and a strong proof |
+| 52 | DNS | `Udp` | none | `DnsBlind` | `DnsPacket::is_blind_udp_match` |
+| 53 | SNMP | `Any` | none | `Snmp` | rule 1's probe |
+| 54 | TLS | `Tcp` | none | `Tls` | `TlsPacket::try_from` |
+| 55 | SSH | `Tcp` | none | `Ssh` | `SshPacket::try_from` |
+| 56 | [HTTP](#http) | `Tcp` | none | `Http` | `HttpRequest::try_from` or `HttpResponse::try_from`, first `PROBE_CAP` bytes |
+| 57 | [GIOP](./giop.md) | `Tcp` | none | `Giop` | magic `GIOP`, then `GiopPacket::try_from` |
+| 58 | DHCP | `Udp` | none | `Dhcp` | `DhcpPacket::try_from` |
+| 59 | SRVLOC | `Any` | none | `Srvloc` | `SrvlocPacket::try_from` |
+| 60 | [UMAS](#modbustcp-and-umas) | `Tcp` | none | `Umas` | rule 36's probe |
+| 61 | [ModbusTCP](#modbustcp-and-umas) | `Tcp` | none | `ModbusTcpBlind` | `ModbusTcpPacket::is_blind_tcp_match` |
+| 62 | QUIC | `Udp` | none | `QuicLongHeader` | `QuicPacket::try_from` |
+| 63 | [WireGuard](./wireguard.md) | `Udp` | none | `WireGuardBlind` | `WireGuardPacket::is_blind_udp_match` |
+| 64 | MQTT | `Tcp` | none | `Mqtt` | `MqttPacket::try_from` |
 
-Six probes serve two rules each: `Ams` its TCP and its UDP port (18, 19), and five others a port rule that gives them priority and a blind rule further down, `Snmp` (1, 51), `Opcua` (21, 47), `Radius` (26, 44), `Bacnet` (27, 45) and `Umas` (35, 58). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, the three verb checks, `is_plausible_short_header`, the `is_blind_*` and `is_port_udp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. In the real file most lines carry a comment that says why they are there, often with the issue, the capture frame or the RFC section behind them. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
+Six probes serve two rules each: `Ams` its TCP and its UDP port (18, 19), and five others a port rule that gives them priority and a blind rule further down, `Snmp` (1, 53), `Opcua` (21, 49), `Radius` (26, 46), `Bacnet` (27, 47) and `Umas` (36, 60). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, the three verb checks, `is_plausible_short_header`, the `is_blind_*` and `is_port_udp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. In the real file most lines carry a comment that says why they are there, often with the issue, the capture frame or the RFC section behind them. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
 
 ### Three detection routes
 
@@ -183,7 +187,7 @@ When choosing where a new protocol goes, the question is: *can a valid payload o
 
 Whatever the route, the **transport guard** is always there: the RFC says on which transport a protocol exists, and probing it elsewhere only produces false positives.
 
-A protocol with a standard port and a signature strong enough elsewhere takes two routes at once, one rule each. With **one probe**, the port rule only gives it priority over the cascade: SNMP, OPC UA, RADIUS, BACnet/IP and UMAS. With **two probes**, the port rule keeps a lenient decoder and the blind rule a stricter one, because the standard port carries real traffic that no blind probe could prove: DNS on UDP 53 (`Dns`, `DnsBlind`, below), NTP on 123 (`Ntp`, `NtpBlind`), Modbus/TCP on 502 (`ModbusTcp`, `ModbusTcpBlind`), PostgreSQL on 5432 (`PostgresqlPort`, `Postgresql`), DIS on 3000 (`DisLenient`, `Dis`) and WireGuard on 51820 (`WireGuardPort`, `WireGuardBlind`). NTP, Modbus/TCP and PostgreSQL have their section below. QUIC has two rules too, but they read two different headers: the opaque short header only on UDP 443, the long header on any UDP port.
+A protocol with a standard port and a signature strong enough elsewhere takes two routes at once, one rule each. With **one probe**, the port rule only gives it priority over the cascade: SNMP, OPC UA, RADIUS, BACnet/IP and UMAS. With **two probes**, the port rule keeps a lenient decoder and the blind rule a stricter one, because the standard port carries real traffic that no blind probe could prove: DNS on UDP 53 (`Dns`, `DnsBlind`, below), NTP on 123 (`Ntp`, `NtpBlind`), Modbus/TCP on 502 (`ModbusTcp`, `ModbusTcpBlind`), PostgreSQL on 5432 (`PostgresqlPort`, `Postgresql`), DIS on 3000 (`DisLenient`, `Dis`), WireGuard on 51820 (`WireGuardPort`, `WireGuardBlind`) and [Valmet DNA](./valmet_dna.md) on UDP 2517, 4516 and 4517, ports observed on a process network rather than registered (`ValmetDna`, `ValmetDnaBlind`). NTP, Modbus/TCP and PostgreSQL have their section below. QUIC has two rules too, but they read two different headers: the opaque short header only on UDP 443, the long header on any UDP port.
 
 ### Tightening a blind probe
 
@@ -196,13 +200,15 @@ In both cases the rule kept its place in the table; what changed is what the pro
 
 11.6.0 did the same for two blind rules that ran a whole decoder, NTP ([#164](https://github.com/Akmot9/Packet-parser/issues/164)) and Modbus/TCP ([#167](https://github.com/Akmot9/Packet-parser/issues/167)), and split them as DNS had been split: the tolerant decoder now runs in a port rule on the standard port, where the labels of the corpus did not move, and the blind rule has a stricter probe of its own. The [NTP](#ntp) and [Modbus/TCP](#modbustcp-and-umas) sections give the details.
 
+11.7.0 came back to the DNS blind probe ([#184](https://github.com/Akmot9/Packet-parser/issues/184), [#196](https://github.com/Akmot9/Packet-parser/issues/196)). It judged only the first `PROBE_CAP` bytes: sections that ended exactly at byte 18 432 were enough, whatever followed, and a hundred null bytes after a response still came out `"DNS"`, where the probe demands sections that consume the datagram exactly; an exact response of 20 041 bytes stayed `"Unknown"`. The probe now reads the whole datagram, as the NTP blind probe does (invariant 3). Reading more needed a bound. The length of a domain name was not limited, and each name pointing to the same QNAME read it again in full, in a time quadratic in the size of the message: a forged response of 18 425 bytes, a QNAME of 4 602 labels and 767 records pointing to it, cost 193 ms to `DnsPacket::try_from`, and came out `"DNS"`. A name is now at most 255 bytes on the wire, pointers followed (RFC 1035 §3.1). A longer one makes `DnsPacket::try_from`, and its mDNS, LLMNR and TCP variants, fail in a few microseconds with `DnsQueryParseError::OutOfBoundParse`, the error of a name that runs past the message. tshark shows such a name as `<Name too long>` and goes on; the crate no longer labels the message. No frame of the corpus changed. ASTERIX, whose data blocks must tile the datagram, was judged on the same prefix, and has read the whole datagram since [#184](https://github.com/Akmot9/Packet-parser/issues/184).
+
 The reverse defect exists too, a parser refusing its own traffic, and 11.5.0 fixed one in SRVLOC ([#131](https://github.com/Akmot9/Packet-parser/issues/131)): the Char Encoding field of an SLPv1 header was read on one byte instead of two (RFC 2165 §7), which shifted everything after it, the XID and, in a `DAAdvert`, the error code, URL and scope list; the 26 SLPv1 `DAAdvert` of a real capture came out `"Unknown"`. The header now has `SrvlocHeaderV1::char_encoding` (`u16`, the IANA MIBenum, 106 for UTF-8); the old single-byte `encoding` is deprecated, a change that on its own calls for a minor version, not a patch. 11.6.0 fixed four more, all with real frames: NTP replies refused because of the client's clock ([#161](https://github.com/Akmot9/Packet-parser/issues/161)), timestamps without their era ([#162](https://github.com/Akmot9/Packet-parser/issues/162)), reference ids and polls an implementation does send ([#165](https://github.com/Akmot9/Packet-parser/issues/165)), and the PostgreSQL `p` message of every password or SCRAM authentication ([#98](https://github.com/Akmot9/Packet-parser/issues/98)).
 
 ## "Decode As"
 
 Port guards mean a server on a non-standard port is invisible to a port-guarded rule. `ParseConfig::decode_as(port, DecodeAsProtocol::Xxx)` declares extra ports, and `parse_with` applies them. Declared ports are evaluated **before** the table, with the same three constraints: port *and* content, the protocol's transport guard, and failures memoized like the table's. Ports the table marks terminal (mDNS 5353, LLMNR 5355) cannot be overridden: the caller extends the guards, never replaces them.
 
-`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch.rs` checks that the label and the probe are those of a rule of the table (for `WireGuard`, those of its 51820 twin), so that the two lists cannot drift apart:
+`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`, and 11.8.0 one more, `ValmetDna`. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch.rs` checks that the label and the probe are those of a rule of the table (for `WireGuard`, those of its 51820 twin), so that the two lists cannot drift apart:
 
 | Variant | Label | Guard | `ProbeId` |
 | --- | --- | --- | --- |
@@ -233,8 +239,9 @@ Port guards mean a server on a non-standard port is invisible to a port-guarded 
 | `Rdp` | [RDP](./rdp.md) | `Tcp` | `Rdp` |
 | `Iec104` | [IEC 104](./iec104.md) | `Tcp` | `Iec104` |
 | `WireGuard` | [WireGuard](./wireguard.md) | `Udp` | `WireGuard` |
+| `ValmetDna` | [Valmet DNA](./valmet_dna.md) | `Udp` | `ValmetDna` |
 
-A declared port gets the probe of the protocol's standard port: the compatible shape of PostgreSQL on 5432, the lenient reading of DIS on 3000, the envelope of Modbus/TCP on 502. `WireGuard` goes further than the 51820 rule: its probe, `WireGuardPacket::try_from`, accepts the reserved bytes whatever the message type, where the port rule wants them null in a cookie or a data message, 51820 being a port that any peer can draw at random. Because declared ports come before the table, a declared port names the protocol of everything its probe accepts: on a port declared `ModbusTcp`, a UMAS frame is `"ModbusTCP"` (see [Modbus/TCP and UMAS](#modbustcp-and-umas)).
+A declared port gets the probe of the protocol's standard port: the compatible shape of PostgreSQL on 5432, the lenient reading of DIS on 3000, the envelope of Modbus/TCP on 502, every message family and the beacon of Valmet DNA on 2517, 4516 and 4517. `WireGuard` goes further than the 51820 rule: its probe, `WireGuardPacket::try_from`, accepts the reserved bytes whatever the message type, where the port rule wants them null in a cookie or a data message, 51820 being a port that any peer can draw at random. Because declared ports come before the table, a declared port names the protocol of everything its probe accepts: on a port declared `ModbusTcp`, a UMAS frame is `"ModbusTCP"` (see [Modbus/TCP and UMAS](#modbustcp-and-umas)).
 
 The seventeen labels without a variant are all given by a rule without a port guard, which probes any port, except NAT-keepalive, which only UDP 4500 knows. For NTP, whose port rule is more tolerant than its blind probe, this means that off port 123 the strict probe is the only way to the label.
 
@@ -531,6 +538,58 @@ The SASLInitialResponse of frame 12 of the same capture is a `p` message of stro
 ### Oracle: 276 segments
 
 `tests/postgresql_golden.rs` runs the fourteen captures of `pcaps_exemple/protocols/postgresql/` against tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/postgresql_oracle.sh`, frozen in `tests/data/postgresql_tshark_oracle.tsv`): twelve real psql sessions (loopback, a VM against AWS RDS, an application in containers, a Windows workstation) and two negatives, HTTP and MySQL replayed on port 5432. Of the 331 segments with a payload, 276 are PostgreSQL, and their 558 messages have tshark's types and lengths, the 8 SSL answers included. Replayed off port 5432, 262 of them are still recognized by the blind probe; the 14 others are the segments without strong evidence, 8 SSL answers, 5 `Terminate` and 1 `ReadyForQuery`, each alone. On the negatives tshark labels 6 segments `pgsql`, the crate none, and nine mutations of two real frames (lengths, protocol version, final NUL, type byte, truncation, trailing byte) are rejected. The golden histogram counts 278 PostgreSQL labels: the 276 segments, and 2 retransmissions that tshark does not dissect.
+
+## HTTP
+
+HTTP/1.x (RFC 9112), as it fits in one TCP segment: the crate reassembles nothing. The module is `packet_parser::parse::application::protocols::http`, and its errors are `HttpParseError`, in `packet_parser::errors::application::http`. Since 11.7.0 it has two decoders, `HttpRequest` and `HttpResponse` ([#176](https://github.com/Akmot9/Packet-parser/issues/176)), and both borrow everything from the payload:
+
+```rust
+pub struct HttpRequest<'a> {
+    pub method: &'a str,
+    pub uri: &'a str,
+    pub version: &'a str,           // "HTTP/1.1", "HTTP/1.0"...
+    pub headers: HttpHeaders<'a>,
+    pub body: &'a str,              // the body as text, empty when it is not UTF-8
+    pub body_bytes: &'a [u8],       // the body as carried, since 11.7.0
+}
+
+pub struct HttpResponse<'a> {
+    pub version: &'a str,
+    pub status_code: u16,           // three digits
+    pub reason: &'a str,            // possibly empty
+    pub headers: HttpHeaders<'a>,
+    pub body: &'a [u8],
+}
+```
+
+Both are `#[non_exhaustive]`. `HttpHeaders` is the view over the header block that both share, validated once while parsing: `iter()` gives the `(name, value)` pairs in wire order, `get(name)` the first value of a name compared case-insensitively, and neither allocates.
+
+### Requests and responses
+
+The rule is a blind probe on TCP, `rule("HTTP", Guard::Tcp, ProbeId::Http)`, rule 56 of the table, after SSH and before GIOP; no port is involved. Before 11.7.0 the probe was `HttpRequest::try_from` alone: a response came out `"Unknown"` while the request that caused it came out `"HTTP"`, and since the whole payload had to be valid UTF-8, so did a request whose binary body fitted in the same segment. The probe now accepts either of two start lines:
+
+- a request line: a method among GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE and PATCH, a URI, and a version, `HTTP/` then one digit, or two separated by a dot;
+- a status line (RFC 9112 §4): the same version, a code of exactly three digits, and a reason phrase, possibly empty.
+
+Header lines follow, each with a colon, up to the first `CRLF CRLF`. Only this head must be valid UTF-8, for requests as for responses; the body is taken as it is, an image, gzip or a piece of a `chunked` transfer. The probe reads the first `PROBE_CAP` bytes of the payload (invariant 3), and without a `CRLF CRLF` in them, all of them are the head.
+
+The body is not decoded: no chunk is reassembled, nothing is decompressed, and nothing checks it against `Content-Length`, so a body cut by the segment is what follows the head in this one. HTTP/2 and HTTP/3 have no decoder, and HTTP inside TLS is labelled TLS: the crate does not decrypt.
+
+Frame 30 of `pcaps_exemple/protocols/arp/arppoison.pcapng`, a server's `204 No Content`, came out `"Unknown"` in 11.6.0 (*tested*):
+
+```rust
+{{#include ../examples/src/shared.rs:http_response}}
+```
+
+Frame 21178 of `pcaps_exemple/The-Ultimate-PCAP.pcapng` is an OCSP request to Let's Encrypt over IPv6, whose 85-byte DER body is in the same segment; because of that body, it came out `"Unknown"` in 11.6.0 (*tested*):
+
+```rust
+{{#include ../examples/src/shared.rs:http_binary_body}}
+```
+
+### Oracle: 296 frames
+
+`tests/http_golden.rs` compares the crate with tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/http_oracle.sh`, frozen in `tests/data/http_tshark_oracle.tsv`). For each frame it checks the kind, the version, and the method and URI or the code and phrase, on every capture of `pcaps_exemple/protocols/` and on `The-Ultimate-PCAP.pcapng`: 144 requests and 152 responses match. The crate labels no other frame of these captures `"HTTP"`, retransmissions apart: tshark does not dissect them, the crate labels six of them like the segments they repeat, and they are left out of the comparison. The two responses that tshark decrypts in `tls12-dsb.pcapng`, with the key the capture carries, stay TLS. With 11.7.0 the golden histogram went from 72 to 146 HTTP labels, 72 responses and 2 retransmissions of responses more, and from 9 579 to 9 505 `"Unknown"`.
 
 ## STP: the one label without a transport
 

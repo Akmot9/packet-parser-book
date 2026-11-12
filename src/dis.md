@@ -18,15 +18,15 @@ rule("DIS", Guard::Udp, ProbeId::Dis),
 with the probes
 
 ```rust
-ProbeId::Dis => DisPacket::try_from(full_payload).is_ok(),
-ProbeId::DisLenient => DisPacket::try_from_lenient(full_payload).is_ok(),
+ProbeId::Dis => DisPacket::try_from(payload).is_ok(),
+ProbeId::DisLenient => DisPacket::try_from_lenient(payload).is_ok(),
 ```
 
 - **The blind probe** is `DisPacket::try_from`, the **strict** read: every PDU must be valid (a version from 1 to 7, a type from 1 to 72, a family of the standard or an experimental one, a length that covers the header and stays within the datagram, the fixed fields of a typed body), and the PDUs must tile the datagram to the last byte. This exact tiling is the signature that lets the blind rule label DIS without a port guard. It is still not reached on the terminal mDNS and LLMNR ports, UDP 5353 and 5355, where a failed probe ends the dispatch with no label.
 - **On UDP 3000** the port already says DIS, and the probe is `DisPacket::try_from_lenient`: a declared length shorter than the datagram is accepted, and the rest is kept in `trailing`. Three real PDUs of the corpus declare 48 bytes in a 160-byte datagram, and tshark dissects them without stopping at the length.
 - **On another port**, `ParseConfig::decode_as(port, DecodeAsProtocol::Dis)` gives the same lenient read: the variant maps to `("DIS", Guard::Udp, ProbeId::DisLenient)`, evaluated before the table like every [Decode As](./application.md#decode-as) port.
 
-Both probes run on the whole payload, not on the 18 KiB prefix (`PROBE_CAP`) that most probes see: an exact tiling can only be proven on the real datagram. `Application::try_from`, which has no ports, runs the strict read, after ASTERIX.
+Both probes run on the whole payload: an exact tiling can only be proven on the real datagram. Since 11.7.0 every probe does so, except the four text protocols, which keep the 18 KiB prefix (`PROBE_CAP`) ([#185](https://github.com/Akmot9/Packet-parser/issues/185)). `Application::try_from`, which has no ports, runs the strict read, after ASTERIX.
 
 Neither read demands a family consistent with the type. `DIS_signal_and_transmitter.pcapng` puts family 0 ("other") instead of 4 (radio communications) on all its radio PDUs: not conforming, but real. Family 0 is admitted, and no rule ties a family to a type.
 

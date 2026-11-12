@@ -1,11 +1,13 @@
 //! Examples of the BACnet/IP and RADIUS chapters: two UDP protocols with a
 //! port rule and a blind probe. Every frame comes from the crate's corpus,
 //! extracted with tshark; the comment above each constant names the capture
-//! (under `pcaps_exemple/` in the crate repository) and the frame number.
+//! (under `pcaps_exemple/` in the crate repository) and the frame number. The
+//! one exception, a RADIUS packet with types no capture carries, is built by
+//! hand in its test.
 
 #[cfg(test)]
 mod tests {
-    use std::net::Ipv4Addr;
+    use std::net::{Ipv4Addr, Ipv6Addr};
 
     use packet_parser::errors::application::bacnet::BacnetParseError;
     use packet_parser::errors::application::radius::RadiusParseError;
@@ -136,6 +138,11 @@ mod tests {
         assert_eq!(ack.max_segments_and_apdu, None); // a request field
         assert_eq!(ack.segment, None);
         assert_eq!(ack.data.len(), 14); // object and property again, then the value
+
+        // Past the corpus: the codes 34 and 35 are named since 11.7.0, 36 is not.
+        assert_eq!(ConfirmedService::from_code(34), Some(ConfirmedService::AuthRequest));
+        assert_eq!(ConfirmedService::from_code(35), Some(ConfirmedService::DirectoryQuery));
+        assert_eq!(ConfirmedService::from_code(36), None);
     }
     // ANCHOR_END: bacnet_read_property
 
@@ -312,6 +319,71 @@ mod tests {
         assert_eq!(packet.attributes[0].vendor(), None);
     }
     // ANCHOR_END: radius_vendor_specific
+
+    // ANCHOR: radius_registry_names
+    #[test]
+    fn radius_types_124_and_125_by_their_registry_names() {
+        // An Access-Request built by hand: no capture of the corpus carries a
+        // type above 95. The header, then four attributes.
+        let mut bytes = vec![1, 7, 0, 0]; // code, identifier, length (set below)
+        bytes.extend_from_slice(&[0; 16]); // request authenticator, not checked
+        // 124, MIP6-Feature-Vector: 64 flags, here the lowest one.
+        bytes.extend_from_slice(&[124, 10, 0, 0, 0, 0, 0, 0, 0, 1]);
+        // 125, MIP6-Home-Link-Prefix: a prefix length, then 2001:db8:1::.
+        bytes.extend_from_slice(&[125, 19, 64, 0x20, 0x01, 0x0d, 0xb8, 0, 1]);
+        bytes.extend_from_slice(&[0; 10]);
+        // 126, Operator-Name, named since 11.7.0.
+        bytes.extend_from_slice(&[126, 14]);
+        bytes.extend_from_slice(b"1example.net");
+        // 192, the first of the experimental types.
+        bytes.extend_from_slice(&[192, 3, 0xff]);
+        let length = u16::try_from(bytes.len()).unwrap();
+        bytes[2..4].copy_from_slice(&length.to_be_bytes());
+
+        let packet = RadiusPacket::try_from(bytes.as_slice()).unwrap();
+        assert_eq!((packet.kind, packet.length), (RadiusCode::AccessRequest, 66));
+
+        // The constants are patterns, like the variants they stand for.
+        let names: Vec<&str> = packet
+            .attributes
+            .iter()
+            .map(|attribute| match attribute.kind {
+                Some(AttributeType::Mip6FeatureVector) => "MIP6-Feature-Vector",
+                Some(AttributeType::Mip6HomeLinkPrefix) => "MIP6-Home-Link-Prefix",
+                Some(AttributeType::OperatorName) => "Operator-Name",
+                Some(_) => "another named type",
+                None => "not named",
+            })
+            .collect();
+        assert_eq!(
+            names,
+            ["MIP6-Feature-Vector", "MIP6-Home-Link-Prefix", "Operator-Name", "not named"]
+        );
+
+        // They are arguments too. The values stay bytes, read by the caller.
+        let features = packet.attribute(AttributeType::Mip6FeatureVector).unwrap();
+        assert_eq!(u64::from_be_bytes(features.value.try_into().unwrap()), 1);
+        let home = packet.attribute(AttributeType::Mip6HomeLinkPrefix).unwrap();
+        let prefix: [u8; 16] = home.value[1..].try_into().unwrap();
+        assert_eq!((home.value[0], Ipv6Addr::from(prefix)), (64, "2001:db8:1::".parse().unwrap()));
+        let operator = packet.attribute(AttributeType::OperatorName);
+        assert_eq!(operator.and_then(RadiusAttribute::as_text), Some("1example.net"));
+
+        // from_code(124) is the same value as in 11.6.0: until 12.0, {:?}
+        // prints the name of the deprecated variant.
+        assert_eq!(AttributeType::from_code(124), Some(AttributeType::Mip6FeatureVector));
+        assert_eq!(format!("{:?}", AttributeType::Mip6FeatureVector), "MipHomeAgentAddress");
+        assert_eq!(format!("{:?}", AttributeType::Mip6HomeLinkPrefix), "MipHomeAgentHost");
+
+        // Every assigned type is named: 1 to 190 but four, and 241 to 246.
+        let named = (0..=255).filter(|&code| AttributeType::from_code(code).is_some());
+        assert_eq!(named.count(), 192);
+        for code in [17, 21, 54, 93, 191, 192, 223, 224, 240, 247, 255] {
+            assert_eq!(AttributeType::from_code(code), None);
+        }
+        assert_eq!(AttributeType::from_code(190), Some(AttributeType::WlanRfBand));
+    }
+    // ANCHOR_END: radius_registry_names
 
     // ANCHOR: radius_loopback_reject
     #[test]
