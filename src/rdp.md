@@ -10,7 +10,7 @@ The rule is port-guarded, TCP 3389 (IANA `ms-wbt-server`) on either side:
 port_rule("RDP", Guard::Tcp, is_rdp_tcp_port, ProbeId::Rdp),   // 3389
 ```
 
-A [blind probe](./application.md#three-detection-routes) is ruled out because none of the three layers is RDP's own: TPKT, COTP and MCS are also the stack of T.120 and of ISO over TCP. A server on another port is declared with `ParseConfig::decode_as(port, DecodeAsProtocol::Rdp)`, which runs the same probe under the same TCP guard ([Decode As](./application.md#decode-as)). The probe is `RdpPacket::try_from`, on the whole segment rather than its first `PROBE_CAP` bytes. `Application::try_from`, which has no port, never answers `"RDP"`.
+A [blind probe](./application.md#three-detection-routes) is ruled out because none of the three layers is RDP's own: TPKT, COTP and MCS are also the stack of T.120 and of ISO over TCP. A server on another port is declared with `ParseConfig::decode_as(port, DecodeAsProtocol::Rdp)`, which runs the same probe under the same TCP guard ([Decode As](./application.md#decode-as)). The probe is `RdpPacket::try_from`, on the whole segment. `Application::try_from`, which has no port, never answers `"RDP"`.
 
 **After a TLS or CredSSP negotiation, the segments are labelled TLS.** Once the server has selected TLS or CredSSP, the connection carries TLS records. Their first byte is a content type (`0x16` for a handshake) where TPKT wants version 3, so the RDP probe refuses them and the blind TLS rule further down the table takes them. That is the decision of the issue, tested on `rdp-to-ssl.pcap`: a stateless parser sees TLS records and names them, and nothing ties them back to the RDP connection they belong to.
 
@@ -157,7 +157,7 @@ The Connection Confirm of frame 9 of `rdp-no-cookie-mstshash.pcap` sets all five
 
 ### The correlation info
 
-A client may append to its negotiation request a 36-byte RDP_NEG_CORRELATION_INFO (MS-RDPBCGR §2.2.1.1.2), which it announces with the request flag `0x08`, CORRELATION_INFO_PRESENT. The decoder reads it since 11.7.0 ([#187](https://github.com/Akmot9/Packet-parser/issues/187)). In 11.6.0, a Connection Request that carried one was refused with `InvalidNegotiation` ("declares 8 bytes, not 8"), and the segment came out `"Unknown"` on port 3389, its cookie and requested protocols lost. Offsets from the end of the request:
+A client may append to its negotiation request a 36-byte RDP_NEG_CORRELATION_INFO (MS-RDPBCGR §2.2.1.1.2), which it announces with the request flag `0x08`, CORRELATION_INFO_PRESENT. The decoder has read it since 11.7.0 ([#187](https://github.com/Akmot9/Packet-parser/issues/187)). In 11.6.0, a Connection Request that carried one was refused with `InvalidNegotiation` ("declares 8 bytes, not 8"), and the segment came out `"Unknown"` on port 3389, its cookie and requested protocols lost. Offsets from the end of the request:
 
 | Bytes | Field | Note |
 | --- | --- | --- |

@@ -121,7 +121,7 @@ The sequence number of that DATA has a high half of −1, like those of frames 1
 
 ### Kinds and their fields
 
-`SubmessageKind` names the identifiers of DDSI-RTPS 2.5, of DDS Security 1.1 and of the vendor range; the HEADER_EXTENSION that RTPS 2.5 adds at `0x00` is among them since 11.7.0 ([#186](https://github.com/Akmot9/Packet-parser/issues/186)), and has [its own section](#the-header-extension). `SubmessageDetails` decodes, for the kinds of the specification, the entity ids, sequence numbers, counters, timestamps and fragmentation fields, once the body has been checked to be long enough for them:
+`SubmessageKind` names the identifiers of DDSI-RTPS 2.5, of DDS Security 1.1 and of the vendor range; the HEADER_EXTENSION that RTPS 2.5 adds at `0x00` has been among them since 11.7.0 ([#186](https://github.com/Akmot9/Packet-parser/issues/186)), and has [its own section](#the-header-extension). `SubmessageDetails` decodes, for the kinds of the specification, the entity ids, sequence numbers, counters, timestamps and fragmentation fields, once the body has been checked to be long enough for them:
 
 | `submessageId` | `SubmessageKind` | `SubmessageDetails` | Minimum body |
 | --- | --- | --- | --- |

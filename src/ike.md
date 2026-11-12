@@ -10,7 +10,7 @@ IKE travels over UDP: port 500 (IANA `isakmp`), and port 4500 (IANA `ipsec-nat-t
 port_rule("IKE", Guard::Udp, is_ike_udp_port, ProbeId::Ike),   // 500, 4500
 ```
 
-There is no blind probe: a 28-byte header with a plausible version and length is not a signature strong enough to try on every datagram. The probe is `IkePacket::from_udp`, run on the whole datagram rather than on the `PROBE_CAP` prefix, since the header's length must cover the message exactly. The rule sits among the port rules, after PostgreSQL's and right before the two other rules of port 4500, ESP and NAT-keepalive; the WireGuard rule of UDP 51820 comes later, so that an IKE packet whose peer drew 51820 as its ephemeral port keeps its label.
+There is no blind probe: a 28-byte header with a plausible version and length is not a signature strong enough to try on every datagram. The probe is `IkePacket::from_udp`, run on the whole datagram, as every probe but the four text ones since 11.7.0: the header's length must cover the message exactly. The rule sits among the port rules, after PostgreSQL's and right before the two other rules of port 4500, ESP and NAT-keepalive; the WireGuard rule of UDP 51820 comes later, so that an IKE packet whose peer drew 51820 as its ephemeral port keeps its label.
 
 One side is enough. In `ipsec_isakmp_esp.pcap`, a client behind a NAT, `192.168.2.100`, talks to nine gateways from ports 10500, 14500 and a few ephemeral ones: only the gateway's side is 500 or 4500. The capture's 279 IKE_SA_INIT messages are on UDP 500, its 240 IKE_AUTH and INFORMATIONAL messages on UDP 4500, with its 315 ESP packets.
 
