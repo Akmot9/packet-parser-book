@@ -26,7 +26,7 @@ ProbeId::DisLenient => DisPacket::try_from_lenient(full_payload).is_ok(),
 - **On UDP 3000** the port already says DIS, and the probe is `DisPacket::try_from_lenient`: a declared length shorter than the datagram is accepted, and the rest is kept in `trailing`. Three real PDUs of the corpus declare 48 bytes in a 160-byte datagram, and tshark dissects them without stopping at the length.
 - **On another port**, `ParseConfig::decode_as(port, DecodeAsProtocol::Dis)` gives the same lenient read: the variant maps to `("DIS", Guard::Udp, ProbeId::DisLenient)`, evaluated before the table like every [Decode As](./application.md#decode-as) port.
 
-Both probes run on the whole payload, not on the 18 KiB prefix (`PROBE_CAP`) that most probes see: an exact tiling can only be proven on the real datagram. `Application::try_from`, which has no ports, runs the strict read, after ASTERIX.
+Both probes run on the whole payload: an exact tiling can only be proven on the real datagram. Since 11.7.0 every probe does so, except the four text protocols, which keep the 18 KiB prefix (`PROBE_CAP`) ([#185](https://github.com/Akmot9/Packet-parser/issues/185)). `Application::try_from`, which has no ports, runs the strict read, after ASTERIX.
 
 Neither read demands a family consistent with the type. `DIS_signal_and_transmitter.pcapng` puts family 0 ("other") instead of 4 (radio communications) on all its radio PDUs: not conforming, but real. Family 0 is admitted, and no rule ties a family to a type.
 
