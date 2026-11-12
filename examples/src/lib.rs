@@ -6,6 +6,7 @@
 #![allow(clippy::unwrap_used)]
 
 mod building_aaa;
+mod dcs;
 mod defense_a;
 mod defense_b;
 mod internet_layer;
