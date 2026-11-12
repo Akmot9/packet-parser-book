@@ -1,9 +1,10 @@
 //! Examples of the application chapter's own sections: NTP, Modbus/TCP and
-//! UMAS, PostgreSQL. Every frame is a real frame of the crate's corpus
+//! UMAS, PostgreSQL, HTTP. Every frame is a real frame of the crate's corpus
 //! (`pcaps_exemple/` in the crate repository), extracted with tshark.
 
 #[cfg(test)]
 mod tests {
+    use packet_parser::parse::application::protocols::http::{HttpRequest, HttpResponse};
     use packet_parser::parse::application::protocols::modbus_tcp::ModbusTcpPacket;
     use packet_parser::parse::application::protocols::ntp::{NtpPacket, Refid};
     use packet_parser::parse::application::protocols::postgresql::{
@@ -89,6 +90,35 @@ mod tests {
         "000189e81538aaf2fd0000bfd26f801802008bda00000101080a51ec8b2051ec",
         "8b1f7000000036534352414d2d5348412d32353600000000206e2c2c6e3d2c72",
         "3d5538784939575938597363524173567737347978324c7434",
+    );
+
+    /// Frame 30 of `protocols/arp/arppoison.pcapng` (Chris Sanders): a
+    /// server's `204 No Content`, Ethernet / IPv4 / TCP 80 -> 45691.
+    const HTTP_NO_CONTENT_HEX: &str = concat!(
+        "002170c056f000260b31073308004500010baa280000350684394a7d5f93ac10",
+        "006b0050b27b6234aff12459cf7780180087316000000101080aa8ef7f690008",
+        "f38f485454502f312e3120323034204e6f20436f6e74656e740d0a436f6e7465",
+        "6e742d4c656e6774683a20300d0a446174653a205765642c203231204a616e20",
+        "323030342031393a35313a333020474d540d0a507261676d613a206e6f2d6361",
+        "6368650d0a43616368652d436f6e74726f6c3a20707269766174652c206e6f2d",
+        "63616368650d0a457870697265733a205765642c203137205365702031393735",
+        "2032313a33323a313020474d540d0a436f6e74656e742d547970653a20746578",
+        "742f68746d6c0d0a5365727665723a20476f6c66650d0a0d0a",
+    );
+
+    /// Frame 21178 of `The-Ultimate-PCAP.pcapng`: an OCSP request to Let's
+    /// Encrypt, Ethernet / IPv6 / TCP 55996 -> 80, its DER body in the same
+    /// segment.
+    const HTTP_OCSP_REQUEST_HEX: &str = concat!(
+        "00869ce75514b827eb03a0ac86dd60066bc400de064020010470765b00001c6e",
+        "18aeddb43bc12a0226f06c000000000000000210ba61dabc00507c490dc8cf6a",
+        "0d8f501800e182510000504f5354202f20485454502f312e300d0a486f73743a",
+        "206f6373702e696e742d78332e6c657473656e63727970742e6f72673a38300d",
+        "0a436f6e74656e742d547970653a206170706c69636174696f6e2f6f6373702d",
+        "726571756573740d0a436f6e74656e742d4c656e6774683a2038350d0a0d0a30",
+        "533051304f304d304b300906052b0e03021a050004147ee66ae7729ab3fcf8a2",
+        "20646c16a12d6071085d0414a84a6a63047dddbae6d139b7a64565eff3a8eca1",
+        "0212041aae4f07d2db620c0916181a8398b7a5ce",
     );
 
     fn label(flow: &PacketFlow<'_>) -> Option<&'static str> {
@@ -313,4 +343,48 @@ mod tests {
         assert_eq!(label(&parse(LinkType::ETHERNET, &moved).unwrap()), Some("PostgreSQL"));
     }
     // ANCHOR_END: postgresql_password_message
+
+    // ANCHOR: http_response
+    #[test]
+    fn an_http_response_is_labelled_http() {
+        let raw = hex::decode(HTTP_NO_CONTENT_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        assert_eq!(label(&flow), Some("HTTP")); // 80 -> 45691: the blind rule, no port
+
+        let payload = flow.transport.as_ref().unwrap().payload.unwrap();
+        let response = HttpResponse::try_from(payload).unwrap();
+        assert_eq!(response.version, "HTTP/1.1");
+        assert_eq!((response.status_code, response.reason), (204, "No Content"));
+        assert_eq!(response.headers.len(), 7);
+        assert_eq!(response.headers.get("content-length"), Some("0")); // any case
+        assert_eq!(response.headers.get("Server"), Some("Golfe"));
+        assert!(response.body.is_empty());
+
+        // A status line is not a request line: the probe tries both decoders.
+        assert!(HttpRequest::try_from(payload).is_err());
+    }
+    // ANCHOR_END: http_response
+
+    // ANCHOR: http_binary_body
+    #[test]
+    fn a_request_with_a_binary_body_is_http() {
+        let raw = hex::decode(HTTP_OCSP_REQUEST_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        assert_eq!(label(&flow), Some("HTTP")); // 55996 -> 80
+
+        let payload = flow.transport.as_ref().unwrap().payload.unwrap();
+        assert!(std::str::from_utf8(payload).is_err()); // the segment is not all text
+        let request = HttpRequest::try_from(payload).unwrap();
+        assert_eq!((request.method, request.uri, request.version), ("POST", "/", "HTTP/1.0"));
+        assert_eq!(request.headers.get("host"), Some("ocsp.int-x3.letsencrypt.org:80"));
+        assert_eq!(request.headers.get("Content-Type"), Some("application/ocsp-request"));
+        assert_eq!(request.headers.get("Content-Length"), Some("85"));
+
+        // The body is a DER OCSPRequest, a SEQUENCE of 0x53 bytes. It is not
+        // UTF-8: `body` is empty, and `body_bytes` carries the 85 bytes.
+        assert_eq!(request.body, "");
+        assert_eq!(request.body_bytes.len(), 85);
+        assert_eq!(request.body_bytes[..2], [0x30, 0x53]);
+    }
+    // ANCHOR_END: http_binary_body
 }
