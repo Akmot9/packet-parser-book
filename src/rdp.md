@@ -107,7 +107,7 @@ pub enum NegotiationResponse {
 }
 ```
 
-The X.224 user data of a Connection Request is a token, then a negotiation request, both optional. The token is everything before the first CR LF, kept raw: `Cookie: mstshash=<user>` from the usual client, or a routing token. `RdpPayload::cookie_user()` returns the user of a cookie as a `&str`, and `None` for anything else. After the token comes nothing, or an 8-byte negotiation request, which a [correlation info](#the-correlation-info) may follow; anything that starts with another byte than the request's type `0x01` is `UnexpectedX224Data`. The user data of a Connection Confirm is empty, or the server's response or failure, in the same 8-byte structure, with nothing after it:
+The X.224 user data of a Connection Request is a token, then a negotiation request, both optional. The token is everything before the first CR LF, kept raw: `Cookie: mstshash=<user>` from the usual client, or a routing token. `RdpPayload::cookie_user()` returns the user of a cookie as a `&str`, and `None` for anything else. After the token comes nothing, or an 8-byte negotiation request, which a [correlation info](#the-correlation-info) may follow; anything that starts with a byte other than the request's type `0x01` is `UnexpectedX224Data`. The user data of a Connection Confirm is empty, or the server's response or failure, in the same 8-byte structure, with nothing after it:
 
 | Byte | Field | Note |
 | --- | --- | --- |
@@ -179,7 +179,7 @@ What may follow the request depends on its flag `0x08`:
 | set | type and length right, fewer than 36 bytes; or fewer than 4 bytes | `Truncated { expected: 36, actual }` |
 | set | more than 36 bytes | `UnexpectedX224Data(n)`, `n` counting the bytes after the 36 |
 
-A flag without the structure is accepted, as it was in 11.6.0; tshark marks such a segment malformed. MS-RDPBCGR wants a `correlationId` whose first byte is neither `0x00` nor `0xF4` and which holds no `0x0D` byte: the decoder does not check it, and neither does tshark. No capture of the corpus carries a correlation info; frame 6 of `rdp-x509.pcap`, given one by hand (*tested*):
+A flag without the structure is accepted, as it was in 11.6.0; tshark marks such a segment malformed. MS-RDPBCGR requires a `correlationId` whose first byte is neither `0x00` nor `0xF4` and which holds no `0x0D` byte: the decoder does not check it, and neither does tshark. No capture of the corpus carries a correlation info; frame 6 of `rdp-x509.pcap`, given one by hand (*tested*):
 
 ```rust
 {{#include ../examples/src/remote_vpn.rs:rdp_correlation_info}}
