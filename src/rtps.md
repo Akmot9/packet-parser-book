@@ -6,7 +6,7 @@ Real-Time Publish-Subscribe, the wire protocol of DDS (OMG DDSI-RTPS 2.x), added
 
 An RTPS message fills one UDP datagram. As for [PTP](./ptp.md) on UDP, the pipeline gives the datagram a label, `"RTPS"`, and nothing more: the decode is `RtpsPacket::try_from` on the transport payload.
 
-The rule is a **blind probe**, `rule("RTPS", Guard::Udp, ProbeId::Rtps)`, in the blind cascade of the [dispatch table](./application.md#reading-the-table), right after the blind NTP rule and before ASTERIX. There is no port guard: Cyclone DDS and Connext Micro send between random unicast ports, which is why the dispatch probes blind (frame 9 below goes from 54020 to 58584, the Connext Micro capture of the corpus to 21914). What identifies RTPS is its first four bytes, then its structure:
+The rule is a **blind probe**, `rule("RTPS", Guard::Udp, ProbeId::Rtps)`, in the blind cascade of the [dispatch table](./application.md#reading-the-table), right after the blind NTP rule and, since 11.8.0, before the blind [Valmet DNA](./valmet_dna.md) rule, then ASTERIX. There is no port guard: Cyclone DDS and Connext Micro send between random unicast ports, which is why the dispatch probes blind (frame 9 below goes from 54020 to 58584, the Connext Micro capture of the corpus to 21914). What identifies RTPS is its first four bytes, then its structure:
 
 ```rust
 ProbeId::Rtps => {

@@ -18,8 +18,8 @@ rule("DIS", Guard::Udp, ProbeId::Dis),
 with the probes
 
 ```rust
-ProbeId::Dis => DisPacket::try_from(full_payload).is_ok(),
-ProbeId::DisLenient => DisPacket::try_from_lenient(full_payload).is_ok(),
+ProbeId::Dis => DisPacket::try_from(payload).is_ok(),
+ProbeId::DisLenient => DisPacket::try_from_lenient(payload).is_ok(),
 ```
 
 - **The blind probe** is `DisPacket::try_from`, the **strict** read: every PDU must be valid (a version from 1 to 7, a type from 1 to 72, a family of the standard or an experimental one, a length that covers the header and stays within the datagram, the fixed fields of a typed body), and the PDUs must tile the datagram to the last byte. This exact tiling is the signature that lets the blind rule label DIS without a port guard. It is still not reached on the terminal mDNS and LLMNR ports, UDP 5353 and 5355, where a failed probe ends the dispatch with no label.

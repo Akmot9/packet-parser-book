@@ -13,7 +13,7 @@ port_rule("BACnet/IP", Guard::Udp, is_bacnet_udp_port, ProbeId::Bacnet), // 4780
 rule("BACnet/IP", Guard::Udp, ProbeId::Bacnet),
 ```
 
-`is_bacnet_udp_port` matches 47808 to 47823, `0xBAC0` to `0xBACF`, on either side: 47808 is the IANA `bacnet` port, and the crate's source ties the fifteen others to the multiple networks of annex J (tshark registers BVLC on 47808 alone). The probe is `BacnetPacket::try_from(full_payload).is_ok()`, run on the whole payload and not on its first `PROBE_CAP` bytes, because the BVLC length is compared with the real datagram. It accepts a datagram only if:
+`is_bacnet_udp_port` matches 47808 to 47823, `0xBAC0` to `0xBACF`, on either side: 47808 is the IANA `bacnet` port, and the crate's source ties the fifteen others to the multiple networks of annex J (tshark registers BVLC on 47808 alone). The probe is `BacnetPacket::try_from(payload).is_ok()`, run on the whole payload, as every probe but the four text ones since 11.7.0 ([#185](https://github.com/Akmot9/Packet-parser/issues/185)): the BVLC length is compared with the real datagram. It accepts a datagram only if:
 
 - the first byte, the BVLC type, is `0x81`;
 - the function is one of the thirteen of annex J, `0x00` to `0x0C`;
