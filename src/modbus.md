@@ -135,6 +135,8 @@ pub struct UmasPacket<'a> {
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **The PDU.** The decoder does not interpret the function code, and the data stay raw: no register, no coil, no exception name. `is_plausible_pdu` is a detection check, internal to the crate.
 - **UMAS beyond its header.** The session id and the function byte are read; `data` is not decoded, and `UmasFunction` names only `Reply`.
 - **UMAS over UDP.** No rule looks for it: on UDP 502 it is `"ModbusUDP"`.

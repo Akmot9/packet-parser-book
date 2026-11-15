@@ -251,6 +251,8 @@ In the golden histogram of `pcaps_exemple/protocols/` (`tests/golden_pcaps.rs`),
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Payload contents**: proposals and transforms, key exchange data, nonces, identities, certificates, notifications and vendor IDs are bytes in `body`. A vendor ID is recognizable by its bytes, the `CISCO-DELETE-REASON` of the example, not named.
 - **Decryption**: none, in either version; `encrypted_body` is the bytes as they are, with the clear IV and integrity data of an IKEv2 SK or SKF.
 - **No state**: no pairing of a request with its response, no SA table, no link between an IKE SA and the ESP SPIs it negotiates. One message at a time, like the rest of the crate.

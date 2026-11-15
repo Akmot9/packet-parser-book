@@ -143,6 +143,8 @@ The first two belong to the [PROFINET](./profinet.md) corpus; the third is the U
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Organization TLVs** are identified, OUI and subtype, not decoded: `info` stays raw, for PROFINET, IEEE 802.1, IEEE 802.3 and LLDP-MED alike.
 - **Management addresses** other than IPv4 and IPv6 are only `address_subtype` and `address`; the OID is raw bytes.
 - **No neighbour table**: the crate does not age announcements by `time_to_live`, nor keep what a device announced; stateless, one LLDPDU at a time.

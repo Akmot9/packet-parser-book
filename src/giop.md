@@ -212,6 +212,8 @@ The fuzz target `parse_giop` runs `find_giop_message`, then `giop_messages`, the
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - Stub data and user-exception members are IDL-typed: without the IDL they are opaque, and kept as raw slices.
 - IIOP 1.1+ tagged components in a profile are not decoded.
 - ZIOP (compressed GIOP) and MIOP framing are recognized as such but not decoded: the ZIOP body needs decompression, and MIOP is reached through `find_giop_message`.

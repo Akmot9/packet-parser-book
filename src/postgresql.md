@@ -72,6 +72,8 @@ The SASLInitialResponse of frame 12 of the same capture is a `p` message of stro
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Most bodies.** The decoder types every message and decodes the bodies of the main ones; the others stay `PostgreSqlMessageBody::Raw`, the `p` messages among them, which only the state of the authentication tells apart.
 - **The state of the connection.** Nothing follows the startup, the authentication or the extended query protocol from one segment to the next.
 - **A message cut by the segment.** The messages must tile the segment: one that runs into the next segment makes the whole segment `"Unknown"`.

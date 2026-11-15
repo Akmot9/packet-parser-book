@@ -4,7 +4,7 @@ The crate gives a flow one of 54 labels, the variants of `ApplicationProtocol`. 
 
 ## The 54 labels
 
-The route is how the dispatch reaches the label. A *port* rule asks for a port and a content that agree; a *blind* rule asks for the content alone, on any port; a *terminal* port rule ends the dispatch when the content does not match. The [Application chapter](./application.md#three-detection-routes) explains the three. A *tunnel* label is given to the outer flow of an encapsulation.
+The route is how the dispatch reaches the label. A *port* rule asks for a port and a content that agree; a *blind* rule asks for the content alone, on any port; a *terminal* port rule ends the dispatch when the content does not match. The [Application chapter](./application.md#three-detection-routes) explains the three, and the [Glossary](./glossary.md) defines each word. A *tunnel* label is given to the outer flow of an encapsulation.
 
 A label written with "then" has a port rule and a blind rule: the port rule is tried first, and is often the more lenient of the two.
 

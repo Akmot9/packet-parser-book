@@ -240,6 +240,8 @@ The second capture, `pcaps_exemple/vlan/pppoe-over-qinq.pcap`, is the one of `te
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **The discovery stage**, EtherType `0x8863` (PADI, PADO, PADR, PADS, PADT), is only named (`"Pppoe Discovery Stage"`): `pppoe` stays `None` and there is no internet layer. The Ultimate PCAP has eight of them, among which the PADT that ends session `0x8f80` (frame 10 396) and the PADS that assigns session `0x8f9e` (frame 10 400), just before the first LCP message of that session.
 - **PPP control protocols** are named, not decoded: LCP options, the PAP or CHAP exchange and the IPCP addresses stay in the raw `payload`.
 - **No session state**: the crate does not follow a discovery to its session, nor tie a session identifier to its MAC addresses. One frame at a time, like the rest of the crate.

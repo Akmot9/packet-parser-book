@@ -112,6 +112,8 @@ The exchange of the Java client of `protocols/iec104/iti_JavaRMI_and_IEC_Misc.pc
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Modes 6 and 7.** Control messages (`ntpq`) and the private mode are refused: `NtpPacket` does not model their format. The 104 mode 6 messages of the corpus come out `"Unknown"`.
 - **What follows the header.** Extension fields, NTS fields and the MAC are not decoded; only the blind probe looks at them.
 - **TCP.** Both rules have a UDP guard.

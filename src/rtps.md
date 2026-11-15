@@ -236,6 +236,8 @@ Two oracle details: tshark lists the identifier of a vendor submessage but not i
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **User data**: the serialized payload (CDR), the inline QoS parameter lists and the locator lists stay raw in `body`; no topic, type or QoS policy is decoded, and the `extraFlags` and `octetsToInlineQos` of a DATA are not exposed.
 - **Names**: entity ids and GUID prefixes are numbers and bytes; tshark calls `0x000200c2` `ENTITYID_P2P_BUILTIN_PARTICIPANT_MESSAGE_WRITER`, the crate does not.
 - **DDS Security**: the secure submessages are recognized by their identifier, their bodies stay opaque.

@@ -241,6 +241,4 @@ Measuring does not change the path: the pipeline is written once, over a `Timing
 
 ## Known limitations
 
-- No TCP reassembly, no IP reassembly: the parser is **stateless** and sees one packet at a time.
-- The application layer is a **classification**, not a decode (see the [application chapter](./application.md) and the [GIOP focus](./giop.md) for the tested example). The [Protocols](./protocols.md) page lists every label.
-- Checksums are never validated during parsing (hardware offloading leaves them uncomputed on sender-side captures). Use the `checksum` module when your context allows it.
+The parser is stateless: it sees one packet at a time, reassembles nothing, verifies no checksum and decrypts nothing. The application layer is a label, not a decode. The [Limits](./limits.md) page lists what follows from each of these, and what the crate exposes to detect it; the [Protocols](./protocols.md) page lists every label.

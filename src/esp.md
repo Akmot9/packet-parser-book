@@ -98,6 +98,8 @@ The Ultimate PCAP, which the golden test does not read, adds 7 datagrams labelle
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Nothing is decrypted**, and the end of the packet is not split: padding, next header and ICV cannot be told apart without the key and the algorithm of the SA, which a stateless parser does not have.
 - **No SA state**: `sequence` is read, not checked against an anti-replay window, and no ESP SPI is linked to the IKE exchange that negotiated it.
 - **AH** (IP protocol 51) is not decoded: over IPv4 the flow gets `TransportProtocol::Ah` without details; over IPv6, AH is one of the extension headers the internet layer walks, and what follows it is the transport protocol.

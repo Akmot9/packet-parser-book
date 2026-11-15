@@ -55,6 +55,10 @@
 
 - [Tunnels](./tunnels.md)
 
+- [Limits](./limits.md)
+
 - [Adding a new protocol](./adding_a_protocol.md)
+
+- [Glossary](./glossary.md)
 
 [About](./about.md)
