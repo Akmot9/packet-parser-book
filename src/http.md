@@ -48,6 +48,40 @@ Frame 21178 of `pcaps_exemple/The-Ultimate-PCAP.pcapng` is an OCSP request to Le
 {{#include ../examples/src/shared.rs:http_binary_body}}
 ```
 
+## What is not HTTP
+
+The rule has no port, so its start line is all that keeps other text protocols out. Each row was checked against the crate, on TCP:
+
+| Payload starts with | Label | Why |
+|---|---|---|
+| `get / HTTP/1.1` | `"Unknown"` | methods are upper case |
+| `PROPFIND / HTTP/1.1`, `NOTIFY * HTTP/1.1` | `"Unknown"` | the method is not one of the nine |
+| `PRI * HTTP/2.0`, the HTTP/2 preface | `"Unknown"` | `PRI` is not one of the nine |
+| `OPTIONS rtsp://… RTSP/1.0` | `"Unknown"` | the version does not start with `HTTP/` |
+| `INVITE sip:… SIP/2.0` | `"Unknown"` | neither the method nor the version |
+| `ICY 200 OK` | `"Unknown"` | a status line starts with `HTTP/` |
+| `HTTP/1.1 20 OK` | `"Unknown"` | the code is not three digits |
+| a header line without a colon | `"Unknown"` | `HttpParseError::InvalidHeader` |
+| a head that is not UTF-8 | `"Unknown"` | `HttpParseError::InvalidUtf8` |
+
+On UDP nothing is HTTP: the rule has a TCP guard. `NOTIFY` and `M-SEARCH` on UDP 1900 are SSDP, rule 13.
+
+Three shapes are accepted that a strict reader would refuse: a start line with no header after it, line ends that are `LF` alone, and a status line with no reason phrase. `HTTP/2 200` is accepted too, since the version is one digit or two; it is a line no HTTP/2 connection carries in clear.
+
+## Validations
+
+The head is text, so the table counts lines, not bytes.
+
+| Part | Check | Error |
+|---|---|---|
+| Head | valid UTF-8, up to the first empty line or the end of what the probe reads | `HttpParseError::InvalidUtf8` |
+| Request line | three parts: method, URI, version | `MissingMethod`, `MissingUri`, `MissingVersion` |
+| Method | GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE or PATCH | `InvalidMethod`, with the text |
+| Version | `HTTP/`, then one digit, or two separated by a dot | `InvalidVersion`, with the text |
+| Status line | a version, then a code | `MissingVersion`, `MissingStatusCode` |
+| Status code | exactly three digits | `InvalidStatusCode`, with the text |
+| Header line | a colon | `InvalidHeader` |
+
 ## Oracle: 296 frames
 
 `tests/http_golden.rs` compares the crate with tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/http_oracle.sh`, frozen in `tests/data/http_tshark_oracle.tsv`). For each frame it checks the kind, the version, and the method and URI or the code and phrase, on every capture of `pcaps_exemple/protocols/` and on `The-Ultimate-PCAP.pcapng`: 144 requests and 152 responses match. The crate labels no other frame of these captures `"HTTP"`, retransmissions apart: tshark does not dissect them, the crate labels six of them like the segments they repeat, and they are left out of the comparison. The two responses that tshark decrypts in `tls12-dsb.pcapng`, with the key the capture carries, stay TLS. With 11.7.0 the golden histogram went from 72 to 146 HTTP labels, 72 responses and 2 retransmissions of responses more, and from 9 579 to 9 505 `"Unknown"`.
@@ -57,7 +91,8 @@ Frame 21178 of `pcaps_exemple/The-Ultimate-PCAP.pcapng` is an OCSP request to Le
 The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
 
 - **The body.** No chunk is reassembled, nothing is decompressed, and nothing checks the body against `Content-Length`: a body cut by the segment is what follows the head in this one.
-- **A message over several segments.** The crate reassembles nothing. A head cut by the segment is read as far as it goes, and the segments that carry the rest of the message, which start with no request or status line, are `"Unknown"`.
+- **A message over several segments.** The crate reassembles nothing. A head cut between two header lines, or after the colon of one, is read as far as it goes; cut before the colon of a header line, the segment is `"Unknown"`. So are the segments that carry the rest of the message, which start with no request or status line.
+- **Other methods.** A WebDAV `PROPFIND` or any extension method is not recognized. The response to it still is: a response is recognized on its own status line.
 - **HTTP/2 and HTTP/3.** They have no decoder.
 - **HTTP inside TLS.** It is labelled TLS: the crate does not decrypt.
 - **Retransmissions.** A retransmitted segment is labelled like the one it repeats, and counted again.
