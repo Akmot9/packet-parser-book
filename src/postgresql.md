@@ -68,7 +68,19 @@ The SASLInitialResponse of frame 12 of the same capture is a `p` message of stro
 
 ## Oracle: 276 segments
 
-`tests/postgresql_golden.rs` runs the fourteen captures of `pcaps_exemple/protocols/postgresql/` against tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/postgresql_oracle.sh`, frozen in `tests/data/postgresql_tshark_oracle.tsv`): twelve real psql sessions (loopback, a VM against AWS RDS, an application in containers, a Windows workstation) and two negatives, HTTP and MySQL replayed on port 5432. Of the 331 segments with a payload, 276 are PostgreSQL, and their 558 messages have tshark's types and lengths, the 8 SSL answers included. Replayed off port 5432, 262 of them are still recognized by the blind probe; the 14 others are the segments without strong evidence, 8 SSL answers, 5 `Terminate` and 1 `ReadyForQuery`, each alone. On the negatives tshark labels 6 segments `pgsql`, the crate none, and nine mutations of two real frames (lengths, protocol version, final NUL, type byte, truncation, trailing byte) are rejected. The golden histogram counts 278 PostgreSQL labels: the 276 segments, and 2 retransmissions that tshark does not dissect.
+`tests/postgresql_golden.rs` runs the fourteen captures of `pcaps_exemple/protocols/postgresql/` against tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/postgresql_oracle.sh`, frozen in `tests/data/postgresql_tshark_oracle.tsv`). Twelve are real psql sessions: loopback, a VM against AWS RDS, an application in containers, a Windows workstation. Two are negatives: HTTP and MySQL replayed on port 5432.
+
+| What the test counts | Number |
+|---|---|
+| segments with a payload | 331 |
+| of them, PostgreSQL | 276 |
+| messages in those segments, with tshark's types and lengths, the 8 SSL answers included | 558 |
+| segments still recognized by the blind probe off port 5432 | 262 |
+| segments recognized on port 5432 only | 14 |
+| segments of the negatives that tshark labels `pgsql` | 6 |
+| segments of the negatives that the crate labels | 0 |
+
+The 14 segments that need the port are the ones without strong evidence, each alone in its segment: 8 SSL answers, 5 `Terminate` and 1 `ReadyForQuery`. Nine mutations of two real frames are rejected: lengths, protocol version, final NUL, type byte, truncation, trailing byte. The golden histogram counts 278 PostgreSQL labels: the 276 segments, and 2 retransmissions that tshark does not dissect.
 
 ## What is left out
 

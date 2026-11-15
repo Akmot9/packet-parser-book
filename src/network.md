@@ -70,7 +70,7 @@ Three IPv6 classifications changed in 11.5.0 ([#136](https://github.com/Akmot9/P
 
 ## Dispatch on the announced protocol, not probing
 
-The link layer already told us what the payload is. The internet parser trusts that announcement:
+The link layer has already said what the payload is. The internet parser trusts that announcement:
 
 ```rust
 pub fn try_from_network_parts(

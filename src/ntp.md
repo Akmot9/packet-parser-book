@@ -12,7 +12,7 @@ port_rule(ApplicationProtocol::Ntp, Guard::Udp, is_ntp_udp_port, ProbeId::Ntp), 
 rule(ApplicationProtocol::Ntp, Guard::Udp, ProbeId::NtpBlind),                    // the first blind rule
 ```
 
-On **UDP 123**, either port (a server's source, a client's destination, both in symmetric mode), `ProbeId::Ntp` runs the decoder alone. The rule is the last of the port rules, which is where the blind rule stood until 11.6.0, with the same decoder, so that the move changed nothing on port 123. Being last, it also lets every other port rule speak first: a DNS query sent from port 123 to port 53 keeps the label DNS even when its bytes read as an NTP header, a case the unit tests of `dispatch.rs` pin down.
+On **UDP 123**, either port (a server's source, a client's destination, both in symmetric mode), `ProbeId::Ntp` runs the decoder alone. The rule is the last of the port rules. Until 11.6.0 the blind rule stood at that place, with the same decoder, so the move changed nothing on port 123. Being last, the rule also lets every other port rule speak first: a DNS query sent from port 123 to port 53 keeps the label DNS even when its bytes read as an NTP header. The unit tests of the dispatch pin that case down.
 
 On **any other UDP port**, `ProbeId::NtpBlind` runs `NtpPacket::is_blind_udp_match`, crate-internal, on the whole datagram. The decoder must accept the datagram, and the header alone is not enough: until 11.6.0 the blind probe was the decoder, and about one random datagram in 250 passed for NTP; on the 654 test captures of nDPI, 43 of the 59 NTP labels were wrong (QUIC, CryNet, Gnutella, KCP, PFCP, NetBIOS datagrams, obfuscated OpenVPN...). The probe now also demands:
 
@@ -108,7 +108,20 @@ The exchange of the Java client of `protocols/iec104/iti_JavaRMI_and_IEC_Misc.pc
 
 ## Oracle: 1 308 datagrams
 
-`tests/ntp_golden.rs` compares the crate with tshark 4.6.6 (`tools/ntp_oracle.sh`, frozen in `tests/data/ntp_tshark_oracle.tsv`) field by field: ports, LI, version, mode, stratum, poll, precision, root delay and dispersion, reference id and the four timestamps to the nanosecond, on **1 308 datagrams**. They come from `pcaps_exemple/protocols/ntp/`, the substation of `goose/iti_Sample_File_MMS_and_GOOSE.pcap`, the Java exchange and, read in place, `The-Ultimate-PCAP.pcapng` and `4SICS-GeekLounge-151020.pcap`: NTS, authenticated MS-SNTP, SHA-256 and SHA-512 MACs, chrony requests with random timestamps, symmetric mode, IPv6 upstreams. Two gaps are named, not masked: the 104 control messages of mode 6 and the 36 ICMP errors quoting an NTP datagram, where the crate labels the ICMP frame. No other frame of `pcaps_exemple/` comes out NTP. The test names 31 datagrams of six nDPI captures that the former blind probe took for NTP, and 8 more among those that only the lenient decoder of [#165](https://github.com/Akmot9/Packet-parser/issues/165) accepts: KCP, QUIC and CryNet datagrams, and ASTERIX CAT 021 datagrams of `wireshark_9953_cat021023.pcap`, 1 555 of which have the shape of an NTP header. Moved off port 123, the 1 308 datagrams are recognized by the blind probe, except one: the chrony request of the example above. The golden histogram counts 77 NTP labels.
+`tests/ntp_golden.rs` compares the crate with tshark 4.6.6 (`tools/ntp_oracle.sh`, frozen in `tests/data/ntp_tshark_oracle.tsv`) on **1 308 datagrams**, field by field: ports, LI, version, mode, stratum, poll, precision, root delay and dispersion, reference id, and the four timestamps to the nanosecond.
+
+The datagrams come from `pcaps_exemple/protocols/ntp/`, the substation of `goose/iti_Sample_File_MMS_and_GOOSE.pcap`, the Java exchange and, read in place, `The-Ultimate-PCAP.pcapng` and `4SICS-GeekLounge-151020.pcap`. They cover NTS, authenticated MS-SNTP, SHA-256 and SHA-512 MACs, chrony requests with random timestamps, symmetric mode and IPv6 upstreams.
+
+| What the test counts | Datagrams |
+|---|---|
+| compared with tshark | 1 308 |
+| control messages of mode 6, a named gap | 104 |
+| ICMP errors quoting an NTP datagram, where the crate labels the ICMP frame, a named gap | 36 |
+| datagrams of six nDPI captures that the former blind probe took for NTP, named one by one | 31 |
+| datagrams that only the lenient decoder of [#165](https://github.com/Akmot9/Packet-parser/issues/165) accepts, named too | 8 |
+| of the 1 308, recognized by the blind probe once moved off port 123 | 1 307 |
+
+The two gaps are named, not masked, and no other frame of `pcaps_exemple/` comes out NTP. The 39 named datagrams are KCP, QUIC and CryNet datagrams, and ASTERIX CAT 021 datagrams of `wireshark_9953_cat021023.pcap`, 1 555 of which have the shape of an NTP header. The one datagram the blind probe refuses is the chrony request of the example above. The golden histogram counts 77 NTP labels.
 
 ## What is left out
 

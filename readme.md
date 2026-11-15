@@ -1,4 +1,4 @@
-# 📘 `packet-parser` book
+# `packet-parser` book
 
 The design documentation of the [**`packet_parser`**](https://github.com/Akmot9/Packet-parser) Rust crate, as an [mdBook](https://rust-lang.github.io/mdBook/).
 
