@@ -204,7 +204,7 @@ mod tests {
         let transport = flow.transport.as_ref().expect("UDP");
         assert_eq!(transport.source_port, Some(546));
         assert_eq!(transport.destination_port, Some(547));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "DHCPv6");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "DHCPv6");
     }
     // ANCHOR_END: pppoe_ipv6
 
@@ -352,7 +352,7 @@ mod tests {
         let transport = flow.transport.as_ref().expect("TCP");
         assert_eq!(transport.destination_port, Some(443));
         assert_eq!(transport.payload.map(<[u8]>::len), Some(1913));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "TLS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "TLS");
     }
     // ANCHOR_END: ipv4_tso
 }

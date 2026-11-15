@@ -40,23 +40,23 @@ As for [PTP](./ptp.md) on UDP, the pipeline gives the datagram a label, `"Valmet
 | a port declared with `ParseConfig::decode_as(port, DecodeAsProtocol::ValmetDna)` | `ProbeId::ValmetDna` | the same |
 | any other UDP port | `ProbeId::ValmetDnaBlind` | a message of one of the two known families, at its exact size |
 
-In the table of `src/parse/dispatch.rs`:
+In the table of `src/parse/dispatch/rules.rs`:
 
 ```rust
 // among the port rules, after BACnet/IP: UDP 2517 for the AB 01 messages,
 // 4516 -> 4517 for the beacon, the observed ports. On these ports an unknown
 // message family is accepted with its body as bytes; elsewhere, the blind
 // probe below only accepts the two known families.
-port_rule("Valmet DNA", Guard::Udp, is_valmet_dna_udp_port, ProbeId::ValmetDna),
+port_rule(ApplicationProtocol::ValmetDna, Guard::Udp, is_valmet_dna_udp_port, ProbeId::ValmetDna),
 // ...
 // --- blind cascade ---
-rule("NTP", Guard::Udp, ProbeId::NtpBlind),
-rule("RTPS", Guard::Udp, ProbeId::Rtps),
+rule(ApplicationProtocol::Ntp, Guard::Udp, ProbeId::NtpBlind),
+rule(ApplicationProtocol::Rtps, Guard::Udp, ProbeId::Rtps),
 // Magic AB 01, a length equal to the datagram minus two and a known family
 // at its exact size: more than 64 bits of constraint, enough to do without
 // the port.
-rule("Valmet DNA", Guard::Udp, ProbeId::ValmetDnaBlind),
-rule("ASTERIX", Guard::Udp, ProbeId::Asterix),
+rule(ApplicationProtocol::ValmetDna, Guard::Udp, ProbeId::ValmetDnaBlind),
+rule(ApplicationProtocol::Asterix, Guard::Udp, ProbeId::Asterix),
 ```
 
 with the probes, both on the whole datagram and not on its first `PROBE_CAP` bytes, since the length must equal the datagram minus two:
@@ -76,7 +76,7 @@ impl ValmetDnaPacket<'_> {
 }
 ```
 
-The blind rule comes right after RTPS and before ASTERIX in the [blind cascade](./application.md#reading-the-table), and takes the same place in `Application::try_from`, which has no ports. The beacon has no blind route: off its ports, it needs a declared port. [Decode As](./application.md#decode-as) resolves `DecodeAsProtocol::ValmetDna` to `("Valmet DNA", Guard::Udp, ProbeId::ValmetDna)`, the probe of the port rule, behind the same UDP guard: a unit test of `dispatch.rs` checks that a status telegram on TCP 2517 is not Valmet DNA, Decode As included.
+The blind rule comes right after RTPS and before ASTERIX in the [blind cascade](./application.md#reading-the-table), and `classify_payload`, given UDP and no port (`None`, `None`), reaches it there. The beacon has no blind route: off its ports, it needs a declared port. [Decode As](./application.md#decode-as) resolves `DecodeAsProtocol::ValmetDna` to `(ApplicationProtocol::ValmetDna, Guard::Udp, ProbeId::ValmetDna)`, the probe of the port rule, behind the same UDP guard: a unit test of `dispatch/tests.rs` checks that a status telegram on TCP 2517 is not Valmet DNA, Decode As included.
 
 Frames 1, 9 and 591 moved to UDP 40000 → 40001: the status telegram and the tag message keep their label, the beacon needs Decode As (*tested*):
 

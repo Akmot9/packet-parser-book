@@ -18,7 +18,8 @@ mod tests {
         DnaClock, MessageKind, TimeBeacon, ValmetDnaMessage, ValmetDnaPacket,
     };
     use packet_parser::{
-        Application, DecodeAsProtocol, LinkType, PacketFlow, ParseConfig, parse, parse_with,
+        ApplicationProtocol, DecodeAsProtocol, LinkType, PacketFlow, ParseConfig,
+        TransportProtocol, classify_payload, parse, parse_with,
     };
 
     /// Frame 1 of `valmet_dna/valmet-dna-multicast-anon.pcap`: Ethernet /
@@ -56,7 +57,7 @@ mod tests {
     const DATAGRAM: usize = 42;
 
     fn label(flow: &PacketFlow<'_>) -> Option<&'static str> {
-        flow.application.as_ref().map(|application| application.application_protocol)
+        flow.application.as_ref().map(|application| application.protocol.label())
     }
 
     // ANCHOR: valmet_status_telegram
@@ -225,7 +226,7 @@ mod tests {
         let declared = ParseConfig::new().decode_as(40_001, DecodeAsProtocol::ValmetDna);
         let label_of = |frame: &[u8], config: &ParseConfig| {
             let flow = parse_with(LinkType::ETHERNET, frame, config).unwrap();
-            flow.application.as_ref().map(|application| application.application_protocol)
+            flow.application.as_ref().map(|application| application.protocol.label())
         };
         let off_port = |frame: &[u8]| {
             let mut moved = frame.to_vec();
@@ -240,10 +241,10 @@ mod tests {
         // and the exact size of a known family are enough.
         assert_eq!(label_of(&off_port(&status), &default), Some("Valmet DNA"));
         assert_eq!(label_of(&off_port(&tag), &default), Some("Valmet DNA"));
-        // The public cascade of `Application::try_from`, which has no ports,
-        // agrees.
-        let blind = Application::try_from(&status[DATAGRAM..]).unwrap();
-        assert_eq!(blind.application_protocol, "Valmet DNA");
+        // `classify_payload`, given the transport and no port, agrees.
+        let blind =
+            classify_payload(TransportProtocol::Udp, None, None, &status[DATAGRAM..]).unwrap();
+        assert_eq!(blind.protocol, ApplicationProtocol::ValmetDna);
 
         // The beacon is recognized on its ports, or on a declared port.
         assert_eq!(label_of(&beacon, &default), Some("Valmet DNA"));
@@ -257,7 +258,7 @@ mod tests {
     fn an_unknown_family_is_kept_as_bytes_on_the_ports_only() {
         let label_of = |frame: &[u8], config: &ParseConfig| {
             let flow = parse_with(LinkType::ETHERNET, frame, config).unwrap();
-            flow.application.as_ref().map(|application| application.application_protocol)
+            flow.application.as_ref().map(|application| application.protocol.label())
         };
         // Frame 1 with the family 0x00000FFE, which the capture does not show.
         let mut unknown = hex::decode(STATUS_TELEGRAM_HEX).unwrap();

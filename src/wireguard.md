@@ -19,16 +19,16 @@ The shape is what `WireGuardPacket::try_from` checks: a known type, and the exac
 // heuristic, the shape is enough for an initiation or a response, reserved
 // bytes included, and a cookie or data have zero reserved bytes. 51820 is an
 // ephemeral port: after the other port rules (#103).
-port_rule("WireGuard", Guard::Udp, is_wireguard_udp_port, ProbeId::WireGuardPort),
-port_rule("NTP", Guard::Udp, is_ntp_udp_port, ProbeId::Ntp),
+port_rule(ApplicationProtocol::WireGuard, Guard::Udp, is_wireguard_udp_port, ProbeId::WireGuardPort),
+port_rule(ApplicationProtocol::Ntp, Guard::Udp, is_ntp_udp_port, ProbeId::Ntp),
 // --- blind cascade ---
 // ...
-rule("QUIC", Guard::Udp, ProbeId::QuicLongHeader),
+rule(ApplicationProtocol::Quic, Guard::Udp, ProbeId::QuicLongHeader),
 // Off 51820: zero reserved bytes, a fixed size or, for data, a counter below
 // 2^60 and a plaintext padded to sixteen bytes or stopped at the MTU. Last
 // UDP probe: Transport Data has only `04 00 00 00` and these constraints.
-rule("WireGuard", Guard::Udp, ProbeId::WireGuardBlind),
-rule("MQTT", Guard::Tcp, ProbeId::Mqtt),
+rule(ApplicationProtocol::WireGuard, Guard::Udp, ProbeId::WireGuardBlind),
+rule(ApplicationProtocol::Mqtt, Guard::Tcp, ProbeId::Mqtt),
 ```
 
 **Decode As** is evaluated before the table ([Decode As](./application.md#decode-as)), and for WireGuard it trusts the caller: the shape is enough, whatever the type and the reserved bytes. It is the one Decode As protocol whose probe is more tolerant than its port rule, on purpose: a declared port is WireGuard on the caller's word, the reserved bytes that Cloudflare uses to spread load included, where 51820 is only an ephemeral port.
@@ -41,7 +41,7 @@ rule("MQTT", Guard::Tcp, ProbeId::Mqtt),
 - the **counter** of Transport Data is below 2^60, `REKEY_AFTER_MESSAGES` (whitepaper §6.1), the number of messages after which WireGuard starts a new handshake (§6.2): no real counter gets there;
 - the **length** of Transport Data is one that padding explains. The plaintext, the message minus its 16-byte header and its 16-byte tag, is padded with zeros to a multiple of 16 (whitepaper §5.4.6), except when that would exceed the MTU: Linux (`calculate_skb_padding`) and wireguard-go (`calculatePaddingSize`) then stop at the MTU. The probe accepts a plaintext that is a multiple of 16, or at least 552 bytes long, the floor of the IPv4 path MTU of Linux (`DEFAULT_MIN_PMTU`, 512 + 20 + 20). The five 1 452-byte messages of the corpus are of the second kind: 1 420 bytes of plaintext, the MTU of `wg-quick`, which is not a multiple of 16.
 
-The probes and `REKEY_AFTER_MESSAGES` are internal to the crate; the public way to them is `parse`, `parse_with`, and `Application::try_from`, whose cascade, without ports, runs the same blind probe just before MQTT.
+The probes and `REKEY_AFTER_MESSAGES` are internal to the crate; the public way to them is `parse`, `parse_with`, and `classify_payload`, which reads the same table: given UDP and no port (`None`, `None`), it runs the blind probe alone.
 
 Why so strict: tshark's heuristic, which only requires the type, the size and, for a cookie and data, zero reserved bytes, takes 59 datagrams of Zoom, TeamViewer and League of Legends from nDPI's test corpus for WireGuard. They are Transport Data with zero reserved bytes, which only the counter and the padding rule out; the crate takes none of them. 25 are in the crate's corpus, named as tshark's misfires in the golden test.
 

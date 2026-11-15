@@ -108,13 +108,13 @@ impl<'a> TryFrom<&'a [u8]> for FooPacket<'a> {
 
 ## 4. Plugging it into the dispatch table
 
-Add a `ProbeId::Foo` and its `run_probe` arm in `src/parse/dispatch.rs`, then one line in `RULES`, choosing the route described in the [application chapter](./application.md#three-detection-routes):
+Add a variant `Foo` at the end of `ApplicationProtocol`, with its label, in `src/parse/application/protocol.rs`, and the label to the test `labels_are_frozen` of the same file. Add a `ProbeId::Foo` and its `run_probe` arm in `src/parse/dispatch/probes.rs`, then one line in `RULES`, in `src/parse/dispatch/rules.rs`, choosing the route described in the [application chapter](./application.md#three-detection-routes):
 
-- **blind** `rule("Foo", Guard::Tcp, ProbeId::Foo)` only if a valid Foo payload cannot also be a valid payload of another detected protocol, or arbitrary text;
+- **blind** `rule(ApplicationProtocol::Foo, Guard::Tcp, ProbeId::Foo)` only if a valid Foo payload cannot also be a valid payload of another detected protocol, or arbitrary text;
 - **port-guarded** `port_rule(..)` otherwise, with a comment explaining why;
 - always with the transport guard the RFC imposes.
 
-The position in the table matters: put the line where its priority belongs and say why in a comment. A blind rule also takes the same place in `Application::try_from`: the unit test `blind_rules_mirror_the_public_cascade_order` of `dispatch.rs` lists, in order, the labels of every rule without a port guard. A port-guarded protocol usually gets a `DecodeAsProtocol` variant as well, at the end of the enum, which `DecodeAsProtocol::rule` resolves to the label and the probe of its port rule; `decode_as_protocols_resolve_to_table_rules` checks the pair ([Decode As](./application.md#decode-as)), and the `parse_packetflow` fuzz target lists every variant. Then update the protocol lists of `README.md` and `README-fr.md`.
+The position in the table matters: put the line where its priority belongs and say why in a comment. The unit test `blind_rules_order_is_frozen` of `dispatch/tests.rs` lists, in order, the labels of every rule without a port guard: a blind rule adds its own there. A blind probe is tested without a frame by `classify_payload(<transport>, None, None, payload)`, under the transport of its guard. A port-guarded protocol usually gets a `DecodeAsProtocol` variant as well, at the end of the enum, which `DecodeAsProtocol::rule` resolves to the label and the probe of its port rule; `decode_as_protocols_resolve_to_table_rules` checks the pair ([Decode As](./application.md#decode-as)), and the `parse_packetflow` fuzz target lists every variant. Then update the protocol lists of `README.md` and `README-fr.md`.
 
 Do **not** add a variant to an exhaustive public enum in a minor version: that breaks users' `match`. The types the parser builds are `#[non_exhaustive]` so that new fields and variants stay additive.
 

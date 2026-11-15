@@ -168,7 +168,7 @@ mod tests {
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!(transport.destination_port, Some(20001));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "DNP3");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "DNP3");
 
         let packet = Dnp3Packet::try_from(transport.payload.unwrap()).unwrap();
         let [frame] = &packet.frames[..] else {
@@ -211,7 +211,7 @@ mod tests {
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!(transport.protocol, TransportProtocol::Udp);
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "DNP3");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "DNP3");
         let udp = Dnp3Packet::try_from(transport.payload.unwrap()).unwrap();
         let udp_read = udp.frames[0].application.as_ref().unwrap();
         assert_eq!(udp_read.header.function(), Some(ApplicationFunction::Read));
@@ -445,7 +445,7 @@ mod tests {
         // On port 20000 itself, neither altered frame is DNP3 any more.
         for altered in [&header, &block] {
             let flow = parse(LinkType::ETHERNET, altered).unwrap();
-            assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+            assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
             assert!(flow.corrupted.is_none());
         }
     }
@@ -457,7 +457,7 @@ mod tests {
         // Frame 9 of wireshark_iec104.pcap: TCP 46413 -> 2404.
         let raw = hex::decode(IEC104_INTERROGATION_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "IEC 104");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "IEC 104");
 
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = Iec104Packet::try_from(payload).unwrap();
@@ -487,12 +487,12 @@ mod tests {
         let mut moved = raw.clone();
         moved[36..38].copy_from_slice(&2405u16.to_be_bytes());
         let flow = parse(LinkType::ETHERNET, &moved).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
 
         // Declared by the caller, the port is tried first, content included.
         let config = ParseConfig::new().decode_as(2405, DecodeAsProtocol::Iec104);
         let flow = parse_with(LinkType::ETHERNET, &moved, &config).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "IEC 104");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "IEC 104");
     }
     // ANCHOR_END: iec104_port_guard
 
@@ -565,7 +565,7 @@ mod tests {
         // Frame 1 of wireshark_IEC104_SQ.pcapng: TCP 2404 -> 4446.
         let raw = hex::decode(IEC104_SEQUENCE_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "IEC 104");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "IEC 104");
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         assert_eq!(payload.len(), 124);
 

@@ -1148,7 +1148,7 @@ def layer_structs_diagram():
                                          ("details", False)]),
                ("Transport", "transport", [("protocol", True), ("source_port", True), ("destination_port", True),
                                            ("payload", False), ("details", False)]),
-               ("Application", "application", [("application_protocol", True)])]
+               ("Application", "application", [("protocol", True)])]
     sx, sw, sy, rh = 300, 300, 112, 44
     by = sy + TITLE_H + len(rows) * (rh + GAP) + GAP + 80
     bw, bgap, bx0, frh = 196, 12, 40, 34

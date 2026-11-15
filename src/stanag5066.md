@@ -8,7 +8,7 @@ The unit is the S_PDU: the preamble `90 EB`, a version byte, two bytes of primit
 
 ```rust
 // among the port rules, after IKE, ESP and NAT-keepalive: TCP 5066 on either side
-port_rule("STANAG 5066", Guard::Tcp, is_stanag5066_tcp_port, ProbeId::Stanag5066),
+port_rule(ApplicationProtocol::Stanag5066, Guard::Tcp, is_stanag5066_tcp_port, ProbeId::Stanag5066),
 ```
 
 with the probe
@@ -17,7 +17,7 @@ with the probe
 ProbeId::Stanag5066 => SisPdu::try_from(payload).is_ok(),
 ```
 
-TCP 5066 is the IANA port (`stanag-5066`) and the one Wireshark registers. There is no blind rule: the preamble `90 EB 00`, a type and a size are three fixed bytes and two constraints, too little to probe every TCP segment with. A node on another port is declared with `ParseConfig::decode_as(port, DecodeAsProtocol::Stanag5066)`, which maps to the same probe behind the same TCP guard, `("STANAG 5066", Guard::Tcp, ProbeId::Stanag5066)`, evaluated before the table like every [Decode As](./application.md#decode-as) port. `Application::try_from`, which has no ports, never answers STANAG 5066. Since 11.7.0 the probe judges the whole payload, as every probe does except the four text protocols ([#185](https://github.com/Akmot9/Packet-parser/issues/185)). Until 11.6.0 it saw only the first 18 KiB (`PROBE_CAP`), and a first S_PDU that ran past that bound was judged as a truncated one.
+TCP 5066 is the IANA port (`stanag-5066`) and the one Wireshark registers. There is no blind rule: the preamble `90 EB 00`, a type and a size are three fixed bytes and two constraints, too little to probe every TCP segment with. A node on another port is declared with `ParseConfig::decode_as(port, DecodeAsProtocol::Stanag5066)`, which maps to the same probe behind the same TCP guard, `(ApplicationProtocol::Stanag5066, Guard::Tcp, ProbeId::Stanag5066)`, evaluated before the table like every [Decode As](./application.md#decode-as) port. `classify_payload` called with no port (`None`, `None`) never answers STANAG 5066. Since 11.7.0 the probe judges the whole payload, as every probe does except the four text protocols ([#185](https://github.com/Akmot9/Packet-parser/issues/185)). Until 11.6.0 it saw only the first 18 KiB (`PROBE_CAP`), and a first S_PDU that ran past that bound was judged as a truncated one.
 
 The guard on a real S_PDU moved to port 5067 (*tested*):
 

@@ -122,7 +122,7 @@ mod tests {
 
     fn label(raw: &[u8], config: &ParseConfig) -> Option<&'static str> {
         let flow = parse_with(LinkType::ETHERNET, raw, config).unwrap();
-        Some(flow.application?.application_protocol)
+        Some(flow.application?.protocol.label())
     }
 
     // ANCHOR: ike_sa_init
@@ -133,7 +133,7 @@ mod tests {
 
         // Port 500 and a message whose length covers the datagram: "IKE".
         assert_eq!(
-            flow.application.as_ref().unwrap().application_protocol,
+            flow.application.as_ref().unwrap().protocol.label(),
             "IKE"
         );
 
@@ -177,7 +177,7 @@ mod tests {
         assert_eq!(PayloadType::from_code(1, 16), Some(PayloadType::SaTek));
         // NAT-D and NAT-OA: 20 and 21 of RFC 3947, 130 and 131 of the drafts.
         for code in [20, 130] {
-            assert_eq!(PayloadType::from_code(1, code), Some(PayloadType::NatDetection));
+            assert_eq!(PayloadType::from_code(1, code), Some(PayloadType::NatDiscovery));
         }
         for code in [21, 131] {
             assert_eq!(PayloadType::from_code(1, code), Some(PayloadType::NatOriginalAddress));
@@ -248,7 +248,7 @@ mod tests {
             (Some(4500), Some(14500))
         );
         assert_eq!(
-            flow.application.as_ref().unwrap().application_protocol,
+            flow.application.as_ref().unwrap().protocol.label(),
             "IKE"
         );
 
@@ -382,7 +382,7 @@ mod tests {
         let raw = hex::decode(NAT_T_ESP_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         assert_eq!(
-            flow.application.as_ref().unwrap().application_protocol,
+            flow.application.as_ref().unwrap().protocol.label(),
             "ESP"
         );
         assert!(flow.inner.is_none()); // a label, not a tunnel: nothing to peel
@@ -400,7 +400,7 @@ mod tests {
         let raw = hex::decode(NAT_KEEPALIVE_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         assert_eq!(
-            flow.application.as_ref().unwrap().application_protocol,
+            flow.application.as_ref().unwrap().protocol.label(),
             "NAT-keepalive"
         );
 

@@ -324,7 +324,7 @@ mod tests {
         // UDP 3000, the customary DIS port: the port rule and its lenient read.
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!(transport.destination_port, Some(3000));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "DIS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "DIS");
 
         // The PDU fills the datagram, so the strict read accepts it too.
         let packet = DisPacket::try_from(transport.payload.unwrap()).unwrap();
@@ -391,7 +391,7 @@ mod tests {
             (transport.source_port, transport.destination_port),
             (Some(3388), Some(6993))
         );
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "DIS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "DIS");
 
         let payload = transport.payload.unwrap();
         let packet = DisPacket::try_from(payload).unwrap();
@@ -436,7 +436,7 @@ mod tests {
         // UDP 2725 -> 6993: no port rule applies, and the strict read of the
         // blind probe refuses the 112 bytes after the declared 48.
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
 
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         assert_eq!(payload.len(), 160);
@@ -459,7 +459,7 @@ mod tests {
         // Declaring the port selects the lenient read, as port 3000 does.
         let config = ParseConfig::new().decode_as(6993, DecodeAsProtocol::Dis);
         let flow = parse_with(LinkType::ETHERNET, &raw, &config).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "DIS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "DIS");
     }
     // ANCHOR_END: dis_strict_and_lenient
 
@@ -470,7 +470,7 @@ mod tests {
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!(transport.destination_port, Some(5066));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "STANAG 5066");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "STANAG 5066");
 
         let payload = transport.payload.unwrap();
         assert_eq!(&payload[..2], &[0x90, 0xeb]); // the preamble
@@ -519,7 +519,7 @@ mod tests {
     fn a_unidata_request_carrying_acp_142() {
         let raw = hex::decode(SIS_ACP142_REQUEST_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "STANAG 5066");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "STANAG 5066");
 
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let request = SisPdu::try_from(payload).unwrap();
@@ -576,11 +576,11 @@ mod tests {
         // Still an S_PDU, but off port 5066 no rule runs the SIS probe, and
         // no other probe accepts it.
         assert!(SisPdu::try_from(transport.payload.unwrap()).is_ok());
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
 
         let config = ParseConfig::new().decode_as(5067, DecodeAsProtocol::Stanag5066);
         let flow = parse_with(LinkType::ETHERNET, &raw, &config).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "STANAG 5066");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "STANAG 5066");
     }
     // ANCHOR_END: sis_port_guard
 
@@ -589,7 +589,7 @@ mod tests {
     fn a_split_s_pdu_is_decoded_on_its_first_segment() {
         let raw = hex::decode(SIS_INDICATION_FIRST_SEGMENT_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "STANAG 5066");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "STANAG 5066");
 
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let indication = SisPdu::try_from(payload).unwrap();
@@ -632,7 +632,7 @@ mod tests {
             SisPdu::try_from(payload),
             Err(Stanag5066ParseError::InvalidPreamble(*b"<0"))
         );
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
     }
     // ANCHOR_END: sis_split_pdu
 
@@ -641,7 +641,7 @@ mod tests {
     fn consumed_walks_the_s_pdus_of_a_segment() {
         let raw = hex::decode(SIS_THREE_REQUESTS_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "STANAG 5066");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "STANAG 5066");
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         assert_eq!(payload.len(), 6195);
 

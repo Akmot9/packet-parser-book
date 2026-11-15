@@ -168,7 +168,7 @@
 <text x="735.0" y="437" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">body</text>
 <text x="735.0" y="458" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">Configuration(..) · root = bridge</text>
 <rect x="614" y="472" width="242" height="56" rx="6" fill="#CDF4D3"/>
-<text x="735.0" y="497" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">application_protocol</text>
+<text x="735.0" y="497" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1E1E1E" text-anchor="middle">protocol</text>
 <text x="735.0" y="518" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#1E1E1E" fill-opacity="0.8" text-anchor="middle">STP · no network layer</text>
 <path d="M 598 140 L 502 140 Q 488 140 488 154 L 488 426.0 Q 488 440.0 474 440.0 L 262 440.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
 <polyline points="271,431.0 262,440.0 271,449.0" fill="none" stroke="#EB7500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>

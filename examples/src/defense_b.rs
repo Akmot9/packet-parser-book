@@ -123,7 +123,7 @@ mod tests {
             (transport.source_port, transport.destination_port),
             (Some(54020), Some(58584))
         );
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RTPS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RTPS");
 
         // The pipeline gives the label; the protocol parser decodes the payload.
         let payload = transport.payload.unwrap();
@@ -190,7 +190,7 @@ mod tests {
         // then a DATA whose octetsToNextHeader is 0.
         let raw = hex::decode(OPENDDS_FRAME_1_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RTPS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RTPS");
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = RtpsPacket::try_from(payload).unwrap();
         assert_eq!(packet.vendor_id(), 0x0103); // OpenDDS
@@ -225,7 +225,7 @@ mod tests {
         // Frame 1 of rtps.pcap: sixteen bytes, magic, version, vendorId, NDDSPING.
         let raw = hex::decode(RTI_PING_FRAME_1_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RTPS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RTPS");
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         assert_eq!(payload.len(), 16);
 
@@ -316,7 +316,7 @@ mod tests {
         let mut frame = raw.clone();
         frame[4 + 20 + 8 + 22] = 200;
         let flow = parse(LinkType::NULL, &frame).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
         assert!(flow.corrupted.is_none());
     }
     // ANCHOR_END: rtps_refusals
@@ -383,7 +383,7 @@ mod tests {
         // Frame 3 of cat_034_048.pcap: a CAT 048 block, then a CAT 034 block.
         let raw = hex::decode(CAT_034_048_FRAME_3_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "ASTERIX");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "ASTERIX");
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = AsterixPacket::try_from(payload).unwrap();
         let shape: Vec<(u8, u16, usize)> = packet
@@ -429,7 +429,7 @@ mod tests {
         // blocks in one datagram.
         let raw = hex::decode(RADARDATA_FRAME_772_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "ASTERIX");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "ASTERIX");
         let packet =
             AsterixPacket::try_from(flow.transport.as_ref().unwrap().payload.unwrap()).unwrap();
         let categories: Vec<u8> = packet.blocks.iter().map(|block| block.category).collect();
@@ -477,7 +477,7 @@ mod tests {
         // end of batch.
         let raw = hex::decode(CAT_062_065_FRAME_1_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "ASTERIX");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "ASTERIX");
         let packet =
             AsterixPacket::try_from(flow.transport.as_ref().unwrap().payload.unwrap()).unwrap();
         let shape: Vec<(u8, usize)> = packet
@@ -520,7 +520,7 @@ mod tests {
         /// The UDP payload of an Ethernet frame the pipeline labels ASTERIX.
         fn datagram(raw: &[u8]) -> &[u8] {
             let flow = parse(LinkType::ETHERNET, raw).unwrap();
-            assert_eq!(flow.application.unwrap().application_protocol, "ASTERIX");
+            assert_eq!(flow.application.unwrap().protocol.label(), "ASTERIX");
             flow.transport.unwrap().payload.unwrap()
         }
 
@@ -575,7 +575,7 @@ mod tests {
         // the frame malformed.
         let raw = hex::decode(RADARDATA_FRAME_30453_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "ASTERIX");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "ASTERIX");
         let packet =
             AsterixPacket::try_from(flow.transport.as_ref().unwrap().payload.unwrap()).unwrap();
         let record = &packet.blocks[0].records[0];
@@ -637,7 +637,7 @@ mod tests {
         let mut frame = raw.clone();
         frame[14 + 20 + 8 + second] = 10;
         let flow = parse(LinkType::ETHERNET, &frame).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
         assert!(flow.corrupted.is_none());
     }
     // ANCHOR_END: asterix_all_or_nothing
