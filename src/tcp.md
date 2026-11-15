@@ -10,14 +10,20 @@ These are the 40 bytes the [internet chapter](./ipv4.md) handed up as `payload`.
 
 Structural checks (an `Err` means "not a readable TCP header"):
 
-✅ **Minimum length** – at least **20 bytes** (`TcpError::PacketTooShort`).  
-✅ **Data offset** – between **5 and 15** words, 20 to 60 bytes (`TcpError::InvalidDataOffset`, carrying the value read).  
-✅ **Header available** – the buffer holds the whole header, options included (`TcpError::PacketTooShort`).  
+| Bytes | Field | Check | Error |
+|---|---|---|---|
+| 0–19 | Fixed header | the buffer holds at least 20 bytes | `TcpError::PacketTooShort` |
+| 12, high nibble | Data offset | between 5 and 15 words, 20 to 60 bytes | `TcpError::InvalidDataOffset`, with the value read |
+| 0–`offset × 4` | Header and options | the buffer holds the whole header | `TcpError::PacketTooShort` |
 
 Semantic checks (the header is readable, `TryFrom` returns `Ok`, and the anomaly is exposed by `TcpPacket::anomaly()`):
 
-⚠️ **SYN + FIN both set** – no conforming stack opens and closes a connection in the same segment. This is a classic scan and firewall-evasion signature (`TcpError::InvalidFlags { flags }`, with the whole flags byte).  
-⚠️ **Reserved bits set** – the three bits between the data offset and NS. RFC 9293 §3.1 says they must be zero (`TcpError::ReservedBitsSet { bits }`). NS is decoded into `ns` and not checked.  
+| Bytes | Field | Anomaly | Error |
+|---|---|---|---|
+| 13 | Flags | SYN and FIN both set | `TcpError::InvalidFlags { flags }`, with the whole flags byte |
+| 12, bits 3 to 1 | Reserved | any of the three bits set | `TcpError::ReservedBitsSet { bits }` |
+
+No conforming stack opens and closes a connection in the same segment: SYN with FIN is a classic scan and firewall-evasion signature. The reserved bits sit between the data offset and NS, and RFC 9293 §3.1 says they must be zero. NS is decoded into `ns` and not checked.
 
 `anomaly()` names one anomaly: when both are present it returns `ReservedBitsSet`, which it checks first. `TcpPacket::is_anomalous()` gives the same verdict as a plain `bool`.
 

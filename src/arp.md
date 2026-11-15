@@ -27,13 +27,17 @@ The parser keeps no cache and takes no view on what a frame means: a reply nobod
 
 ## Validations
 
-✅ **Minimum length** – at least **28 bytes**, otherwise `ArpError::InvalidLength`.  
-✅ **Hardware type** – **1**, Ethernet, otherwise `UnsupportedHardwareType`.  
-✅ **Protocol type** – IPv4 (`0x0800`) or IPv6 (`0x86DD`), otherwise `UnsupportedProtocolType`.  
-✅ **Hardware length** – **6**, otherwise `InvalidHardwareLength`.  
-✅ **Dynamic length** – the buffer holds `8 + 2 × hardware length + 2 × protocol length` bytes, otherwise `InvalidLength` with that expected size.  
-✅ **Protocol length** – **4** for IPv4, **16** for IPv6, otherwise `InvalidProtocolLength`.  
-✅ **Operation** – **1** (request) or **2** (reply), otherwise `UnsupportedOperation`.  
+| Bytes | Field | Check | Error |
+|---|---|---|---|
+| 0–27 | Message | the buffer holds at least 28 bytes | `ArpError::InvalidLength` |
+| 0–1 | Hardware type | 1, Ethernet | `UnsupportedHardwareType` |
+| 2–3 | Protocol type | IPv4 (`0x0800`) or IPv6 (`0x86DD`) | `UnsupportedProtocolType` |
+| 4 | Hardware length | 6 | `InvalidHardwareLength` |
+| 0– | Message | the buffer holds `8 + 2 × hardware length + 2 × protocol length` bytes | `InvalidLength`, with that expected size |
+| 5 | Protocol length | 4 for IPv4, 16 for IPv6 | `InvalidProtocolLength` |
+| 6–7 | Operation | 1 (request) or 2 (reply) | `UnsupportedOperation` |
+
+The rows are in the order of the checks.
 
 Bytes past the message are ignored: the reply above is 46 bytes on the wire, four more than the request, and the gratuitous frame is padded to the 60-byte Ethernet minimum; neither changes the result. Since the EtherType said ARP, a failed check is reported in `corrupted` (`layer: Internet`, `error: "ARP error: Invalid ARP packet length: expected at least 28 bytes, got 27 bytes"`), not dropped.
 

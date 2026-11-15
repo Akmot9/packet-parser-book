@@ -10,8 +10,10 @@ This is the datagram of the DNS query drawn in the [packet chapter](./packet.md)
 
 ## Validations
 
-✅ **Minimum length** – at least **8 bytes**, otherwise `UdpError::PacketTooShort { expected, actual }`.  
-✅ **Length field** – **equal** to the number of bytes handed up, otherwise `UdpError::InvalidLength { length, actual }`.  
+| Bytes | Field | Check | Error |
+|---|---|---|---|
+| 0–7 | Header | the buffer holds at least 8 bytes | `UdpError::PacketTooShort { expected, actual }` |
+| 4–5 | Length | equal to the number of bytes handed up | `UdpError::InvalidLength { length, actual }` |
 
 `payload` is everything after the 8-byte header. UDP has no semantic anomaly: a datagram either parses or corrupts the layer, reported as `corrupted: Transport` with the error's text, for instance `UDP error: UDP length field (9) doesn't match actual packet length (10)`.
 

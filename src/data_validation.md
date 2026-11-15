@@ -2,9 +2,7 @@
 
 ![The 20 bytes of an IPv4 header go through Ipv4Packet::try_from: a validation, then Ok(Ipv4Packet) or Err(Ipv4Error)](images/data_validation/tryfrom.svg)
 
-When we receive a packet, we use `TryFrom` to apply several validation steps to it.  
-If the validations succeed, the function returns a structured representation of the packet or a part of it.  
-If the validations fail, it returns a custom error, implemented using the [thiserror crate](https://crates.io/crates/thiserror).
+Every struct of the crate is built by a `TryFrom` that applies its validation steps to the bytes. When they all pass, it returns the typed structure. When one fails, it returns a typed error, defined with the [thiserror crate](https://crates.io/crates/thiserror).
 
 The top-level API returns `ParseError`; each layer and each protocol has its own error type (`DataLinkError`, `Ipv4Error`, `TcpError`, `NtpPacketParseError`...).
 
@@ -137,5 +135,3 @@ A parser of hostile bytes must never bring its host down. What the crate does ab
   Most protocol targets also mutate seeds built from real frames of the corpus, named in their comments, so that hostile bytes reach the deep paths from the first run. The nightly workflow, `.github/workflows/fuzz.yml`, draws its matrix from these `[[bin]]` entries, so that a new target runs the very night it is added; it keeps each target's corpus from one night to the next, and a failed night opens or completes a `fuzz-failure` issue. On every pull request, the CI checks that each file of `fuzz/fuzz_targets/` has its `[[bin]]`, builds the targets and runs each one once (`-runs=1`), which also runs the fixed oracles of `policy_dispatch`.
 
 None of this is a proof. Lints catch the explicit panics, not an out-of-bounds index; fuzzing finds panics, it does not demonstrate their absence. What the crate can claim is that every parser follows the same length-checked discipline, that the tooling refuses the obvious deviations, and that the fuzzers have not found a panic on the published versions. The same honesty applies to the other properties described in this book: `TryFrom` and `corrupted` describe how the *supported* layers behave; a protocol the crate does not decode is simply `None`, and zero-copy holds for the L2/L3/L4 structs and for the bytes of most application parsers. Many of them do allocate a `Vec` for each list whose length the packet dictates (the records of DNS and ASTERIX, the messages of PostgreSQL and Modbus/TCP, the APDUs of IEC 104, the attributes of RADIUS, the TLVs of LLDP...), every pre-allocation bounded first by the bytes left; and two copy bytes: DNS, whose names are `String`s, and DNP3, whose user data are rebuilt without their CRCs.
-
-Now let's go layer by layer.

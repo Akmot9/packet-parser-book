@@ -6,11 +6,15 @@ Announced by EtherType `0x0800` (or, inside a [PPPoE session](./pppoe.md), by th
 
 The **Protocol** byte plays the part the EtherType played one layer down: the internet layer does not parse what follows, it turns `6` into `payload_protocol: Some(Tcp)`, the announcement the [transport layer](./transport.md) dispatches on (`None` for a fragment, see [below](#fragments)). The bytes are those of a typical Linux TCP SYN, and the struct shows what `Internet::try_from_network_parts` returns for them.
 
-✅ **Minimum length** – at least **20 bytes**, otherwise `Ipv4Error::InvalidLength`.  
-✅ **Version** – the high nibble is **4**, otherwise `InvalidVersion`.  
-✅ **Header length** – `IHL × 4` is between **20 and 60** bytes (IHL 5..=15), otherwise `InvalidHeaderLength`.  
-✅ **Header available** – the buffer holds the whole header, options included, otherwise `InvalidLength`.  
-✅ **Total length** – `total_length` is at least the header length and at most the buffer length, otherwise `InvalidTotalLength`; 0 is the one exception, see [TSO](#a-total-length-of-zero-tso). The payload is `data[header_len..total_length]`: Ethernet padding after a short IP packet is *not* handed to the transport layer.  
+| Bytes | Field | Check | Error |
+|---|---|---|---|
+| 0–19 | Fixed header | the buffer holds at least 20 bytes | `Ipv4Error::InvalidLength` |
+| 0, high nibble | Version | 4 | `InvalidVersion` |
+| 0, low nibble | IHL | `IHL × 4` is between 20 and 60 bytes (IHL 5 to 15) | `InvalidHeaderLength` |
+| 0–`IHL × 4` | Header and options | the buffer holds the whole header | `InvalidLength` |
+| 2–3 | Total length | at least the header length and at most the buffer length; 0 is the one exception, see [TSO](#a-total-length-of-zero-tso) | `InvalidTotalLength` |
+
+The payload is `data[header_len..total_length]`: Ethernet padding after a short IP packet is not handed to the transport layer.
 
 The upper bound has a consequence: a packet cut by the capture's snapshot length fails it and is reported in `corrupted`, although nothing was wrong on the wire. `parse` receives the captured bytes only, so a truncated capture and a lying header look the same.
 

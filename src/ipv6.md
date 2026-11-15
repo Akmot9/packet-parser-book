@@ -6,10 +6,14 @@ Announced by EtherType `0x86DD`, or directly by a RAW IP capture, and parsed by 
 
 The same SYN as in the [IPv4 page](./ipv4.md), carried by IPv6 behind one Hop-by-Hop extension header. The fixed header is 40 bytes, and its **Next header** byte does not name the transport here: it says `0`, an extension. The addresses and the payload come out as for IPv4; `payload_protocol` comes from the end of the chain, and `details` keeps the chain's bytes.
 
-✅ **Header length** – at least **40 bytes**, otherwise `Ipv6Error::InvalidLength`.  
-✅ **Version** – the high nibble is **6**, otherwise `InvalidVersion`.  
-✅ **Payload length** – the buffer holds `40 + payload_length` bytes, otherwise `InvalidPayloadLength`. Bytes beyond it (Ethernet padding) are not handed up, as for IPv4.  
-✅ **Extension chain** – every extension header walked fits in the payload, otherwise `InvalidExtensionHeader`.  
+| Bytes | Field | Check | Error |
+|---|---|---|---|
+| 0–39 | Fixed header | the buffer holds at least 40 bytes | `Ipv6Error::InvalidLength` |
+| 0, high nibble | Version | 6 | `InvalidVersion` |
+| 4–5 | Payload length | the buffer holds `40 + payload_length` bytes | `InvalidPayloadLength` |
+| 40– | Extension chain | every extension header walked fits in the payload | `InvalidExtensionHeader` |
+
+Bytes beyond the payload length (Ethernet padding) are not handed up, as for IPv4.
 
 ![Walking the chain: the fixed header's Next header is 0, a Hop-by-Hop header of 8 bytes whose own Next header is 6, TCP; next_header keeps 0, extension_headers the 8 bytes, transport_protocol Some(6); a Fragment header or No Next Header makes transport_protocol None](images/network/ipv6_extensions.svg)
 
