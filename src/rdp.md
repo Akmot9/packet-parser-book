@@ -7,10 +7,10 @@ Remote Desktop Protocol, MS-RDPBCGR, added in 11.6.0 ([#100](https://github.com/
 The rule is port-guarded, TCP 3389 (IANA `ms-wbt-server`) on either side:
 
 ```rust
-port_rule("RDP", Guard::Tcp, is_rdp_tcp_port, ProbeId::Rdp),   // 3389
+port_rule(ApplicationProtocol::Rdp, Guard::Tcp, is_rdp_tcp_port, ProbeId::Rdp),   // 3389
 ```
 
-A [blind probe](./application.md#three-detection-routes) is ruled out because none of the three layers is RDP's own: TPKT, COTP and MCS are also the stack of T.120 and of ISO over TCP. A server on another port is declared with `ParseConfig::decode_as(port, DecodeAsProtocol::Rdp)`, which runs the same probe under the same TCP guard ([Decode As](./application.md#decode-as)). The probe is `RdpPacket::try_from`, on the whole segment. `Application::try_from`, which has no port, never answers `"RDP"`.
+A [blind probe](./application.md#three-detection-routes) is ruled out because none of the three layers is RDP's own: TPKT, COTP and MCS are also the stack of T.120 and of ISO over TCP. A server on another port is declared with `ParseConfig::decode_as(port, DecodeAsProtocol::Rdp)`, which runs the same probe under the same TCP guard ([Decode As](./application.md#decode-as)). The probe is `RdpPacket::try_from`, on the whole segment. `classify_payload` called with no port (`None`, `None`) never answers `"RDP"`.
 
 **After a TLS or CredSSP negotiation, the segments are labelled TLS.** Once the server has selected TLS or CredSSP, the connection carries TLS records. Their first byte is a content type (`0x16` for a handshake) where TPKT wants version 3, so the RDP probe refuses them and the blind TLS rule further down the table takes them. That is the decision of the issue, tested on `rdp-to-ssl.pcap`: a stateless parser sees TLS records and names them, and nothing ties them back to the RDP connection they belong to.
 
@@ -70,7 +70,7 @@ The TPKT header and the fixed part of the TPDU, on the Connection Request of fra
 
 In a DT, byte 6 holds the EOT bit (`0x80`), `end_of_tsdu`, and the MCS PDU starts `length_indicator` + 1 bytes into the TPDU, at byte 7 for the usual length indicator of 2.
 
-MS-RDPBCGR counts the token and the negotiation of a CR or a CC in the length indicator, where the crate's generic COTP parser, `copt::CotpHeader`, would read variable-part parameters. The RDP decoder therefore reads the fixed part itself and reuses only `CotpPduType`.
+MS-RDPBCGR counts the token and the negotiation of a CR or a CC in the length indicator, where the crate's generic COTP parser, `cotp::CotpHeader` (the module was misspelt `copt` until 12.0.0), would read variable-part parameters. The RDP decoder therefore reads the fixed part itself and reuses only `CotpPduType`.
 
 ## The connection: Connection Request and Confirm
 

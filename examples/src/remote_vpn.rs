@@ -11,7 +11,7 @@
 mod tests {
     use packet_parser::errors::application::rdp::RdpParseError;
     use packet_parser::errors::application::wireguard::WireGuardParseError;
-    use packet_parser::parse::application::protocols::copt::CotpPduType;
+    use packet_parser::parse::application::protocols::cotp::CotpPduType;
     use packet_parser::parse::application::protocols::rdp::{
         McsPduType, NegotiationResponse, RdpPacket, RdpPayload,
     };
@@ -194,7 +194,7 @@ mod tests {
     fn rdp_on_port_3389_and_the_connection_request() {
         let raw = hex::decode(RDP_COOKIE_REQUEST_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RDP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RDP");
 
         // The label is a classification; RdpPacket is the decode.
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
@@ -222,12 +222,12 @@ mod tests {
         let mut moved = raw.clone();
         moved[36..38].copy_from_slice(&3390u16.to_be_bytes());
         let flow = parse(LinkType::ETHERNET, &moved).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
 
         // ... until the caller declares the port.
         let config = ParseConfig::new().decode_as(3390, DecodeAsProtocol::Rdp);
         let flow = parse_with(LinkType::ETHERNET, &moved, &config).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RDP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RDP");
     }
     // ANCHOR_END: rdp_connection_request
 
@@ -251,7 +251,7 @@ mod tests {
         // tshark names "TLS not allowed by server".
         let raw = hex::decode(RDP_NEGOTIATION_FAILURE_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RDP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RDP");
         let segment = flow.transport.as_ref().unwrap().payload.unwrap();
         let confirm = RdpPacket::try_from(segment).unwrap();
         assert_eq!(confirm.pdus[0].cotp.pdu_type, CotpPduType::ConnectionConfirm);
@@ -285,7 +285,7 @@ mod tests {
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!(transport.destination_port, Some(3389));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "TLS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "TLS");
         assert_eq!(
             RdpPacket::try_from(transport.payload.unwrap()),
             Err(RdpParseError::InvalidTpkt { version: 0x16, reserved: 0x03 })
@@ -378,7 +378,7 @@ mod tests {
         // whole in its segment.
         let raw = hex::decode(RDP_SEND_DATA_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RDP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RDP");
         let segment = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = RdpPacket::try_from(segment).unwrap();
         assert!(!packet.truncated);
@@ -401,7 +401,7 @@ mod tests {
         // decoded on what is there, and marked.
         let raw = hex::decode(RDP_CUT_TPKT_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RDP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RDP");
         let segment = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = RdpPacket::try_from(segment).unwrap();
         assert_eq!((segment.len(), packet.pdus[0].tpkt_length), (1260, 1421));
@@ -418,7 +418,7 @@ mod tests {
         // a TPKT.
         let raw = hex::decode(RDP_TPKT_CONTINUATION_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
         assert_eq!(
             RdpPacket::try_from(flow.transport.as_ref().unwrap().payload.unwrap()),
             Err(RdpParseError::InvalidTpkt { version: 3, reserved: 0x29 })
@@ -432,7 +432,7 @@ mod tests {
         let initiation_frame = hex::decode(WG_INITIATION_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &initiation_frame).unwrap();
         assert_eq!(flow.transport.as_ref().unwrap().destination_port, Some(51820));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "WireGuard");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "WireGuard");
 
         let datagram = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = WireGuardPacket::try_from(datagram).unwrap();
@@ -467,7 +467,7 @@ mod tests {
     fn transport_data_and_a_keepalive() {
         let frame = hex::decode(WG_DATA_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &frame).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "WireGuard");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "WireGuard");
         let datagram = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = WireGuardPacket::try_from(datagram).unwrap();
         let WireGuardMessage::TransportData(data) = &packet.message else {
@@ -498,7 +498,7 @@ mod tests {
     fn three_rules_from_the_most_tolerant_to_the_strictest() {
         let label = |frame: &[u8], config: &ParseConfig| {
             let flow = parse_with(LinkType::ETHERNET, frame, config).unwrap();
-            flow.application.as_ref().map(|application| application.application_protocol)
+            flow.application.as_ref().map(|application| application.protocol.label())
         };
         // Ethernet and IPv4 without options: the UDP ports are bytes 34-37,
         // the datagram starts at byte 42.
@@ -546,13 +546,13 @@ mod tests {
         let frame = hex::decode(PROTONVPN_KEEPALIVE_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &frame).unwrap();
         assert_eq!(flow.transport.as_ref().unwrap().destination_port, Some(443));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "WireGuard");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "WireGuard");
 
         // Zoom: `04 00 00 00` and 81 bytes are the shape of Transport Data, and
         // tshark's heuristic accepts the datagram. The blind probe does not.
         let frame = hex::decode(ZOOM_DATAGRAM_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &frame).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
         let datagram = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = WireGuardPacket::try_from(datagram).unwrap(); // the shape is there
         assert_eq!(packet.reserved, [0; 3]);
@@ -566,7 +566,7 @@ mod tests {
         // A port the caller declares is WireGuard as soon as the shape is.
         let config = ParseConfig::new().decode_as(8801, DecodeAsProtocol::WireGuard);
         let flow = parse_with(LinkType::ETHERNET, &frame, &config).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "WireGuard");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "WireGuard");
     }
     // ANCHOR_END: wireguard_blind_probe
 

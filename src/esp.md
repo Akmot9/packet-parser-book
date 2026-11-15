@@ -69,8 +69,8 @@ The corpus has 8 native ESP packets, frames 5 to 12 of `ikev2_s2s_ipsec_vpn_aes_
 A NAT rewrites ports, and ESP has none. Behind a NAT, ESP rides in UDP 4500 (RFC 3948), sharing the port with IKE and with the keepalives that hold the NAT mapping open. The [IKE page](./ike.md#udp-4500-three-things-on-one-port) explains how `UdpEncapsulation::classify` tells the three apart; two rules of the table, right after the IKE rule, give the other two labels:
 
 ```rust
-port_rule("ESP",           Guard::Udp, is_nat_t_udp_port, ProbeId::EspNatT),      // 4500
-port_rule("NAT-keepalive", Guard::Udp, is_nat_t_udp_port, ProbeId::NatKeepalive), // 4500
+port_rule(ApplicationProtocol::Esp, Guard::Udp, is_nat_t_udp_port, ProbeId::EspNatT),      // 4500
+port_rule(ApplicationProtocol::NatKeepalive, Guard::Udp, is_nat_t_udp_port, ProbeId::NatKeepalive), // 4500
 ```
 
 Both look at UDP 4500 only, on either side; UDP 500 carries neither.

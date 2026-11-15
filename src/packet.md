@@ -95,7 +95,7 @@ The pipeline is **layered and progressive**: each layer is parsed from the paylo
 | Link | LINKTYPE + packet bytes | the caller (LINKTYPE) | `LinkLayer` + `NetworkProtocol` + L3 payload |
 | Internet | `NetworkProtocol` + L3 payload | EtherType / SLL protocol field | `Internet` + `payload_protocol` + L4 payload |
 | Transport | `TransportProtocol` + L4 payload | IP protocol number / next header | `Transport` + ports + L7 payload |
-| Application | `Transport` (ports + payload) | **content probes**, guarded by transport and sometimes by port | `Application { application_protocol }` |
+| Application | `Transport` (ports + payload) | **content probes**, guarded by transport and sometimes by port | `Application { protocol }` |
 
 ### The engine, end to end
 

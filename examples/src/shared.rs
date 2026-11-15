@@ -11,7 +11,10 @@ mod tests {
         PostgreSqlMessageBody, PostgreSqlMessageType, PostgreSqlPacket,
     };
     use packet_parser::parse::application::protocols::umas::{UmasFunction, UmasPacket};
-    use packet_parser::{DecodeAsProtocol, LinkType, PacketFlow, ParseConfig, parse, parse_with};
+    use packet_parser::{
+        ApplicationProtocol, DecodeAsProtocol, LinkType, PacketFlow, ParseConfig,
+        TransportProtocol, classify_payload, parse, parse_with,
+    };
 
     /// Frame 1 of `protocols/iec104/iti_JavaRMI_and_IEC_Misc.pcap` (ITI): a
     /// Java client's NTPv4 request, Ethernet / IPv4 / UDP 1027 -> 123.
@@ -44,6 +47,14 @@ mod tests {
         "001cc05f490a000ae4c5830a0800450000348bfd400080061068c0a86e83c0a8",
         "6e8a081a01f641d2eac6e1153ace5018fcc60032000000d10000000601030001",
         "0001",
+    );
+
+    /// Frame 50281 of `The-Ultimate-PCAP.pcapng` (frame 1 of
+    /// `protocols/modbus/modbus-udp.pcapng`): a Read Coils request on UDP,
+    /// 38956 -> 502.
+    const MODBUS_UDP_READ_HEX: &str = concat!(
+        "bc2411292b31bc2411d6d08f0800450000287f2f400040117d3fc0a8de81c0a8",
+        "de83982c01f600143e7c000100000006010105000003",
     );
 
     /// Frame 170 of `protocols/modbus/MODBUS-TestDataPart2.pcap` (ITI): a
@@ -122,7 +133,7 @@ mod tests {
     );
 
     fn label(flow: &PacketFlow<'_>) -> Option<&'static str> {
-        flow.application.as_ref().map(|application| application.application_protocol)
+        flow.application.as_ref().map(|application| application.protocol.label())
     }
 
     // ANCHOR: with_ports
@@ -239,6 +250,50 @@ mod tests {
         assert_eq!(label(&parse(LinkType::ETHERNET, &moved).unwrap()), Some("Unknown"));
     }
     // ANCHOR_END: modbus_lenient_on_port_502
+
+    // ANCHOR: modbus_over_udp
+    #[test]
+    fn modbus_on_udp_502_has_its_own_label() {
+        let raw = hex::decode(MODBUS_UDP_READ_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        let application = flow.application.as_ref().unwrap();
+        assert_eq!(application.protocol, ApplicationProtocol::ModbusUdp);
+        assert_eq!(application.protocol.label(), "ModbusUDP");
+
+        // The decoder is the one of Modbus/TCP: the same MBAP envelope.
+        let payload = flow.transport.as_ref().unwrap().payload.unwrap();
+        let packet = ModbusTcpPacket::try_from(payload).unwrap();
+        let [mbap] = packet.mbaps.as_slice() else {
+            panic!("one MBAP, got {}", packet.mbaps.len());
+        };
+        assert_eq!(mbap.transaction_identifier, 1);
+        assert_eq!((mbap.protocol_identifier, mbap.length, mbap.unit_identifier), (0, 6, 1));
+        assert_eq!(mbap.pdu.function_code, 0x01);
+        assert_eq!(mbap.pdu.pdu_data, [0x05, 0x00, 0x00, 0x03]); // address 1280, quantity 3
+
+        // Off UDP 502 nothing probes for Modbus, unless the port is declared.
+        let moved = with_ports(&raw, 38956, 40001);
+        assert_eq!(label(&parse(LinkType::ETHERNET, &moved).unwrap()), Some("Unknown"));
+        let declared = ParseConfig::new().decode_as(40001, DecodeAsProtocol::ModbusUdp);
+        let flow = parse_with(LinkType::ETHERNET, &moved, &declared).unwrap();
+        assert_eq!(label(&flow), Some("ModbusUDP"));
+
+        // The same payload without its frame: `classify_payload` gives the
+        // label of `parse`. With no port, UDP has no Modbus rule to try; TCP
+        // has the strict blind probe.
+        let udp = TransportProtocol::Udp;
+        let label_of = |protocol, source, destination| {
+            classify_payload(protocol, source, destination, payload)
+                .map(|application| application.protocol)
+        };
+        assert_eq!(label_of(udp, Some(38956), Some(502)), Some(ApplicationProtocol::ModbusUdp));
+        assert_eq!(label_of(udp, None, None), Some(ApplicationProtocol::Unknown));
+        assert_eq!(
+            label_of(TransportProtocol::Tcp, None, None),
+            Some(ApplicationProtocol::ModbusTcp)
+        );
+    }
+    // ANCHOR_END: modbus_over_udp
 
     // ANCHOR: modbus_ldap_lookalike
     #[test]

@@ -7,7 +7,7 @@ Internet Key Exchange, in both its versions: IKEv1, RFC 2409 on the ISAKMP frame
 IKE travels over UDP: port 500 (IANA `isakmp`), and port 4500 (IANA `ipsec-nat-t`) behind a NAT (RFC 3948), or because the implementation chose that port. The rule of the [dispatch table](./application.md) is **port-guarded**, 500 or 4500 on either side:
 
 ```rust
-port_rule("IKE", Guard::Udp, is_ike_udp_port, ProbeId::Ike),   // 500, 4500
+port_rule(ApplicationProtocol::Ike, Guard::Udp, is_ike_udp_port, ProbeId::Ike),   // 500, 4500
 ```
 
 There is no blind probe: a 28-byte header with a plausible version and length is not a signature strong enough to try on every datagram. The probe is `IkePacket::from_udp`, run on the whole datagram, as every probe but the four text ones since 11.7.0: the header's length must cover the message exactly. The rule sits among the port rules, after PostgreSQL's and right before the two other rules of port 4500, ESP and NAT-keepalive; the WireGuard rule of UDP 51820 comes later, so that an IKE packet whose peer drew 51820 as its ephemeral port keeps its label.
@@ -20,7 +20,7 @@ IKE on another port is declared with `ParseConfig::decode_as(port, DecodeAsProto
 {{#include ../examples/src/ipsec.rs:ike_decode_as}}
 ```
 
-Being port-guarded, IKE is not among the probes of `Application::try_from`, which has no port to check.
+Being port-guarded, IKE is not tried by `classify_payload` when it is given no port (`None`, `None`): a port rule needs a port to check.
 
 ## UDP 4500: three things on one port
 
@@ -47,9 +47,9 @@ pub enum UdpEncapsulation<'a> {
 The marker sits where an ESP packet has its SPI, and an SPI of zero is reserved and never sent (RFC 4303 §2.1): no ESP packet starts with it. Port 4500 has three rules, in this order:
 
 ```rust
-port_rule("IKE",           Guard::Udp, is_ike_udp_port,   ProbeId::Ike),          // 500, 4500
-port_rule("ESP",           Guard::Udp, is_nat_t_udp_port, ProbeId::EspNatT),      // 4500
-port_rule("NAT-keepalive", Guard::Udp, is_nat_t_udp_port, ProbeId::NatKeepalive), // 4500
+port_rule(ApplicationProtocol::Ike, Guard::Udp, is_ike_udp_port,   ProbeId::Ike),          // 500, 4500
+port_rule(ApplicationProtocol::Esp, Guard::Udp, is_nat_t_udp_port, ProbeId::EspNatT),      // 4500
+port_rule(ApplicationProtocol::NatKeepalive, Guard::Udp, is_nat_t_udp_port, ProbeId::NatKeepalive), // 4500
 ```
 
 The IKE probe does not go through `classify`: `IkePacket::from_udp` tries the bare message first, as on port 500, and if that fails while the marker is there with something after it, it decodes what follows the marker. A bare IKE message on 4500 is therefore accepted too. The other two rules give the labels `"ESP"` and `"NAT-keepalive"`, described on the [ESP page](./esp.md#in-udp-4500-behind-a-nat); UDP 500 carries neither.
@@ -178,7 +178,7 @@ Only the top level is walked: Proposal and Transform live inside a Security Asso
 | `SaKek`, `SaTek` (GDOI, 11.7.0) | 15, 16 | — |
 | `KeyDownload` | 17 (GDOI, 11.7.0) | 52 |
 | `SequenceNumber`, `ProofOfPossession` (GDOI, 11.7.0) | 18, 19 | — |
-| `NatDetection` | 20 (RFC 3947); 130 (drafts) | — |
+| `NatDiscovery` (`NatDetection` until 12.0.0) | 20 (RFC 3947); 130 (drafts) | — |
 | `NatOriginalAddress` | 21 (RFC 3947); 131 (drafts) | — |
 | `GroupAssociatedPolicy` (GDOI, 11.7.0) | 22 | — |
 | `TrafficSelectorInitiator`, `TrafficSelectorResponder` | — | 44, 45 |
@@ -192,7 +192,7 @@ Only the top level is walked: Proposal and Transform live inside a Security Asso
 
 Payload 14, the attributes of mode-config, comes from a draft that was never standardized: the IANA registry marks it "Reserved, not to be used". Codes 130 and 131 are those of the NAT-T drafts draft-ietf-ipsec-nat-t-ike-00 to -03.
 
-In IKEv1, codes 15 and 16 changed meaning in 11.7.0 ([#189](https://github.com/Akmot9/Packet-parser/issues/189)). 11.6.0 read them as `NatDetection` and `NatOriginalAddress`, after the drafts draft-ietf-ipsec-nat-t-ike-04 to -08, which used them without registering them. The *Next Payload Types* registry gives them to GDOI since RFC 3547: 15 is SA KEK (SAK), 16 SA TEK (SAT), and RFC 3947 took 20 and 21 for NAT-T. `PayloadType::from_code(1, 15)` now returns `Some(SaKek)` and `from_code(1, 16)` `Some(SaTek)`, as tshark ("SA KEK Payload", "SA TEK Payload"), libreswan and strongSwan read them. A caller that matches on `NatDetection` or `NatOriginalAddress` no longer sees 15 or 16, including from a peer that still follows those drafts. The other GDOI types, 17 to 19 and 22, were `None` in 11.6.0. None of the 1 254 ISAKMP frames of the crate's corpus carries these codes in clear: apart from a peer that follows those drafts, a GDOI type appears in clear at the top level only in the header of an encrypted message, whose `next_payload` names the first payload under the encryption (a GROUPKEY-PUSH announces a Sequence Number). The codes of both tables, as `from_code` reads them (*tested*):
+In IKEv1, codes 15 and 16 changed meaning in 11.7.0 ([#189](https://github.com/Akmot9/Packet-parser/issues/189)). 11.6.0 read them as `NatDetection` (the variant 12.0.0 renames `NatDiscovery`, the name of RFC 3947) and `NatOriginalAddress`, after the drafts draft-ietf-ipsec-nat-t-ike-04 to -08, which used them without registering them. The *Next Payload Types* registry gives them to GDOI since RFC 3547: 15 is SA KEK (SAK), 16 SA TEK (SAT), and RFC 3947 took 20 and 21 for NAT-T. `PayloadType::from_code(1, 15)` now returns `Some(SaKek)` and `from_code(1, 16)` `Some(SaTek)`, as tshark ("SA KEK Payload", "SA TEK Payload"), libreswan and strongSwan read them. A caller that matches on `NatDiscovery` or `NatOriginalAddress` no longer sees 15 or 16, including from a peer that still follows those drafts. The other GDOI types, 17 to 19 and 22, were `None` in 11.6.0. None of the 1 254 ISAKMP frames of the crate's corpus carries these codes in clear: apart from a peer that follows those drafts, a GDOI type appears in clear at the top level only in the header of an encrypted message, whose `next_payload` names the first payload under the encryption (a GROUPKEY-PUSH announces a Sequence Number). The codes of both tables, as `from_code` reads them (*tested*):
 
 ```rust
 {{#include ../examples/src/ipsec.rs:ike_registry_codes}}

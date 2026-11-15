@@ -166,7 +166,7 @@ mod tests {
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
 
         // The pipeline classifies the transport payload: a label, no decode.
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "GIOP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "GIOP");
 
         // The detailed parser decodes the same bytes.
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
@@ -198,7 +198,7 @@ mod tests {
         // datagram; the protocol parser decodes it from the transport payload.
         let raw = hex::decode(ETHERNET_IPV4_UDP_PTP_SYNC_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "PTP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "PTP");
 
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let PtpPacket::V2(sync) = PtpPacket::try_from_udp(payload).unwrap() else {

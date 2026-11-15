@@ -4,7 +4,7 @@ Some packets carry a **whole other packet** inside their payload. The base pipel
 
 ## `inner` and `flatten()`
 
-When a tunnel is recognized, its name goes into the outer flow's `application_protocol`, its headers are peeled, and the encapsulated packet is fed back into the **same** L3/L4/L7 pipeline, recursively, into `inner`:
+When a tunnel is recognized, its name goes into the outer flow's `Application::protocol`, its headers are peeled, and the encapsulated packet is fed back into the **same** L3/L4/L7 pipeline, recursively, into `inner`:
 
 ```rust
 pub struct PacketFlow<'a> {

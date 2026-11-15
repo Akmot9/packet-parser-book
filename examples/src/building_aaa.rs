@@ -95,7 +95,7 @@ mod tests {
         // Frame 3: labelled by the port rule, then decoded from the payload.
         let raw = hex::decode(ITI_READ_PROPERTY_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "BACnet/IP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "BACnet/IP");
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!(transport.destination_port, Some(47808));
 
@@ -152,7 +152,7 @@ mod tests {
         // Frame 10: a Who-Is for every device on every network.
         let raw = hex::decode(NDPI_WHO_IS_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "BACnet/IP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "BACnet/IP");
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = BacnetPacket::try_from(payload).unwrap();
         assert_eq!(packet.bvlc.kind, BvlcFunction::OriginalBroadcastNpdu);
@@ -196,7 +196,7 @@ mod tests {
         // Frame 25: a device asks to be registered as a foreign device.
         let raw = hex::decode(ITI_REGISTER_FOREIGN_DEVICE_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "BACnet/IP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "BACnet/IP");
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = BacnetPacket::try_from(payload).unwrap();
         assert_eq!(packet.bvlc.kind, BvlcFunction::RegisterForeignDevice);
@@ -226,7 +226,7 @@ mod tests {
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!((transport.source_port, transport.destination_port), (Some(40000), Some(40001)));
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "BACnet/IP");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "BACnet/IP");
 
         // One altered byte: the decoder refuses the datagram, the label is not
         // given, and nothing is reported as corrupted.
@@ -240,7 +240,7 @@ mod tests {
             altered[start + offset] = value;
             assert_eq!(BacnetPacket::try_from(&altered[start..]), Err(error));
             let flow = parse(LinkType::ETHERNET, &altered).unwrap();
-            assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+            assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
             assert!(flow.corrupted.is_none());
         }
     }
@@ -251,7 +251,7 @@ mod tests {
     fn radius_access_request_of_a_switch() {
         let raw = hex::decode(RADIUS_ACCESS_REQUEST_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RADIUS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RADIUS");
         let transport = flow.transport.as_ref().unwrap();
         assert_eq!((transport.source_port, transport.destination_port), (Some(1645), Some(1812)));
 
@@ -297,7 +297,7 @@ mod tests {
         let raw = hex::decode(ULTIMATE_ACCESS_ACCEPT_HEX).unwrap();
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
         assert_eq!(flow.internet.as_ref().unwrap().protocol_name, "IPv6");
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RADIUS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RADIUS");
 
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = RadiusPacket::try_from(payload).unwrap();
@@ -369,11 +369,11 @@ mod tests {
         let operator = packet.attribute(AttributeType::OperatorName);
         assert_eq!(operator.and_then(RadiusAttribute::as_text), Some("1example.net"));
 
-        // from_code(124) is the same value as in 11.6.0: until 12.0, {:?}
-        // prints the name of the deprecated variant.
+        // from_code(124) is the same value as in 11.6.0; since 12.0.0 the
+        // variant carries the registry's name, and {:?} prints it.
         assert_eq!(AttributeType::from_code(124), Some(AttributeType::Mip6FeatureVector));
-        assert_eq!(format!("{:?}", AttributeType::Mip6FeatureVector), "MipHomeAgentAddress");
-        assert_eq!(format!("{:?}", AttributeType::Mip6HomeLinkPrefix), "MipHomeAgentHost");
+        assert_eq!(format!("{:?}", AttributeType::Mip6FeatureVector), "Mip6FeatureVector");
+        assert_eq!(format!("{:?}", AttributeType::Mip6HomeLinkPrefix), "Mip6HomeLinkPrefix");
 
         // Every assigned type is named: 1 to 190 but four, and 241 to 246.
         let named = (0..=255).filter(|&code| AttributeType::from_code(code).is_some());
@@ -391,7 +391,7 @@ mod tests {
         // Captured on the loopback interface: LINKTYPE_NULL, then IPv4 and UDP.
         let raw = hex::decode(LOCALHOST_ACCESS_REJECT_HEX).unwrap();
         let flow = parse(LinkType::NULL, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RADIUS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RADIUS");
 
         let payload = flow.transport.as_ref().unwrap().payload.unwrap();
         let packet = RadiusPacket::try_from(payload).unwrap();
@@ -408,7 +408,7 @@ mod tests {
         let mut raw = hex::decode(RADIUS_ACCESS_REQUEST_HEX).unwrap();
         raw[34..38].copy_from_slice(&[0x9c, 0x40, 0x9c, 0x41]);
         let flow = parse(LinkType::ETHERNET, &raw).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RADIUS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RADIUS");
 
         // The authenticator and the values are not checked: nothing here knows
         // the shared secret.
@@ -417,7 +417,7 @@ mod tests {
         values[start + 4] ^= 0xff; // first byte of the authenticator
         values[start + 22] ^= 0xff; // first byte of the NAS-IP-Address value
         let flow = parse(LinkType::ETHERNET, &values).unwrap();
-        assert_eq!(flow.application.as_ref().unwrap().application_protocol, "RADIUS");
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RADIUS");
 
         // The structure is checked: an unknown code, a length that is not the
         // datagram's, attributes that no longer tile it (a NAS-IP-Address one
@@ -431,7 +431,7 @@ mod tests {
             altered[start + offset] = value;
             assert_eq!(RadiusPacket::try_from(&altered[start..]), Err(error));
             let flow = parse(LinkType::ETHERNET, &altered).unwrap();
-            assert_eq!(flow.application.as_ref().unwrap().application_protocol, "Unknown");
+            assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "Unknown");
             assert!(flow.corrupted.is_none());
         }
     }

@@ -211,7 +211,7 @@ STP_RST_BPDU = {
         {"name": "version", "value": "2 → StpVersion::Rstp", "color": "orange", "arrow": 8},
         {"name": "bpdu_type", "value": "0x02 → RapidSpanningTree", "color": "orange", "arrow": 9},
         {"name": "body", "value": "Configuration(..) · root = bridge", "arrow": 11, "arrow_color": "gray"},
-        {"name": "application_protocol", "value": "STP · no network layer"},
+        {"name": "protocol", "value": "STP · no network layer"},
     ]},
 }
 

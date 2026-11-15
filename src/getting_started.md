@@ -2,13 +2,13 @@
 
 This chapter is the "how do I use it" part. The rest of the book is the "how is it built" part.
 
-> **Reference version: `packet_parser` 11.8.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 12.0.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "11.8.0"
+packet_parser = "12.0.0"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 
@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             transport.protocol, transport.source_port, transport.destination_port);
     }
     if let Some(application) = &flow.application {
-        println!("L7: {}", application.application_protocol);
+        println!("L7: {}", application.protocol);
     }
     Ok(())
 }
