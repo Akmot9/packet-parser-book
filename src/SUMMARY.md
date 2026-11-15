@@ -1,7 +1,5 @@
 # Summary
 
-[The Packet Parser Crate](./the_packet_parser_crate.md)
-
 [Introduction](./introduction.md)
 
 - [Getting started](./getting_started.md)
@@ -58,3 +56,5 @@
 - [Tunnels](./tunnels.md)
 
 - [Adding a new protocol](./adding_a_protocol.md)
+
+[About](./about.md)

@@ -1,41 +1,36 @@
-# Packet Structure and Parsing Approach
+# PacketFlow struct
 
-## What is a Packet?
-A network packet is a sequence of bytes transmitted over a network. Here's an example of a raw packet in hexadecimal format:
+`parse` takes the bytes of a packet and returns a `PacketFlow`. This page shows what the bytes hold, what the struct keeps of them, and the order in which the engine fills it.
+
+## A packet is a list of bytes
 
 ![The 71 bytes of a DNS query, twelve per row](images/packet/raw_packet.svg)
 
-A **packet** is essentially a **list of bytes** representing network data.  
-For example:
+The crate receives a packet as a slice:
 
 ```rust
 let packet: &[u8] = &[0x02, 0x42, 0xc0, 0xa8, 0x00, 0x01, /* 65 more bytes */];
 ```
 
-It is preferable to **reference** the packet (`&[u8]`) rather than copying it to avoid unnecessary memory usage and improve performance. This is the founding rule of the crate: **the parsed structures borrow the packet, they never copy it**. Every parsed struct carries a lifetime `'a` tied to the input buffer.
+The parsed structures borrow that slice and never copy it. Every one of them carries a lifetime `'a` tied to the input buffer.
 
---- 
-## 🎨 Identifying Protocols in the Packet  
+## Layers in the bytes
 
-Each protocol occupies a specific part of the packet. By analyzing the bytes, we can identify different layers.
+Each protocol occupies one part of the packet:
 
 ![The same bytes coloured by layer: 14 of Ethernet, 20 of IPv4, 8 of UDP, 29 of DNS](images/packet/layered_packet.svg)
 
----
+The parts are nested. Each layer carries the next one as its payload:
 
-## 🪆 Protocols are Nested (Like Russian Dolls)  
-A network packet is structured as a series of encapsulated layers: each layer contains a protocol that encapsulates the next.
 ![Nested boxes: the Ethernet frame carries the IPv4 packet, which carries the UDP datagram, which carries the DNS message](images/packet/nesting.svg)
 
----
+## The struct
 
-## `PacketFlow` Layered Structure
-Once parsed, a packet is structured into **four layers**, following the OSI model:
+A parsed packet has four layers:
+
 ![The PacketFlow stack, data_link, internet, transport, application, inner, corrupted, with the formats and protocols each layer can hold](images/packet/packetflow_layers.svg)
 
-The **Data Link Layer** is always present, while the others depend on the packet type.
-
-Here is the actual struct:
+The data link layer is always present. The others depend on the packet.
 
 ```rust
 pub struct PacketFlow<'a> {
@@ -54,41 +49,35 @@ pub struct PacketFlow<'a> {
 }
 ```
 
-Two fields were not in the original design and deserve a word:
+Two fields are not layers:
 
-- **`inner`**: some packets carry a *whole other packet* inside their payload. When a tunnel is recognized, its name goes into `application` and the encapsulated packet is parsed recursively into `inner`. See the [tunnels chapter](./tunnels.md).
-- **`corrupted`**: a layer that was *recognized* (the EtherType said IPv4, the IP header said TCP) but whose bytes are invalid does not fail the whole parse. The lower layers are kept (the link layer, for a corrupt IPv4 header), that layer and the ones it would have carried stay `None`, and the problem is reported here. See [getting started](./getting_started.md#reading-the-outcome).
+- **`inner`**. Some packets carry a whole other packet in their payload. When a tunnel is recognized, its name goes into `application` and the encapsulated packet is parsed recursively into `inner` ([Tunnels](./tunnels.md)).
+- **`corrupted`**. A layer that was recognized (the EtherType said IPv4, the IP header said TCP) but whose bytes are invalid does not fail the parse. The lower layers are kept, that layer and the ones it would have carried stay `None`, and the problem is reported here ([Getting started](./getting_started.md#reading-the-outcome)).
 
----
+## Flow identity
 
-## 🔗 How Layers Interact with Addresses and Entry/Exit Points  
-Each layer contains specific information to identify **source and destination addresses**.
+Each layer holds a source and a destination:
+
 ![The flow identity of the DNS query: source and destination MAC, IP and port, the protocol of each layer and the application label](images/packet/flow_identity.svg)
 
-This is what I call the **flow identity**: MAC addresses, IP addresses, protocols, ports. `PacketFlow` implements `PartialEq`, `Eq` and `Hash` on this identity only, **not on the raw bytes**: payloads are deliberately ignored. Two packets of the same conversation carrying different data compare equal and hash identically, which is exactly what you want to build a flow table with a `HashMap<PacketFlowOwned, Stats>`. Since 11.6.0 the identity of an Ethernet frame also holds the session and the PPP protocol of a PPPoE session, which the owned form does not keep ([PPPoE session](./pppoe.md#flow-identity)).
+The flow identity is that set: MAC addresses, IP addresses, protocols, ports. `PacketFlow` implements `PartialEq`, `Eq` and `Hash` on the identity only, not on the raw bytes. Two packets of one conversation that carry different data compare equal and hash identically, which is what a flow table needs: a `HashMap<PacketFlowOwned, Stats>`. Since 11.6.0 the identity of an Ethernet frame also holds the session and the PPP protocol of a PPPoE session, which the owned form does not keep ([PPPoE session](./pppoe.md#flow-identity)).
 
----
-
-## 🧐 Detailed Breakdown of Parsed Structures  
-Each layer has its own structure with unique fields.
+## The structs behind each layer
 
 ![The structs behind each layer: LinkLayer, Internet, Transport and Application, with the fields that are not part of the identity hatched](images/packet/layer_structs.svg)
 
 Each layer exposes two levels of information:
 
-- the **flattened summary** you see in the diagram (`source`, `destination`, `protocol_name`, `source_port`...), which defines the identity of the layer and is what gets serialized;
-- a **`details`** field (`InternetDetails`, `TransportDetails`) holding the full parsed header (`Ipv4Packet`, `TcpPacket`, `IcmpPacket`...), so you never need to re-parse the payload to reach the TTL, the DSCP or the TCP flags. `details` is ignored by equality, hashing and serialization.
+- the flattened summary of the diagram (`source`, `destination`, `protocol_name`, `source_port`...), which is the identity of the layer and what is serialized;
+- a `details` field (`InternetDetails`, `TransportDetails`) with the full parsed header (`Ipv4Packet`, `TcpPacket`, `IcmpPacket`...). The TTL, the DSCP or the TCP flags are read there, without parsing the payload again. Equality, hashing and serialization ignore `details`.
 
-The data link layer is the exception: `LinkLayer` is *format-neutral* (Ethernet, RAW IP, Linux cooked capture...), and the format-specific view is reached through `as_ethernet()`, `as_linux_sll()`, etc. See the [data link chapter](./data_link.md).
+The data link layer is the exception. `LinkLayer` is format-neutral (Ethernet, RAW IP, Linux cooked capture...), and the view of one format is reached through `as_ethernet()`, `as_linux_sll()` and the like ([Data link](./data_link.md)).
 
----
-## Parsing Strategy Based on Payloads  
- 
-Parsing is determined by the payloads extracted at each stage.
+## Each layer announces the next
 
 ![Each layer has a payload and announces the next protocol: network_payload and network_protocol for the internet layer, payload and payload_protocol for the transport layer, payload and ports for the application probes](images/packet/payload_chain.svg)
 
-The pipeline is **layered and progressive**: each layer is parsed from the payload of the previous one, and each layer announces what the next one is.
+Each layer is parsed from the payload of the one below, and each layer says what the next one is:
 
 | Step | Input | What tells us the next protocol | Output |
 | --- | --- | --- | --- |
@@ -136,17 +125,8 @@ Read from top to bottom:
 - **A tunnel re-enters at `DecodedLink`**, one level deeper, with the same Decode As ports ([tunnels chapter](./tunnels.md)). That recursion runs inside the L7 stage, which is where its time is counted.
 - **`sink` is the timing**: a no-op for `parse`, a clock for `parse_timed`, so the measured path is the parsed path ([getting started](./getting_started.md#timing-benchmarks)).
 
-## Independent Layer Parsing
+## The port never decides alone
 
-Each layer must be **parsed independently** from the others.  
-We do **not** use information from one layer to *decode* another.
+Up to the transport layer, a field names the next protocol: the EtherType, then the IP protocol number. Above it, nothing does. A port number is a convention, which a scanner, a relay or an administrator can break, so port 80 does not make a payload HTTP.
 
-### **Why?**
-- **Security:** attackers can manipulate packet fields (e.g. changing port numbers).
-- **Flexibility:** some protocols do not strictly follow conventional port assignments.
-- **Reliability:** parsing should be based on raw data, not assumptions.
-
-For example, **we do not label an application-layer protocol based on the transport-layer port number alone**.  
-Just because a packet has **port 80** does not mean it contains **HTTP**: it could be anything.
-
-The rule has one nuance, learned the hard way. Some protocols have a signature too weak to be recognized from their bytes alone: an FTP reply, an SMTP reply and an NNTP reply are byte-for-byte identical (`220 text CRLF`). For those, the standard port is used as a **guard in addition to the content check, never instead of it**: the label is only given when port *and* content agree. The [application chapter](./application.md) details this table.
+The application label therefore comes from the content. Where the content is enough, a rule of the dispatch reads it on any port. Where it is not, the port is added as a guard: an FTP reply, an SMTP reply and an NNTP reply are the same bytes (`220 text CRLF`), and each is labelled only on its own port. In both cases the content must match. The [Application](./application.md) chapter has the table of these rules.

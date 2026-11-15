@@ -1,13 +1,10 @@
 # Data link
 
-### **Parsing the Data Link Layer from a Raw Packet**
-Understanding how to parse the **Data Link Layer** from raw packets is a crucial step in network packet analysis. The Data Link Layer provides essential information such as **MAC addresses, EtherType, and payload extraction**. This part explains how the crate decides which format it reads, then each format has its own page, Ethernet first.
+The data link layer is the first one `parse` reads, and the only one whose format the bytes do not announce. This page explains how the crate selects the format; each format then has its own page.
 
----
+## The LINKTYPE decides: `LinkType` and `LinkLayer`
 
-## **🌐 The LINKTYPE decides: `LinkType` and `LinkLayer`**
-
-A capture is not always Ethernet. A capture on the Linux `any` interface is *Linux cooked* (SLL), a VPN capture is often *RAW IP*, an industrial capture can be *802.3br*. The bytes of these formats look nothing like an Ethernet header, and nothing in them says which format they are: **only the capture file knows**, through its LINKTYPE.
+A capture is not always Ethernet. A capture on the Linux `any` interface is *Linux cooked* (SLL), a VPN capture is often *RAW IP*, an industrial capture can be *802.3br*. The bytes of these formats look nothing like an Ethernet header, and nothing in them says which format they are. Only the capture file knows, through its LINKTYPE.
 
 That is why `parse` takes a `LinkType` and never guesses. `LinkType(pub u32)` uses the canonical `LINKTYPE_*` values stored in PCAP/PCAPNG files, and stays open: an unknown value is preserved, not collapsed into an `Unknown` variant. `parse` never reads a capture file, so mapping the capture source to this namespace is the caller's job: a `DLT_*` value from a live capture must be normalized when it differs from the `LINKTYPE_*` value, and a PCAPNG reader passes the LINKTYPE of the interface each packet references.
 
@@ -73,9 +70,9 @@ if let Some(sll) = flow.data_link.as_linux_sll() {
 }
 ```
 
-So a RAW or SLL capture **cannot silently manufacture MAC addresses**, which is what happened before this design when everything was forced through `DataLink`.
+A RAW or SLL capture therefore cannot come out with MAC addresses it never had, which is what happened when every format went through `DataLink`.
 
-### The formats
+## The formats
 
 Each format has its page:
 
@@ -89,9 +86,9 @@ Each format has its page:
 
 IEEE 802.11 is modelled (`Ieee80211Link`) for the inner flows of a CAPWAP tunnel, not yet decodable as a top-level LINKTYPE.
 
-### One error path
+## One error path
 
-Whatever the format, a link failure is reported through the same enum, `LinkLayerError` (`#[non_exhaustive]`), with sizes expressed on the **whole packet**:
+Whatever the format, a link failure is reported through the same enum, `LinkLayerError` (`#[non_exhaustive]`), with sizes that count the whole packet:
 
 ```rust
 Err(ParseError::InvalidLinkLayer(LinkLayerError::Truncated {
@@ -100,14 +97,3 @@ Err(ParseError::InvalidLinkLayer(LinkLayerError::Truncated {
 ```
 
 `Truncated` is the only variant Ethernet produces: its decoder maps `DataLinkError::DataLinkTooShort` onto it, `required` counting the VLAN tags already met. The 802.3br decoder adds its preamble, SMD and mCRC to both sizes and the NULL decoder its four header bytes, so a consumer accounting for link failures never needs to know where a decoder slices the packet. The other variants name what is wrong instead of a size: `InvalidIpVersion`, `InvalidAddressFamily`, `InvalidPreamble`, `InvalidSmd` and `PreemptibleFragment`. An unsupported LINKTYPE is not among them: it is `ParseError::UnsupportedLinkType`. Neither is a malformed PPPoE session: the frame is kept unpeeled, with EtherType `0x8864` and no layer 3, never refused ([PPPoE session](./pppoe.md#what-makes-a-session)).
-
----
-
-## **🚀 Conclusion**
-Parsing the **Data Link Layer** requires **careful validation** and **structured extraction**. By following a modular approach:
-- **MAC addresses** are extracted safely.
-- **EtherType** is correctly mapped, VLAN stacks and PPPoE sessions are consumed.
-- **The LINKTYPE is trusted, the bytes are not**: each format has its own decoder, and none of them can be mistaken for another.
-- The structure is **extensible** to new link formats without touching the L3/L4/L7 pipeline.
-
-🚀 **Next Step:** exploring the **internet layer (IPv4/IPv6/ARP)**!
