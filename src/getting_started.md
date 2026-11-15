@@ -1,6 +1,6 @@
 # Getting started
 
-This chapter is the "how do I use it" part. The rest of the book is the "how is it built" part.
+This chapter shows how to use the crate. The rest of the book shows how it is built.
 
 > **Reference version: `packet_parser` 12.0.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
 
@@ -155,7 +155,7 @@ And the two link-layer failures, the only ones that return `Err` (*tested*):
 | Verify a checksum (opt-in) | `packet_parser::checksum::verify_{ipv4_header,tcp,udp}_checksum` |
 | Measure the time spent per layer | `parse_timed(...)` with the `parse_timing` feature |
 
-## "Decode As": my FTP runs on port 2121
+## "Decode As": an FTP server on port 2121
 
 Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 28 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)). The port never replaces the content check: it only gives the probe its chance before the rest of the table.
 

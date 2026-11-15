@@ -182,7 +182,24 @@ These errors never reach `corrupted`: a datagram the probes refuse goes on down 
 | `ndpi_zoom2.pcap` | 0 | Zoom: 22 datagrams tshark takes for WireGuard | — | nDPI test corpus |
 | `ndpi_lol_wild_rift_udp.pcap` | 0 | League of Legends: Wild Rift: 3 such datagrams | — | nDPI test corpus |
 
-The golden test checks the other side too: none of the neighbours of these messages comes out WireGuard, not the 61 "disco" messages of Tailscale on the same port 41641, nor the two extended handshakes of TunnelBear (204 and 100 bytes), nor the 43 obfuscated OpenVPN datagrams of NordVPN on UDP 1198, nor frame 41 of ProtonVPN, retouched by hand in nDPI's corpus. It then replays the 128 messages off their port, from UDP 40000 to 40001, where the blind probe recognizes all of them; with `02 78 00` in their reserved bytes, the blind probe refuses all of them, 51820 keeps only the 12 handshakes, and a port declared by Decode As keeps all 128. No real capture carries WireGuard over IPv6: the keepalive of frame 9 of `wireshark_wireguard-ping-tcp.pcap`, put in a raw IPv6 frame, follows the same rules. In the golden histogram of the whole corpus, `"WireGuard"` counts these 128 frames. The fuzz target `parse_wireguard` runs nightly: no panic, and on success the size is the one of the type, every borrowed field points into the input, a keepalive is exactly 32 bytes, and what the blind cascade labels WireGuard has zero reserved bytes.
+The golden test checks the other side too. None of the neighbours of these messages comes out WireGuard:
+
+- the 61 "disco" messages of Tailscale on the same port 41641;
+- the two extended handshakes of TunnelBear, 204 and 100 bytes;
+- the 43 obfuscated OpenVPN datagrams of NordVPN on UDP 1198;
+- frame 41 of ProtonVPN, retouched by hand in nDPI's corpus.
+
+It then replays the 128 messages off their port, from UDP 40000 to 40001, where the blind probe recognizes all of them. With `02 78 00` in their reserved bytes, the outcome depends on the route:
+
+| Route | Messages kept, of 128 |
+|---|---|
+| the blind probe | none |
+| port 51820 | the 12 handshakes |
+| a port declared by Decode As | all 128 |
+
+No real capture carries WireGuard over IPv6: the keepalive of frame 9 of `wireshark_wireguard-ping-tcp.pcap`, put in a raw IPv6 frame, follows the same rules. In the golden histogram of the whole corpus, `"WireGuard"` counts these 128 frames.
+
+The fuzz target `parse_wireguard` runs nightly. It must not panic, and on success the size is the one of the type, every borrowed field points into the input, a keepalive is exactly 32 bytes, and what the blind cascade labels WireGuard has zero reserved bytes.
 
 ## What is left out
 

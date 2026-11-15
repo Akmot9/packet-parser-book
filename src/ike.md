@@ -192,7 +192,21 @@ Only the top level is walked: Proposal and Transform live inside a Security Asso
 
 Payload 14, the attributes of mode-config, comes from a draft that was never standardized: the IANA registry marks it "Reserved, not to be used". Codes 130 and 131 are those of the NAT-T drafts draft-ietf-ipsec-nat-t-ike-00 to -03.
 
-In IKEv1, codes 15 and 16 changed meaning in 11.7.0 ([#189](https://github.com/Akmot9/Packet-parser/issues/189)). 11.6.0 read them as `NatDetection` (the variant 12.0.0 renames `NatDiscovery`, the name of RFC 3947) and `NatOriginalAddress`, after the drafts draft-ietf-ipsec-nat-t-ike-04 to -08, which used them without registering them. The *Next Payload Types* registry gives them to GDOI since RFC 3547: 15 is SA KEK (SAK), 16 SA TEK (SAT), and RFC 3947 took 20 and 21 for NAT-T. `PayloadType::from_code(1, 15)` now returns `Some(SaKek)` and `from_code(1, 16)` `Some(SaTek)`, as tshark ("SA KEK Payload", "SA TEK Payload"), libreswan and strongSwan read them. A caller that matches on `NatDiscovery` or `NatOriginalAddress` no longer sees 15 or 16, including from a peer that still follows those drafts. The other GDOI types, 17 to 19 and 22, were `None` in 11.6.0. None of the 1 254 ISAKMP frames of the crate's corpus carries these codes in clear: apart from a peer that follows those drafts, a GDOI type appears in clear at the top level only in the header of an encrypted message, whose `next_payload` names the first payload under the encryption (a GROUPKEY-PUSH announces a Sequence Number). The codes of both tables, as `from_code` reads them (*tested*):
+In IKEv1, codes 15 and 16 changed meaning in 11.7.0 ([#189](https://github.com/Akmot9/Packet-parser/issues/189)).
+
+| Code | 11.6.0 | Since 11.7.0 | Registered by |
+|---|---|---|---|
+| 15 | `NatDetection`, renamed `NatDiscovery` in 12.0.0 | `SaKek`, SA KEK (SAK) | RFC 3547, GDOI |
+| 16 | `NatOriginalAddress` | `SaTek`, SA TEK (SAT) | RFC 3547, GDOI |
+| 17 to 19, 22 | `None` | the other GDOI types | RFC 3547, GDOI |
+
+11.6.0 followed the drafts draft-ietf-ipsec-nat-t-ike-04 to -08, which used 15 and 16 without registering them. The *Next Payload Types* registry gives them to GDOI since RFC 3547, and RFC 3947 took 20 and 21 for NAT-T; `NatDiscovery` is the name RFC 3947 uses. `PayloadType::from_code(1, 15)` now returns `Some(SaKek)` and `from_code(1, 16)` `Some(SaTek)`, as tshark ("SA KEK Payload", "SA TEK Payload"), libreswan and strongSwan read them.
+
+A caller that matches on `NatDiscovery` or `NatOriginalAddress` no longer sees 15 or 16, including from a peer that still follows those drafts.
+
+None of the 1 254 ISAKMP frames of the crate's corpus carries these codes in clear. Apart from a peer that follows the drafts, a GDOI type appears in clear at the top level only in the header of an encrypted message, whose `next_payload` names the first payload under the encryption: a GROUPKEY-PUSH announces a Sequence Number.
+
+The codes of both tables, as `from_code` reads them (*tested*):
 
 ```rust
 {{#include ../examples/src/ipsec.rs:ike_registry_codes}}
@@ -239,7 +253,21 @@ A failure is not a corruption. The port is a hint: when the probe fails, the dat
 
 ## Oracle: 535 messages, field by field
 
-The golden test `tests/ipsec_golden.rs` runs the three captures of `pcaps_exemple/protocols/ipsec/`, 858 frames, and compares every one with tshark 4.6.6, frozen in `tests/data/ipsec_tshark_oracle.tsv` by `tools/ipsec_oracle.sh`. For each IKE message: both SPIs, the version, the exchange type, the flags, the message ID, the length, and the top-level chain with the length of each payload; tshark's Proposal and Transform, nested in a Security Association, are left out. For each ESP packet: the SPI and the sequence number ([ESP](./esp.md#oracle)). No Decode As is needed, every IKE frame has 500 or 4500 on one side. The 535 IKE messages are 12 IKEv1 (6 main mode, 3 quick mode, 3 informational) and 523 IKEv2 (281 IKE_SA_INIT, 224 IKE_AUTH, 18 INFORMATIONAL); 249 carry an encrypted body, 8 IKEv1 and 241 IKEv2. A second test moves frame 42 and frame 11 of the nDPI capture, IKE behind the marker and ESP, to port 4501, where they become `"Unknown"`, and declares them back with Decode As.
+The golden test `tests/ipsec_golden.rs` runs the three captures of `pcaps_exemple/protocols/ipsec/`, 858 frames, and compares every one with tshark 4.6.6, frozen in `tests/data/ipsec_tshark_oracle.tsv` by `tools/ipsec_oracle.sh`.
+
+- For each IKE message: both SPIs, the version, the exchange type, the flags, the message ID, the length, and the top-level chain with the length of each payload. tshark's Proposal and Transform, nested in a Security Association, are left out.
+- For each ESP packet: the SPI and the sequence number ([ESP](./esp.md#oracle)).
+
+No Decode As is needed: every IKE frame has 500 or 4500 on one side.
+
+| IKE messages | Number | Of which |
+|---|---|---|
+| IKEv1 | 12 | 6 main mode, 3 quick mode, 3 informational |
+| IKEv2 | 523 | 281 IKE_SA_INIT, 224 IKE_AUTH, 18 INFORMATIONAL |
+| with an encrypted body | 249 | 8 IKEv1, 241 IKEv2 |
+| all | 535 | |
+
+A second test moves frame 42 and frame 11 of the nDPI capture, IKE behind the marker and ESP, to port 4501, where they become `"Unknown"`, and declares them back with Decode As.
 
 | Capture | Frames | Content | Origin |
 | --- | --- | --- | --- |

@@ -138,9 +138,37 @@ pub enum RangeSpecifier {
 }
 ```
 
-The qualifier is two codes (§4.2.2.7.1). Its low nibble is the range code, and the range fields that follow the header are 1, 2 or 4 bytes wide according to it. Bits 4 to 6 are the prefix code: 1 to 3 an index, 4 to 6 a size, each on 1, 2 or 4 bytes, and 7 is reserved; bit 7 of the qualifier is reserved too and is not read. `range.object_count()` gives the number of objects the range announces: stop − start + 1, or the count. It is `None` for `All` and `Reserved`, for an inverted range, whose stop precedes its start by more than one index ([#181](https://github.com/Akmot9/Packet-parser/issues/181)), and for the full range, 0 to `0xFFFFFFFF` on four bytes (range codes 2 and 5), whose 2<sup>32</sup> objects do not fit in a `u32` ([#180](https://github.com/Akmot9/Packet-parser/issues/180)). A stop one index below the start, 5 to 4, is an empty range: `Some(0)`. Two of these answers changed in 11.7.0. On the full range, 11.6.0 overflowed: a panic with overflow checks (debug builds, `cargo fuzz`), `Some(0)` in release; the probe being blind, a 28-byte frame with valid CRCs, in any TCP segment or almost any UDP datagram, was enough to make `parse()` panic. And on the empty range, 11.6.0 returned `None`.
+The qualifier is two codes (§4.2.2.7.1).
 
-Whether data follows a header depends on the function. Confirm, Read, the immediate freezes and freeze-and-clears (codes 7 to 10), the cold and warm restarts, enable and disable unsolicited, assign class, delay measurement and record current time carry headers only, with two exceptions. Objects prefixed by their size carry their data: a file block read (g70v5, qualifier `0x5b`) carries the file handle and the block number. A header prefixed by indexes, qualifier `0x17`, `0x28` or `0x39` for instance, carries the list of the points the request asks for, without objects: since 11.7.0 ([#182](https://github.com/Akmot9/Packet-parser/issues/182)), `data` covers that list, the count times the width of an index, and the chain goes on after it. 11.6.0 did not step over the list and read the indexes as the next header, inventing headers. For the other functions, the size of the objects comes from a table of IEEE 1815-2012 annex A in the crate: a fixed size in bytes, packed bits (one bit per point for g1v1, g10v1, g12v3 and g80v1, among them the binary inputs, binary outputs and internal indications, two bits for g3v1), or a size carried by the prefix, for files, device profiles, data sets and authentication among others. `data` is then the range of the objects in `user_data`, and `LinkFrame::object_data(&header)` the bytes.
+- Its low nibble is the range code. The range fields that follow the header are 1, 2 or 4 bytes wide according to it.
+- Bits 4 to 6 are the prefix code: 1 to 3 an index, 4 to 6 a size, each on 1, 2 or 4 bytes; 7 is reserved.
+- Bit 7 of the qualifier is reserved too, and is not read.
+
+`range.object_count()` gives the number of objects the range announces: stop − start + 1, or the count.
+
+| Range | `object_count()` | In 11.6.0 |
+|---|---|---|
+| `All`, `Reserved` | `None` | the same |
+| inverted: the stop precedes the start by more than one index ([#181](https://github.com/Akmot9/Packet-parser/issues/181)) | `None` | the same |
+| full: 0 to `0xFFFFFFFF` on four bytes, range codes 2 and 5 ([#180](https://github.com/Akmot9/Packet-parser/issues/180)) | `None`: its 2<sup>32</sup> objects do not fit in a `u32` | an overflow |
+| empty: a stop one index below the start, 5 to 4 | `Some(0)` | `None` |
+
+The overflow of 11.6.0 was a panic with overflow checks (debug builds, `cargo fuzz`), and `Some(0)` in release. The probe being blind, a 28-byte frame with valid CRCs, in any TCP segment or almost any UDP datagram, was enough to make `parse()` panic.
+
+Whether data follows a header depends on the function.
+
+Some functions carry headers only: Confirm, Read, the immediate freezes and freeze-and-clears (codes 7 to 10), the cold and warm restarts, enable and disable unsolicited, assign class, delay measurement and record current time. There are two exceptions:
+
+- Objects prefixed by their size carry their data. A file block read (g70v5, qualifier `0x5b`) carries the file handle and the block number.
+- A header prefixed by indexes, qualifier `0x17`, `0x28` or `0x39` for instance, carries the list of the points the request asks for, without objects. Since 11.7.0 ([#182](https://github.com/Akmot9/Packet-parser/issues/182)), `data` covers that list, the count times the width of an index, and the chain goes on after it. 11.6.0 did not step over the list: it read the indexes as the next header, and invented headers.
+
+For the other functions, the size of the objects comes from a table of IEEE 1815-2012 annex A in the crate. It gives one of three things:
+
+- a fixed size in bytes;
+- packed bits: one bit per point for g1v1, g10v1, g12v3 and g80v1, among them the binary inputs, binary outputs and internal indications, and two bits for g3v1;
+- a size carried by the prefix, for files, device profiles, data sets and authentication among others.
+
+`data` is then the range of the objects in `user_data`, and `LinkFrame::object_data(&header)` the bytes.
 
 The chain stops at a header whose prefix or range code is reserved, at an inverted range, and at a header whose objects, sizes or indexes cannot be delimited: when the function carries data, a group and variation the table does not know or a variable-size object without a size prefix, and data or an index list that goes beyond the frame. That header is still listed, with an empty `data`, and what follows it is `undecoded`; a header cut before its last range field is not listed at all. A header that announces no object, an empty range or a zero count, never stops the chain, whatever its group, unless its prefix code is reserved, which is tested first. Both rules changed in 11.7.0 ([#181](https://github.com/Akmot9/Packet-parser/issues/181)): 11.6.0 treated an inverted range like `All` and read what followed it as a new header, and it stopped on the zero count of an unknown group or of objects it could not delimit.
 

@@ -79,7 +79,7 @@ The data link layer is the exception. `LinkLayer` is format-neutral (Ethernet, R
 
 Each layer is parsed from the payload of the one below, and each layer says what the next one is:
 
-| Step | Input | What tells us the next protocol | Output |
+| Step | Input | What names the next protocol | Output |
 | --- | --- | --- | --- |
 | Link | LINKTYPE + packet bytes | the caller (LINKTYPE) | `LinkLayer` + `NetworkProtocol` + L3 payload |
 | Internet | `NetworkProtocol` + L3 payload | EtherType / SLL protocol field | `Internet` + `payload_protocol` + L4 payload |

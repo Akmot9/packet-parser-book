@@ -84,7 +84,11 @@ The head is text, so the table counts lines, not bytes.
 
 ## Oracle: 296 frames
 
-`tests/http_golden.rs` compares the crate with tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/http_oracle.sh`, frozen in `tests/data/http_tshark_oracle.tsv`). For each frame it checks the kind, the version, and the method and URI or the code and phrase, on every capture of `pcaps_exemple/protocols/` and on `The-Ultimate-PCAP.pcapng`: 144 requests and 152 responses match. The crate labels no other frame of these captures `"HTTP"`, retransmissions apart: tshark does not dissect them, the crate labels six of them like the segments they repeat, and they are left out of the comparison. The two responses that tshark decrypts in `tls12-dsb.pcapng`, with the key the capture carries, stay TLS. With 11.7.0 the golden histogram went from 72 to 146 HTTP labels, 72 responses and 2 retransmissions of responses more, and from 9 579 to 9 505 `"Unknown"`.
+`tests/http_golden.rs` compares the crate with tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/http_oracle.sh`, frozen in `tests/data/http_tshark_oracle.tsv`). For each frame it checks the kind, the version, and the method and URI or the code and phrase. It runs on every capture of `pcaps_exemple/protocols/` and on `The-Ultimate-PCAP.pcapng`: 144 requests and 152 responses match.
+
+The crate labels no other frame of these captures `"HTTP"`, retransmissions apart. tshark does not dissect a retransmission; the crate labels six of them like the segments they repeat, and they are left out of the comparison. The two responses that tshark decrypts in `tls12-dsb.pcapng`, with the key the capture carries, stay TLS.
+
+With 11.7.0 the golden histogram went from 72 to 146 HTTP labels: 72 responses more, and 2 retransmissions of responses. `"Unknown"` went from 9 579 to 9 505.
 
 ## What is left out
 

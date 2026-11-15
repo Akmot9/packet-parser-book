@@ -67,7 +67,23 @@ and the invariants are:
 2. **Every probe runs at most once per payload.** Failures are memoized by `ProbeId` in a bitmask, one bit of a `u64` for each of the 59 probes: a rule sharing a probe with an earlier one (port-priority then blind fallback) never re-runs it.
 3. **A probe judges the bytes its decoder will read; only the text probes stop at `PROBE_CAP`** ([Limits](./limits.md#what-the-crate-chooses-not-to-do))**.** Since 11.7.0 every other probe runs on the real payload ([#184](https://github.com/Akmot9/Packet-parser/issues/184), [#185](https://github.com/Akmot9/Packet-parser/issues/185)): most decoders want it tiled to the last byte (SNMP, Modbus/TCP, ASTERIX, DIS, RTPS...) or covered by a declared length that must fit in it (NBSS, DNS over TCP, TLS...), and a prefix proves neither. The probes of the four text protocols, FTP, SMTP, NNTP and HTTP, keep the cap, `PROBE_CAP` = 18 432 bytes (18 KiB). They validate their text over its whole length: in UTF-8 for FTP and SMTP, the first line in UTF-8 and the octets of what follows for NNTP, the head in UTF-8 for HTTP. The fuzz oracle of FTP, SMTP and NNTP off their ports, `fuzz/oracles/text_protocols.rs`, copies the cap so that it judges the same bytes as their probes. What lies beyond the cap is not seen: a text message is judged on its first 18 432 bytes alone.
 
-   Before 11.7.0, 43 of the 57 probes read only that prefix, the bound that [#20](https://github.com/Akmot9/Packet-parser/issues/20) put on the cost of 64 KiB GRO segments. Beyond it a probe labelled what its decoder refuses (an SNMP GetResponse of 18 432 bytes followed by a hundred null bytes was `"SNMP"`), or missed a complete message (an exact DNS response of 20 041 bytes, or a TLS 1.2 record of 18 437 bytes, the maximum of RFC 5246 §6.2.3, stayed `"Unknown"`). Reading everything keeps the cost linear: a UDP payload is bounded by its datagram, and on TCP each decoder stops at its first structural error. Measured in release by [#185](https://github.com/Akmot9/Packet-parser/issues/185), a 60 000-byte TCP segment costs at most 31 µs to `parse()`. On the largest datagrams, [#184](https://github.com/Akmot9/Packet-parser/issues/184) measured 2.7 ms to decode 65 505 bytes of ASTERIX records, 3.8 times the cost of the 18 432 bytes of the cap, and 39 ms for the worst DNS case, a 255-byte name pointed at by 10 871 questions in 65 497 bytes, a cost that the bound on names keeps linear (see [Tightening a blind probe](./application.md#tightening-a-blind-probe)). No label of the corpus moved: apart from six RTPS datagrams, already read whole, none of its 210 captures carries a payload longer than the cap.
+   Before 11.7.0, 43 of the 57 probes read only that prefix, the bound that [#20](https://github.com/Akmot9/Packet-parser/issues/20) put on the cost of 64 KiB GRO segments. Beyond the prefix, a probe could label what its decoder refuses, or miss a complete message:
+
+   | Payload | Before 11.7.0 | The fault |
+   |---|---|---|
+   | an SNMP GetResponse of 18 432 bytes followed by a hundred null bytes | `"SNMP"` | the decoder refuses it |
+   | an exact DNS response of 20 041 bytes | `"Unknown"` | a complete message, missed |
+   | a TLS 1.2 record of 18 437 bytes, the maximum of RFC 5246 §6.2.3 | `"Unknown"` | a complete message, missed |
+
+   Reading everything keeps the cost linear. A UDP payload is bounded by its datagram, and on TCP each decoder stops at its first structural error. The measures, in release:
+
+   | Input | Cost | Source |
+   |---|---|---|
+   | a 60 000-byte TCP segment, through `parse()` | at most 31 µs | [#185](https://github.com/Akmot9/Packet-parser/issues/185) |
+   | 65 505 bytes of ASTERIX records | 2.7 ms, 3.8 times the cost of the 18 432 bytes of the cap | [#184](https://github.com/Akmot9/Packet-parser/issues/184) |
+   | the worst DNS case: a 255-byte name pointed at by 10 871 questions, in 65 497 bytes | 39 ms | [#184](https://github.com/Akmot9/Packet-parser/issues/184) |
+
+   The bound on names is what keeps the DNS cost linear (see [Tightening a blind probe](./application.md#tightening-a-blind-probe)). No label of the corpus moved: apart from six RTPS datagrams, already read whole, none of its 210 captures carries a payload longer than the cap.
 4. **The order of the table is the priority**, inspectable, testable, and locked by a golden snapshot over the reference captures.
 
 ![One rule of the table: the transport payload, a TLS ClientHello on TCP 54322 to 443, passes the transport guard, then the port guard, then the content probe, and gets the label TLS; a failed gate moves on to the next rule, the last rule falls through to Unknown, an empty payload is not probed](images/application/dispatch_rule.svg)
@@ -117,8 +133,8 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 6 | SMTP | `Tcp` | 25, 587 | `Smtp` | `SmtpMessage::try_from`, first `PROBE_CAP` bytes |
 | 7 | NNTP | `Tcp` | 119 | `Nntp` | `NntpMessage::try_from`, first `PROBE_CAP` bytes |
 | 8 | FTP | `Tcp` | vetoed on 21, 25, 587, 119 | `FtpUnambiguous` | a complete command whose verb only FTP has: RETR, STOR, PASV, APPE, RNFR, RNTO, MKD, CDUP, EPSV, EPRT, NLST; first `PROBE_CAP` bytes |
-| 9 | SMTP | `Tcp` | vetoed on 21, 25, 587, 119 | `SmtpUnambiguous` | the same, for EHLO, HELO, MAIL, RCPT |
-| 10 | NNTP | `Tcp` | vetoed on 21, 25, 587, 119 | `NntpUnambiguous` | the same, for ARTICLE, XOVER, XHDR, IHAVE, LISTGROUP, NEWGROUPS, NEWNEWS |
+| 9 | SMTP | `Tcp` | vetoed on 21, 25, 587, 119 | `SmtpUnambiguous` | a complete command whose verb only SMTP has: EHLO, HELO, MAIL, RCPT; first `PROBE_CAP` bytes |
+| 10 | NNTP | `Tcp` | vetoed on 21, 25, 587, 119 | `NntpUnambiguous` | a complete command whose verb only NNTP has: ARTICLE, XOVER, XHDR, IHAVE, LISTGROUP, NEWGROUPS, NEWNEWS; first `PROBE_CAP` bytes |
 | 11 | [mDNS](./dns.md) | `Udp` | 5353, terminal | `Mdns` | `DnsPacket::try_from_mdns` |
 | 12 | [LLMNR](./dns.md) | `Udp` | 5355, terminal | `Llmnr` | `DnsPacket::try_from_llmnr` |
 | 13 | SSDP | `Udp` | 1900 | `Ssdp` | `SsdpPacket::try_from` |
@@ -184,7 +200,7 @@ Seven probes serve two rules each: `Ams` its TCP and its UDP port (18, 19), `Mod
 
 ### Three detection routes
 
-When choosing where a new protocol goes, the question is: *can a valid payload of this protocol also be a valid payload of another protocol we already detect, or of arbitrary text?*
+When choosing where a new protocol goes, the question is: *can a valid payload of this protocol also be a valid payload of another protocol the crate already detect, or of arbitrary text?*
 
 | Route | When | Example |
 | --- | --- | --- |
@@ -207,7 +223,18 @@ In both cases the rule kept its place in the table; what changed is what the pro
 
 11.6.0 did the same for two blind rules that ran a whole decoder, NTP ([#164](https://github.com/Akmot9/Packet-parser/issues/164)) and Modbus/TCP ([#167](https://github.com/Akmot9/Packet-parser/issues/167)), and split them as DNS had been split: the tolerant decoder now runs in a port rule on the standard port, where the labels of the corpus did not move, and the blind rule has a stricter probe of its own. The [NTP](./ntp.md) and [Modbus/TCP](./modbus.md) sections give the details.
 
-11.7.0 came back to the DNS blind probe ([#184](https://github.com/Akmot9/Packet-parser/issues/184), [#196](https://github.com/Akmot9/Packet-parser/issues/196)). It judged only the first `PROBE_CAP` bytes: sections that ended exactly at byte 18 432 were enough, whatever followed, and a hundred null bytes after a response still came out `"DNS"`, where the probe demands sections that consume the datagram exactly; an exact response of 20 041 bytes stayed `"Unknown"`. The probe now reads the whole datagram, as the NTP blind probe does (invariant 3). Reading more needed a bound. The length of a domain name was not limited, and each name pointing to the same QNAME read it again in full, in a time quadratic in the size of the message: a forged response of 18 425 bytes, a QNAME of 4 602 labels and 767 records pointing to it, cost 193 ms to `DnsPacket::try_from`, and came out `"DNS"`. A name is now at most 255 bytes on the wire, pointers followed (RFC 1035 §3.1). A longer one makes `DnsPacket::try_from`, and its mDNS, LLMNR and TCP variants, fail in a few microseconds with `DnsQueryParseError::OutOfBoundParse`, the error of a name that runs past the message. tshark shows such a name as `<Name too long>` and goes on; the crate no longer labels the message. No frame of the corpus changed. ASTERIX, whose data blocks must tile the datagram, was judged on the same prefix, and has read the whole datagram since [#184](https://github.com/Akmot9/Packet-parser/issues/184).
+11.7.0 came back to the DNS blind probe ([#184](https://github.com/Akmot9/Packet-parser/issues/184), [#196](https://github.com/Akmot9/Packet-parser/issues/196)). The probe judged only the first `PROBE_CAP` bytes, with two consequences:
+
+- Sections that ended exactly at byte 18 432 were enough, whatever followed. A hundred null bytes after a response still came out `"DNS"`, although the probe demands sections that consume the datagram exactly.
+- An exact response of 20 041 bytes stayed `"Unknown"`.
+
+The probe now reads the whole datagram, as the NTP blind probe does (invariant 3).
+
+Reading more needed a bound. The length of a domain name was not limited, and each name pointing to the same QNAME read it again in full, in a time quadratic in the size of the message. A forged response of 18 425 bytes, with a QNAME of 4 602 labels and 767 records pointing to it, cost 193 ms to `DnsPacket::try_from`, and came out `"DNS"`.
+
+A name is now at most 255 bytes on the wire, pointers followed (RFC 1035 §3.1). A longer one makes `DnsPacket::try_from` fail in a few microseconds, and its mDNS, LLMNR and TCP variants with it. The error is `DnsQueryParseError::OutOfBoundParse`, the one of a name that runs past the message. tshark shows such a name as `<Name too long>` and goes on; the crate no longer labels the message. No frame of the corpus changed. The [DNS](./dns.md#names-and-compression) page has the rules.
+
+ASTERIX, whose data blocks must tile the datagram, was judged on the same prefix. It has read the whole datagram since [#184](https://github.com/Akmot9/Packet-parser/issues/184).
 
 The reverse defect exists too, a parser refusing its own traffic, and 11.5.0 fixed one in SRVLOC ([#131](https://github.com/Akmot9/Packet-parser/issues/131)): the Char Encoding field of an SLPv1 header was read on one byte instead of two (RFC 2165 §7), which shifted everything after it, the XID and, in a `DAAdvert`, the error code, URL and scope list; the 26 SLPv1 `DAAdvert` of a real capture came out `"Unknown"`. The header now has `SrvlocHeaderV1::char_encoding` (`u16`, the IANA MIBenum, 106 for UTF-8); the old single-byte `encoding` is deprecated, a change that on its own calls for a minor version, not a patch. 11.6.0 fixed four more, all with real frames: NTP replies refused because of the client's clock ([#161](https://github.com/Akmot9/Packet-parser/issues/161)), timestamps without their era ([#162](https://github.com/Akmot9/Packet-parser/issues/162)), reference ids and polls an implementation does send ([#165](https://github.com/Akmot9/Packet-parser/issues/165)), and the PostgreSQL `p` message of every password or SCRAM authentication ([#98](https://github.com/Akmot9/Packet-parser/issues/98)).
 

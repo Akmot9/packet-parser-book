@@ -1,6 +1,6 @@
 # Introduction
 
-<p align="center"><img src="images/packet_parser.png" alt="The crate Logo" /></p>
+<p align="center"><img src="images/packet_parser.png" alt="The logo of the packet_parser crate" /></p>
 
 `packet_parser` is a Rust library that turns the bytes of a captured frame into a typed structure, layer by layer, or into a typed error when the bytes are not coherent. This book describes what the crate decodes, how it decides, and what it leaves out.
 

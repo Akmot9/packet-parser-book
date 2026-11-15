@@ -131,7 +131,20 @@ pub struct UmasPacket<'a> {
 
 ## Oracle: 601 segments
 
-`tests/modbus_golden.rs` compares every MBAP header with tshark 4.6.6 (`tools/modbus_oracle.sh`, frozen in `tests/data/modbus_tshark_oracle.tsv`): transaction, length, unit, function code and exception code, on the 601 Modbus/TCP segments of `protocols/modbus/`, `protocols/umas/` and, read in place, `The-Ultimate-PCAP.pcapng`. The crate labels 420 of them ModbusTCP and 181 UMAS, misses none, and labels no other segment of these captures Modbus: of the 400 TCP 389 segments with a payload of the Ultimate PCAP, LDAP and the TLS that follows StartTLS, 57 have the MBAP shape and none is labelled. Moved off port 502, 358 of the 601 stay recognized; the 243 others are the probes of a scanner that tries the 128 request codes `0x00` to `0x7F`, and their exception responses (`MODBUS-TestDataPart2.pcap`), which only port 502 recognizes. `tests/umas_golden.rs` checks the 180 UMAS frames of `umas.pcap`: two sessions and fourteen values of the function byte. The 38 datagrams of [Modbus over UDP](#modbus-over-udp) have their own comparison in the same test, against `tests/data/modbus_udp_tshark_oracle.tsv` (`tools/modbus_udp_oracle.sh`). The golden histogram counts 382 ModbusTCP, 181 UMAS and 38 ModbusUDP labels.
+`tests/modbus_golden.rs` compares every MBAP header with tshark 4.6.6 (`tools/modbus_oracle.sh`, frozen in `tests/data/modbus_tshark_oracle.tsv`): transaction, length, unit, function code and exception code. The segments are those of `protocols/modbus/`, `protocols/umas/` and, read in place, `The-Ultimate-PCAP.pcapng`.
+
+| What the test counts | Segments |
+|---|---|
+| Modbus/TCP segments compared with tshark | 601 |
+| of them, labelled `"ModbusTCP"` | 420 |
+| of them, labelled `"UMAS"` | 181 |
+| missed by the crate | 0 |
+| still recognized once moved off port 502 | 358 |
+| recognized on port 502 only | 243 |
+
+The crate labels no other segment of these captures Modbus. The Ultimate PCAP has 400 TCP 389 segments with a payload, LDAP and the TLS that follows StartTLS: 57 of them have the MBAP shape, and none is labelled. The 243 segments that need port 502 are the probes of a scanner that tries the 128 request codes `0x00` to `0x7F`, and their exception responses (`MODBUS-TestDataPart2.pcap`).
+
+`tests/umas_golden.rs` checks the 180 UMAS frames of `umas.pcap`: two sessions and fourteen values of the function byte. The 38 datagrams of [Modbus over UDP](#modbus-over-udp) have their own comparison in the same test as the TCP segments, against `tests/data/modbus_udp_tshark_oracle.tsv` (`tools/modbus_udp_oracle.sh`). The golden histogram counts 382 ModbusTCP, 181 UMAS and 38 ModbusUDP labels.
 
 ## What is left out
 
