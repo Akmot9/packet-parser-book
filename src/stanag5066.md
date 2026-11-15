@@ -250,6 +250,8 @@ In the golden histogram of the whole corpus, `"STANAG 5066"` went from 0 to 34 w
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **No reassembly**: the U_PDU of a split S_PDU is what its first segment holds, and the continuation segments come out `"Unknown"`. A caller that tracks the TCP stream has `u_pdu_size` to rebuild it.
 - **The U_PDU stays raw**: the ACP 142 (P_MUL) or STANAG 4406 annex E message it carries, behind its client transport header, is not decoded; neither is the body of a management message.
 - **Skipped, not exposed**: the block lists of an indication in mode 3, and the minimum number of retransmissions that follows the service type of an S_BIND_REQUEST (the data requests do expose theirs).

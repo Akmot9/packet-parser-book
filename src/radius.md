@@ -148,6 +148,8 @@ A run of the 11.6.0 pipeline over the 386 403 frames that the crate's test reade
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **The shared secret**: neither authenticator nor the Message-Authenticator is verified, and User-Password, Tunnel-Password or the keys a vendor attribute carries stay the bytes of the wire.
 - **EAP** is not decoded: an EAP-Message value is raw bytes, and an EAP packet spread over several attributes is not reassembled.
 - **Vendor attributes**: `vendor()` gives the vendor id and the vendor's bytes; their sub-attributes are not split.

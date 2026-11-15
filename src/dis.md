@@ -284,6 +284,8 @@ In the golden histogram of the whole corpus, `"DIS"` went from 0 to 390 with 11.
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **69 of the 72 types** keep their body raw, in `DisBody::Opaque`: Fire, Detonation, Underwater Acoustic, the simulation management PDUs...
 - **Inside the typed bodies**: the dead-reckoning parameters after the algorithm byte, the variable parameters (raw 16-byte records), the modulation parameters, antenna pattern and variable transmitter parameters of a Transmitter, and the data of a Signal (no audio, no tactical data link message) are not decoded. `appearance` and `capabilities` are raw bits.
 - **Enumerations are numbers**: entity kinds, countries, modulations and encodings are the values of SISO-REF-010, not names.

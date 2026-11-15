@@ -43,6 +43,8 @@ Bytes past the message are ignored: the reply above is 46 bytes on the wire, fou
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Only requests and replies.** Inverse ARP (operations 8 and 9) travels under the same EtherType and comes out `corrupted` with `Unsupported ARP operation: 8`. RARP never reaches this parser: it has its own EtherType, `0x8035`.
 - **Only Ethernet addresses.** Hardware type 1 and 6-byte hardware addresses; a frame for another link type is `corrupted`.
 - **IPv6 over ARP is accepted** (protocol type `0x86DD`, 16-byte addresses), although IPv6 resolves addresses with Neighbor Discovery, decoded in the [ICMPv6 page](./icmp.md).

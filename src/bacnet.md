@@ -201,6 +201,8 @@ A run of the 11.6.0 pipeline over the 386 403 frames that the crate's test reade
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Service data** stays tag-encoded bytes in `Apdu::data`: object identifiers, property values, the device range of a Who-Is, the content of an I-Am. The crate decodes the envelope, not the application tags.
 - **Network messages and BVLC control functions** are typed, not decoded: `message_type` and `data`, the result codes, times-to-live and tables in `body`. A Secure-BVLL is recognized and left whole.
 - **No state**: no reassembly of segmented messages, no pairing of a request with its acknowledgement by invoke id. One datagram at a time, as in the rest of the crate.

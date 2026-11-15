@@ -42,6 +42,8 @@ The checksum is read into `details` and never verified during parsing: on a send
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **UDP-Lite** (IP protocol 136) is another protocol number: the flow gets `TransportProtocol::Udplite` as its name, without ports or payload.
 - **No reassembly**, as everywhere in the crate: a datagram split by IP fragmentation has no transport layer.
 - **The checksum is not a validation**: a wrong checksum parses like a right one; see above.

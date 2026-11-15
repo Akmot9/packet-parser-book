@@ -235,6 +235,8 @@ One capture of the same Zeek folder is left out, `dnp3-flowbuffer-overflow-asser
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Object values** are not decoded: no point value, flag, counter or time stamp, only where each object lies in `user_data`.
 - **No reassembly**, at any level: neither the transport segments of a fragment, nor the fragments of a message, nor a link frame split over two TCP segments, which is labelled DNP3 in neither.
 - **Groups outside the table** of annex A stop the object chain of a function that carries data; the header is kept, the rest is `undecoded`.

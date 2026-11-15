@@ -186,6 +186,8 @@ The golden test checks the other side too: none of the neighbours of these messa
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Decryption**: there are no keys, so the encrypted fields and `encrypted_packet` stay opaque, `mac1` and `mac2` are not checked, and there is no inner flow: the tunnelled packets are not peeled like the encapsulations of the [tunnels chapter](./tunnels.md).
 - **Cookie Reply** has no real capture: it is decoded at the offsets of the whitepaper, and a synthetic unit test covers it.
 - **boringtun** (Cloudflare) and its derivatives (NordSecurity neptun, Firezone) do not pad their data ("spec requires padding to 16 bytes, but actually works fine without it", `noise/session.rs`): off 51820 and the declared ports, only their handshakes, their keepalives and their packets whose size happens to fit are recognized.

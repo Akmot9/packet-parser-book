@@ -169,6 +169,8 @@ The corpus covers eight classes of the table: `Unicast`, `RtClass1Unicast`, `Ala
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **The content of the frames**: cyclic I/O data, alarms, PTCP and fragments are classed, not decoded, and fragments are not reassembled.
 - **DCP block values**: only the NameOfStation is read; IP parameters, device ID, role and options stay raw in `DcpBlock::data`.
 - **No `details`**: a caller re-runs `validate_frame` or `ProfinetPacket::try_from` on the link payload.

@@ -154,6 +154,8 @@ The four come from the ICS-Security-Tools repository of ITI (CC-BY-4.0); `pcaps_
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Sampled Values** (IEC 61850-9-2, EtherType `0x88BA`) is not decoded: it maps to `NetworkProtocol::Other(0x88BA)`, and the internet layer stays `None`.
 - **Only EtherType `0x88B8`**: no rule of the [dispatch table](./application.md) recognizes GOOSE carried over UDP.
 - **Values are not interpreted**: `allData` keeps tags and bytes; arrays and structures are not walked, a bit string keeps its unused-bits byte, floats and times are not converted.

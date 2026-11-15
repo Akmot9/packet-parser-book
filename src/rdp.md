@@ -296,6 +296,8 @@ The 69 MCS PDUs are 3 Connect-Initial, 2 Connect-Response, 1 Erect Domain Reques
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **RDP over UDP** (MS-RDPEUDP) is another transport, which the crate does not decode; the `rdpeudp*` captures of Zeek's corpus were left out.
 - **No reassembly**: a TPKT cut by TCP is decoded on its first segment when it starts that segment, and its continuation stays `"Unknown"`, like the continuations of TLS records. A segment that starts with a continuation is refused whole, the complete TPKTs that follow it included: frame 77 of `rdp-proprietary-encryption.pcap` holds two.
 - **Fast-path PDUs**, which MS-RDPBCGR sends without the TPKT, X.224 and MCS headers, fail the TPKT check and stay `"Unknown"`; tshark leaves them at `data` as well. Of the 262 `data` segments of the corpus that do not continue a cut TPKT, 241 start with a byte whose two low bits are clear, the mark of a fast-path PDU, where a TPKT has 3.

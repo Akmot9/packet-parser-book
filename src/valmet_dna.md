@@ -346,6 +346,8 @@ In the golden histogram of `pcaps_exemple/protocols/` (`tests/golden_pcaps.rs`),
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **The bytes not identified** stay bytes: 87 of the 126 of the status telegram, 56 of the 72 of the tag message header, 16 of the 42 of the beacon. Those of a message are in `body`; `TimeBeacon` does not expose its own, which stay in the transport payload.
 - **No meaning is given** to the classes of the tags, to the code and the counter of the beacon, or to the families the capture does not show. What a tag message says about its tag, beyond naming it, is not known.
 - **The destination `0x00FF`** reads as "all nodes" only because every frame observed carries it and goes to the multicast group; no other value was observed.

@@ -134,6 +134,8 @@ The NodeB capture is the one that taught the SRVLOC probe its language check: it
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **TLV values** are not decoded: type and raw bytes only. The profiles (802.1AS, C37.238, ST 2059-2, telecom) are visible through `flags`, `major_sdo_id` and the TLV types, not interpreted.
 - **PTPv1 bodies** stay raw; only the header is decoded.
 - **No clock state**: no offset, no best-master decision, no pairing of a `Follow_Up` with its `Sync`. One message at a time, like the rest of the crate.

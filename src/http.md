@@ -54,6 +54,8 @@ Frame 21178 of `pcaps_exemple/The-Ultimate-PCAP.pcapng` is an OCSP request to Le
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **The body.** No chunk is reassembled, nothing is decompressed, and nothing checks the body against `Content-Length`: a body cut by the segment is what follows the head in this one.
 - **A message over several segments.** The crate reassembles nothing. A head cut by the segment is read as far as it goes, and the segments that carry the rest of the message, which start with no request or status line, are `"Unknown"`.
 - **HTTP/2 and HTTP/3.** They have no decoder.

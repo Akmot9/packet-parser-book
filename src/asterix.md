@@ -235,6 +235,8 @@ All of them are `AsterixError`, in `packet_parser::errors::application::asterix`
 
 ## What is left out
 
+The limits every protocol shares, reassembly and checksums among them, are on the [Limits](./limits.md) page. The ones below are this protocol's own.
+
 - **Other categories.** A category outside the eleven, CAT 010, 019, 020 or 240 for instance, is `UnsupportedCategory` and refuses its datagram; the corpus has no capture of them.
 - **Other editions.** One UAP per category, from the latest edition, which accepts the earlier ones. The CAT 021 editions 0.2x, whose UAP is entirely different from 2.x, are not described: nothing in the bytes tells the editions apart, and the crate decodes 2.x. The CAT 247 reports of `cat021023.pcap` announce CAT 021 edition 0.26, yet its 1 555 CAT 021 records cut cleanly along the 2.x UAP, for the crate as for tshark.
 - **Item contents** beyond the typed subset: `RE` and `SP` stay opaque, BDS registers and weather vectors are raw bytes, the subfields of a compound item are cut and reachable by number, most of them not interpreted.
