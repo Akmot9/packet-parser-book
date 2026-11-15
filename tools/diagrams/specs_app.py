@@ -520,5 +520,32 @@ DNS = {
     ]},
 }
 
+TLS = {
+    "out": "images/application/tls_record.svg",
+    "title": "TLS: a 5-byte record header, then the record",
+    "subtitle": "frame 1 of tls12-dsb.pcapng, TCP 46800 → 443 · 229 bytes, a Client Hello",
+    "desc": "The TLS record of frame 1 of tls12-dsb.pcapng, 32 bits per row: the 5-byte record header, content type 22, handshake, the version 3.1 and the length 224, then the first bytes of the record, a handshake of type 1, Client Hello, of 220 bytes, which offers the version 3.3 and starts its random; TlsPacket keeps the content type, the version and the length of the header and borrows the 224 bytes of the record, which the crate does not decode.",
+    "palette": "app",
+    "fields": [
+        {"label": "Type · 22", "hex": "16", "color": "orange", "emph": True},
+        {"label": "Version · 3.1", "hex": "0301", "color": "orange"},
+        {"label": "Length", "hex": "00", "color": "yellow"},
+        {"label": "224", "hex": "e0", "color": "yellow"},
+        {"label": "Client Hello", "hex": "01"},
+        {"label": "Length", "hex": "0000"},
+        {"label": "220", "hex": "dc"},
+        {"label": "Offered · 3.3", "hex": "0303"},
+        {"label": "Random", "hex": "f6"},
+        {"skip": "… 31 more bytes of random, cipher suites, extensions"},
+        {"skip": "… the server name example.com among them: not decoded"},
+    ],
+    "card": {"title": "TlsPacket", "width": 250, "fields": [
+        {"name": "content_type", "value": "Handshake", "color": "orange", "arrow": 0},
+        {"name": "version", "value": "TLS 1.0 · (3, 1), legacy", "color": "orange", "arrow": 1},
+        {"name": "length", "value": "224 · fits in the segment", "color": "yellow", "arrow": 3, "arrow_color": "dark"},
+        {"name": "payload", "value": "224 bytes · borrowed, raw", "arrow": 7, "arrow_color": "gray"},
+    ]},
+}
+
 ALL = [IKE, RADIUS, RDP, RTPS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
-       NTP, MODBUS, POSTGRESQL, HTTP, DNS]
+       NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS]

@@ -58,7 +58,7 @@ A label written with "then" has a port rule and a blind rule: the port rule is t
 | `SSH` | blind | TCP | rule 56 of the [Application](./application.md#reading-the-table) | none | 10.1.0 |
 | `STANAG 5066` | port | TCP 5066 | [STANAG 5066 SIS](./stanag5066.md) | 34 segments | 11.6.0 |
 | `STP` | link layer | no transport | [STP](./stp.md) | none | 10.4.0 |
-| `TLS` | blind | TCP | rule 55 of the [Application](./application.md#reading-the-table) | counts and digests | 5.0.0 or earlier |
+| `TLS` | blind | TCP | [TLS](./tls.md) | counts and digests | 5.0.0 or earlier |
 | `UMAS` | port and blind | TCP 502, then any TCP port | [Modbus/TCP and UMAS](./modbus.md) | 601 segments, with ModbusTCP | 11.1.0 |
 | `Unknown` | no rule matched | any | [Application](./application.md#how-the-label-is-chosen-one-ordered-table) | not a protocol | 5.0.0 or earlier |
 | `Valmet DNA` | port and blind | UDP 2517, 4516, 4517, then any UDP port | [Valmet DNA](./valmet_dna.md) | none: tshark has no dissector | 11.8.0 |
