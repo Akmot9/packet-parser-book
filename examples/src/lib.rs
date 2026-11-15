@@ -16,6 +16,7 @@ mod link_layer;
 mod remote_vpn;
 mod scada;
 mod shared;
+mod tls;
 
 /// Frame 1 of the crate's README example: Ethernet / IPv4 / TCP 443 -> 49416,
 /// a pure ACK with an empty payload.
