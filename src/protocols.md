@@ -20,7 +20,7 @@ A label written with "then" has a port rule and a blind rule: the port rule is t
 | `DHCPv6` | port | UDP 546, 547 | rule 2 of the [Application](./application.md#reading-the-table) | none | 5.0.0 or earlier |
 | `DIS` | port and blind | UDP 3000, then any UDP port | [DIS](./dis.md) | 393 frames | 11.6.0 |
 | `DNP3` | blind | TCP and UDP | [DNP3](./dnp3.md) | 218 frames | 11.6.0 |
-| `DNS` | port and blind | TCP 53, UDP 53, then any UDP port | rules 22, 23, 53 of the [Application](./application.md#reading-the-table) | counts and digests | 5.0.0 or earlier |
+| `DNS` | port and blind | TCP 53, UDP 53, then any UDP port | [DNS, mDNS and LLMNR](./dns.md) | counts and digests | 5.0.0 or earlier |
 | `ESP` | port | UDP 4500 | [ESP](./esp.md#in-udp-4500-behind-a-nat) | 323 packets, 315 of them in UDP | 11.6.0 |
 | `EtherNet/IP` | blind | TCP and UDP | rule 51 of the [Application](./application.md#reading-the-table) | none | 5.0.0 or earlier |
 | `FTP` | port and blind | TCP 21, then any TCP port but 25, 587, 119 | rules 5, 8 of the [Application](./application.md#reading-the-table) | none | 9.0.0 |
@@ -32,8 +32,8 @@ A label written with "then" has a port rule and a blind rule: the port rule is t
 | `IEC 104` | port | TCP 2404 | [IEC 60870-5-104](./iec104.md) | 373 segments | 11.6.0 |
 | `IKE` | port | UDP 500, 4500 | [IKE](./ike.md) | 535 messages | 11.6.0 |
 | `IP-in-IP` | tunnel | IP protocols 4 and 41 | [Tunnels](./tunnels.md#supported-tunnels) | none | 10.4.0 |
-| `LLMNR` | port, terminal | UDP 5355 | rule 12 of the [Application](./application.md#reading-the-table) | none | 10.4.0 |
-| `mDNS` | port, terminal | UDP 5353 | rule 11 of the [Application](./application.md#reading-the-table) | none | 9.0.0 |
+| `LLMNR` | port, terminal | UDP 5355 | [DNS, mDNS and LLMNR](./dns.md#mdns-and-llmnr) | none | 10.4.0 |
+| `mDNS` | port, terminal | UDP 5353 | [DNS, mDNS and LLMNR](./dns.md#mdns-and-llmnr) | none | 9.0.0 |
 | `ModbusTCP` | port and blind | TCP 502, then any TCP port | [Modbus/TCP and UMAS](./modbus.md) | 601 segments, with UMAS | 5.0.0 or earlier |
 | `ModbusUDP` | port | UDP 502 | [Modbus over UDP](./modbus.md#modbus-over-udp) | 38 datagrams | 12.0.0 |
 | `MQTT` | blind | TCP | rule 65 of the [Application](./application.md#reading-the-table) | none | 5.0.0 or earlier |

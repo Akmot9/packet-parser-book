@@ -481,5 +481,44 @@ HTTP = {
     ]},
 }
 
+DNS = {
+    "out": "images/application/dns_message.svg",
+    "title": "DNS: a 12-byte header, a question, a record",
+    "subtitle": "frame 2 of dns_query_response.pcapng, UDP 53 → 1060 · 47 bytes, the A record of wireshark.org",
+    "desc": "The DNS response of frame 2 of dns_query_response.pcapng, 32 bits per row: the 12-byte header, transaction identifier 0x180f, flags 0x8180 and four counts, one question and one answer; the question, the name wireshark.org as two labels and a root label, then its type and class; the answer, whose name is the two bytes c0 0c, a compression pointer to offset 12, then type A, class IN, a TTL of 14400 seconds, a data length of 4 and the address 128.121.50.122; DnsPacket keeps the header, the question and the answer with its name rebuilt.",
+    "palette": "app",
+    "fields": [
+        {"label": "Transaction ID", "hex": "180f", "color": "orange"},
+        {"label": "Flags · response", "hex": "8180", "color": "orange", "emph": True},
+        {"label": "Questions · 1", "hex": "0001", "color": "yellow"},
+        {"label": "Answers · 1", "hex": "0001", "color": "yellow"},
+        {"label": "Authority · 0", "hex": "0000"},
+        {"label": "Additional · 0", "hex": "0000"},
+        {"label": "Question name · 9 wireshark 3 org 0", "hex": "0977697265736861726b036f726700", "color": "orange", "cont": "Question name, continued"},
+        {"label": "Type", "hex": "00"},
+        {"label": "A", "hex": "01"},
+        {"label": "Class · IN", "hex": "0001"},
+        {"label": "Pointer", "hex": "c0", "color": "yellow", "emph": True},
+        {"label": "to 12", "hex": "0c", "color": "yellow", "emph": True},
+        {"label": "Type · A", "hex": "0001"},
+        {"label": "Class", "hex": "00"},
+        {"label": "IN", "hex": "01"},
+        {"label": "TTL · 14 400 s", "hex": "000038"},
+        {"label": "TTL", "hex": "40"},
+        {"label": "Data length · 4", "hex": "0004"},
+        {"label": "Data", "hex": "80", "color": "orange"},
+        {"label": "128.121.50.122", "hex": "79327a", "color": "orange"},
+    ],
+    "card": {"title": "DnsPacket", "width": 250, "fields": [
+        {"name": "header.transaction_id", "value": "0x180f", "color": "orange", "arrow": 0},
+        {"name": "header.flags", "value": "0x8180 · checked, kept raw", "color": "orange", "arrow": 1},
+        {"name": "header.counts", "value": "[1, 1, 0, 0]", "color": "yellow", "arrow": 2, "arrow_color": "dark"},
+        {"name": "queries[0].name", "value": "wireshark.org", "color": "orange", "arrow": 6},
+        {"name": "answers[0].name", "value": "wireshark.org · rebuilt", "color": "yellow", "arrow": 10, "arrow_color": "dark"},
+        {"name": "answers[0].ttl", "value": "14400", "arrow": 15, "arrow_color": "gray"},
+        {"name": "answers[0].address", "value": "[128, 121, 50, 122] · raw", "color": "orange", "arrow": 18},
+    ]},
+}
+
 ALL = [IKE, RADIUS, RDP, RTPS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
-       NTP, MODBUS, POSTGRESQL, HTTP]
+       NTP, MODBUS, POSTGRESQL, HTTP, DNS]

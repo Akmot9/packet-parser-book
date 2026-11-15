@@ -9,6 +9,7 @@ mod building_aaa;
 mod dcs;
 mod defense_a;
 mod defense_b;
+mod dns;
 mod internet_layer;
 mod ipsec;
 mod link_layer;
