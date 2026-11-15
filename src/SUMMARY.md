@@ -53,6 +53,8 @@
     - [Valmet DNA](./valmet_dna.md)
     - [WireGuard](./wireguard.md)
 
+- [Protocols](./protocols.md)
+
 - [Tunnels](./tunnels.md)
 
 - [Adding a new protocol](./adding_a_protocol.md)
