@@ -376,4 +376,110 @@ VALMET_DNA = {
     ]},
 }
 
-ALL = [IKE, RADIUS, RDP, RTPS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA]
+NTP = {
+    "out": "images/application/ntp_header.svg",
+    "title": "NTP: the 48-byte header of a client request",
+    "subtitle": "frame 3 of tcpdump_ntp.pcap, UDP 42818 → 123 · 72 bytes, a chrony request with a 24-byte MAC",
+    "desc": "The NTP header of frame 3 of tcpdump_ntp.pcap, 32 bits per row: the byte 0x23 (leap indicator 0, version 4, mode 3, client), stratum 0, poll 0, precision 32, a zero root delay, root dispersion and reference id, a zero reference timestamp, then the origin, receive and transmit timestamps, which chrony fills with random values; the NtpPacket struct on the right holds the same fields, and the 24 bytes after the header, a key id and a SHA-1 digest, are not decoded.",
+    "palette": "app",
+    "fields": [
+        {"label": "LI · VN · Mode", "hex": "23", "color": "orange", "emph": True},
+        {"label": "Stratum", "hex": "00", "color": "orange"},
+        {"label": "Poll", "hex": "00"},
+        {"label": "Precision", "hex": "20"},
+        {"label": "Root delay", "hex": "00000000"},
+        {"label": "Root dispersion", "hex": "00000000"},
+        {"label": "Reference ID · read by stratum", "hex": "00000000", "color": "yellow"},
+        {"label": "Reference timestamp · zero: unknown", "hex": "0000000000000000", "cont": "Reference timestamp, fraction"},
+        {"label": "Origin timestamp (T1) · seconds", "hex": "dcf25be5794d206a", "cont": "Origin timestamp, fraction"},
+        {"label": "Receive timestamp (T2) · seconds", "hex": "6b70caf9b1a9f9d9", "color": "orange", "cont": "Receive timestamp, fraction"},
+        {"label": "Transmit timestamp (T3) · seconds", "hex": "ae9d0aa81b8971a7", "color": "orange", "cont": "Transmit timestamp, fraction"},
+    ],
+    "payload": "24 more bytes: a key id and a SHA-1 digest, not decoded",
+    "card": {"title": "NtpPacket", "width": 250, "fields": [
+        {"name": "flags", "value": "(0, 4, 3) · LI, version, mode", "color": "orange", "arrow": 0},
+        {"name": "stratum", "value": "0 · unspecified", "color": "orange", "arrow": 1},
+        {"name": "precision", "value": "32", "arrow": 3, "arrow_color": "gray"},
+        {"name": "reference_id", "value": "Refid::KissCode · NULL", "color": "yellow", "arrow": 6, "arrow_color": "dark"},
+        {"name": "reference_timestamp", "value": "1970-01-01 · unknown", "arrow": 7, "arrow_color": "gray"},
+        {"name": "receive_timestamp", "value": "2093-03-22 · era 1", "color": "orange", "arrow": 9},
+        {"name": "transmit_timestamp", "value": "1992-10-31 · era 0", "color": "orange", "arrow": 10},
+    ]},
+}
+
+MODBUS = {
+    "out": "images/application/modbus_mbap.svg",
+    "title": "Modbus/TCP: a 7-byte MBAP header, then the PDU",
+    "subtitle": "frame 1 of Modbus.pcap, TCP 2074 → 502 · 12 bytes, a Read Holding Registers request",
+    "desc": "The Modbus/TCP message of frame 1 of Modbus.pcap, 32 bits per row: the MBAP header, transaction identifier 209, protocol identifier 0, length 6 and unit identifier 1, then the PDU, function code 3 (Read Holding Registers) and four bytes of data, address 1 and quantity 1; the MBAP struct on the right holds the header fields and a Modbus PDU whose data stay raw.",
+    "palette": "app",
+    "fields": [
+        {"label": "Transaction identifier", "hex": "00d1", "color": "orange"},
+        {"label": "Protocol identifier · 0", "hex": "0000", "color": "yellow", "emph": True},
+        {"label": "Length · what follows", "hex": "0006", "color": "yellow"},
+        {"label": "Unit", "hex": "01"},
+        {"label": "Function", "hex": "03", "color": "orange", "emph": True},
+        {"label": "Data · address", "hex": "0001"},
+        {"label": "Data · quantity", "hex": "0001"},
+    ],
+    "card": {"title": "MBAP", "width": 250, "fields": [
+        {"name": "transaction_identifier", "value": "209", "color": "orange", "arrow": 0},
+        {"name": "protocol_identifier", "value": "0 · anything else is refused", "color": "yellow", "arrow": 1, "arrow_color": "dark"},
+        {"name": "length", "value": "6 = unit + PDU", "color": "yellow", "arrow": 2, "arrow_color": "dark"},
+        {"name": "unit_identifier", "value": "1", "arrow": 3, "arrow_color": "gray"},
+        {"name": "pdu.function_code", "value": "0x03 · not interpreted", "color": "orange", "arrow": 4},
+        {"name": "pdu.pdu_data", "value": "[00 01 00 01] · raw", "arrow": 5, "arrow_color": "gray"},
+    ]},
+}
+
+POSTGRESQL = {
+    "out": "images/application/postgresql_message.svg",
+    "title": "PostgreSQL: a typed message",
+    "subtitle": "frame 12 of psql-login.pcap, TCP 35304 → 5432 · 55 bytes, a SASLInitialResponse",
+    "desc": "The typed message of frame 12 of psql-login.pcap, 32 bits per row: the type byte p, a length of 54 that counts itself and the body but not the type byte, then the body, the mechanism name SCRAM-SHA-256 ended by a null byte, the length 32 of the initial response and the SCRAM client-first-message; PostgreSqlMessage keeps the named type, the length, the body bytes and a Raw body.",
+    "palette": "app",
+    "fields": [
+        {"label": "Type", "hex": "70", "color": "orange", "emph": True},
+        {"label": "Length · itself and the body", "hex": "00000036", "color": "yellow", "cont": "Length"},
+        {"label": "Mechanism · SCRAM-SHA-256, NUL", "hex": "534352414d2d5348412d32353600", "cont": "Mechanism, continued"},
+        {"label": "Response length · 32", "hex": "00000020", "cont": "Response length"},
+        {"label": "n", "hex": "6e"},
+        {"skip": "… 31 more bytes of client-first-message: ,,n=,r=U8xI9WY8YscRAsVw74yx2Lt4"},
+    ],
+    "card": {"title": "PostgreSqlMessage", "width": 250, "fields": [
+        {"name": "message_type", "value": "PasswordOrSaslResponse", "color": "orange", "arrow": 0},
+        {"name": "length", "value": "54 = 55 − the type byte", "color": "yellow", "arrow": 1, "arrow_color": "dark"},
+        {"name": "payload", "value": "50 bytes · the body", "arrow": 2, "arrow_color": "gray"},
+        {"name": "body", "value": "PostgreSqlMessageBody::Raw", "arrow_color": "gray"},
+    ]},
+}
+
+HTTP = {
+    "out": "images/application/http_response.svg",
+    "title": "HTTP/1.1: a status line, header lines, an empty line",
+    "subtitle": "frame 30 of arppoison.pcapng, TCP 80 → 45691 · 215 bytes, a 204 No Content",
+    "desc": "The HTTP response of frame 30 of arppoison.pcapng, 32 bits per row: the status line, the version HTTP/1.1, a space, the three-digit code 204, a space, the reason phrase No Content and CR LF, then the header line Content-Length: 0, six more header lines, and the empty line that ends the head; HttpResponse keeps the version, the status code, the reason, the seven headers and an empty body.",
+    "palette": "app",
+    "fields": [
+        {"label": "Version · HTTP/1.1", "hex": "485454502f312e31", "color": "orange", "cont": "Version, continued"},
+        {"label": "SP", "hex": "20"},
+        {"label": "Code · 204", "hex": "323034", "color": "orange", "emph": True},
+        {"label": "SP", "hex": "20"},
+        {"label": "Reason · No Content", "hex": "4e6f20436f6e74656e74", "color": "yellow", "cont": "Reason, continued"},
+        {"label": "CR LF", "hex": "0d0a"},
+        {"label": "Header line · Content-Length: 0", "hex": "436f6e74656e742d4c656e6774683a2030", "cont": "Content-Length: 0, continued"},
+        {"label": "CR LF", "hex": "0d0a"},
+        {"skip": "… 6 more header lines, 169 bytes: Date to Server"},
+        {"skip": "… then an empty line, CR LF: the head ends, no body"},
+    ],
+    "card": {"title": "HttpResponse", "width": 250, "fields": [
+        {"name": "version", "value": "\"HTTP/1.1\"", "color": "orange", "arrow": 0},
+        {"name": "status_code", "value": "204 · exactly three digits", "color": "orange", "arrow": 2},
+        {"name": "reason", "value": "\"No Content\"", "color": "yellow", "arrow": 4, "arrow_color": "dark"},
+        {"name": "headers", "value": "HttpHeaders, 7", "arrow": 6, "arrow_color": "gray"},
+        {"name": "body", "value": "&[u8], empty", "arrow_color": "gray"},
+    ]},
+}
+
+ALL = [IKE, RADIUS, RDP, RTPS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
+       NTP, MODBUS, POSTGRESQL, HTTP]
