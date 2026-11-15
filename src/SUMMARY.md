@@ -36,6 +36,7 @@
     - [BACnet/IP](./bacnet.md)
     - [DIS](./dis.md)
     - [DNP3](./dnp3.md)
+    - [DNS, mDNS and LLMNR](./dns.md)
     - [GIOP](./giop.md)
     - [HTTP](./http.md)
     - [IEC 60870-5-104](./iec104.md)

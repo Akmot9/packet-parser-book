@@ -32,7 +32,7 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 The [Protocols](./protocols.md) page has one row per label: its detection route, its page, its oracle and the release it arrived in.
 
-The dispatch table gives 46 labels: DNS (plus its mDNS and LLMNR forms), TLS, SNMP, [NTP](./ntp.md), DHCP, DHCPv6, [HTTP](./http.md) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](./postgresql.md), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](./modbus.md) (and, since 12.0.0, Modbus over UDP 502), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems. STP gets its label from the link layer (see below).
+The dispatch table gives 46 labels: [DNS](./dns.md) (plus its mDNS and LLMNR forms), TLS, SNMP, [NTP](./ntp.md), DHCP, DHCPv6, [HTTP](./http.md) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](./postgresql.md), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](./modbus.md) (and, since 12.0.0, Modbus over UDP 502), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems. STP gets its label from the link layer (see below).
 
 Some protocols are decoded below the table and get no label: PTP straight over Ethernet (EtherType `0x88F7`), [GOOSE](./goose.md) (`0x88B8`) and [LLDP](./lldp.md) (`0x88CC`) are [internet layers](./network.md), and native ESP, IP protocol 50, is a transport layer whose SPI and sequence number are in `TransportDetails::Esp`, with no application payload, like ICMP.
 
@@ -119,8 +119,8 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 8 | FTP | `Tcp` | vetoed on 21, 25, 587, 119 | `FtpUnambiguous` | a complete command whose verb only FTP has: RETR, STOR, PASV, APPE, RNFR, RNTO, MKD, CDUP, EPSV, EPRT, NLST; first `PROBE_CAP` bytes |
 | 9 | SMTP | `Tcp` | vetoed on 21, 25, 587, 119 | `SmtpUnambiguous` | the same, for EHLO, HELO, MAIL, RCPT |
 | 10 | NNTP | `Tcp` | vetoed on 21, 25, 587, 119 | `NntpUnambiguous` | the same, for ARTICLE, XOVER, XHDR, IHAVE, LISTGROUP, NEWGROUPS, NEWNEWS |
-| 11 | mDNS | `Udp` | 5353, terminal | `Mdns` | `DnsPacket::try_from_mdns` |
-| 12 | LLMNR | `Udp` | 5355, terminal | `Llmnr` | `DnsPacket::try_from_llmnr` |
+| 11 | [mDNS](./dns.md) | `Udp` | 5353, terminal | `Mdns` | `DnsPacket::try_from_mdns` |
+| 12 | [LLMNR](./dns.md) | `Udp` | 5355, terminal | `Llmnr` | `DnsPacket::try_from_llmnr` |
 | 13 | SSDP | `Udp` | 1900 | `Ssdp` | `SsdpPacket::try_from` |
 | 14 | NBNS | `Udp` | 137 | `Nbns` | `NbnsPacket::try_from` |
 | 15 | NBSS | `Tcp` | 139, 445 | `Nbss` | `NbssPacket::try_from` |
@@ -130,8 +130,8 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 19 | AMS | `Udp` | 48899 | `Ams` | the same probe |
 | 20 | QUIC | `Udp` | 443 | `QuicShortHeader` | `is_plausible_short_header`: the 1-RTT header is opaque by design |
 | 21 | OPC UA | `Tcp` | 4840, 12001 | `Opcua` | `OpcuaPacket::try_from` |
-| 22 | DNS | `Tcp` | 53 | `DnsTcp` | `DnsPacket::try_from_tcp`: the length-prefixed form |
-| 23 | DNS | `Udp` | 53 | `Dns` | `DnsPacket::try_from`: the datagram form |
+| 22 | [DNS](./dns.md) | `Tcp` | 53 | `DnsTcp` | `DnsPacket::try_from_tcp`: the length-prefixed form |
+| 23 | [DNS](./dns.md) | `Udp` | 53 | `Dns` | `DnsPacket::try_from`: the datagram form |
 | 24 | [PTP](./ptp.md) | `Udp` | 319, 320 | `Ptp` | `PtpPacket::try_from_udp` |
 | 25 | [DIS](./dis.md) | `Udp` | 3000 | `DisLenient` | `DisPacket::try_from_lenient` |
 | 26 | [RADIUS](./radius.md) | `Udp` | 1812, 1813, 1645, 1646, 3799 | `Radius` | `RadiusPacket::try_from` |
@@ -166,7 +166,7 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 50 | OPC UA | `Tcp` | none | `Opcua` | rule 21's probe |
 | 51 | EtherNet/IP | `Any` | none | `EthernetIp` | `EtherNetIpPacket::try_from` |
 | 52 | [PostgreSQL](./postgresql.md) | `Tcp` | none | `Postgresql` | `is_likely_postgresql_payload`: compatible shape and a strong proof |
-| 53 | DNS | `Udp` | none | `DnsBlind` | `DnsPacket::is_blind_udp_match` |
+| 53 | [DNS](./dns.md) | `Udp` | none | `DnsBlind` | `DnsPacket::is_blind_udp_match` |
 | 54 | SNMP | `Any` | none | `Snmp` | rule 1's probe |
 | 55 | TLS | `Tcp` | none | `Tls` | `TlsPacket::try_from` |
 | 56 | SSH | `Tcp` | none | `Ssh` | `SshPacket::try_from` |
