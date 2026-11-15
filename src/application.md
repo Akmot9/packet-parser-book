@@ -30,6 +30,8 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 ## Supported protocols
 
+The [Protocols](./protocols.md) page has one row per label: its detection route, its page, its oracle and the release it arrived in.
+
 The dispatch table gives 46 labels: DNS (plus its mDNS and LLMNR forms), TLS, SNMP, [NTP](./ntp.md), DHCP, DHCPv6, [HTTP](./http.md) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](./postgresql.md), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](./modbus.md) (and, since 12.0.0, Modbus over UDP 502), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems. STP gets its label from the link layer (see below).
 
 Some protocols are decoded below the table and get no label: PTP straight over Ethernet (EtherType `0x88F7`), [GOOSE](./goose.md) (`0x88B8`) and [LLDP](./lldp.md) (`0x88CC`) are [internet layers](./network.md), and native ESP, IP protocol 50, is a transport layer whose SPI and sequence number are in `TransportDetails::Esp`, with no application payload, like ICMP.

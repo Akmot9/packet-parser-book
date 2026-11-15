@@ -57,6 +57,21 @@ pub const ETHERNET_PTP_PDELAY_REQ_HEX: &str = concat!(
 
 #[cfg(test)]
 mod tests {
+    /// Every label of the pinned crate has a row in the index page of the
+    /// book, and the page lists no label the crate does not give.
+    #[test]
+    fn protocol_index_lists_every_label() {
+        use packet_parser::ApplicationProtocol;
+        let page = include_str!("../../src/protocols.md");
+        let table = page.split("## The 54 labels").nth(1).unwrap().split("\n## ").next().unwrap();
+        let listed: Vec<&str> =
+            table.lines().filter_map(|l| l.strip_prefix("| `")?.split('`').next()).collect();
+        for protocol in ApplicationProtocol::ALL {
+            assert!(listed.contains(&protocol.label()), "no row for {protocol}");
+        }
+        assert_eq!(listed.len(), ApplicationProtocol::ALL.len());
+    }
+
     use super::*;
     use packet_parser::parse::application::protocols::giop::{
         GiopMessage, GiopMessageType, GiopPacket, TargetAddress,
