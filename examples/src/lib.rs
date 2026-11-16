@@ -80,7 +80,8 @@ mod tests {
     };
     use packet_parser::parse::application::protocols::ptp::{PtpPacket, PtpV2Body};
     use packet_parser::{
-        CorruptedLayerKind, InternetDetails, LinkType, PacketFlow, ParseError, is_supported, parse,
+        CorruptedLayerKind, DecodeAsProtocol, InternetDetails, LinkType, PacketFlow, ParseConfig,
+        ParseError, is_supported, parse,
     };
 
     // ANCHOR: parse_valid_frame
@@ -254,6 +255,25 @@ mod tests {
         assert!(pdelay_req.trailing.is_empty());
     }
     // ANCHOR_END: ptp_two_carriers
+
+    // ANCHOR: decode_as_all
+    #[test]
+    fn decode_as_all_is_the_list_a_caller_offers_for_a_port() {
+        // Every variant, in declaration order: what a "Decode As" menu shows.
+        let offered: Vec<String> = DecodeAsProtocol::ALL
+            .iter()
+            .map(|protocol| format!("{protocol:?}"))
+            .collect();
+        assert_eq!(offered.len(), 29);
+        assert_eq!(offered.first().map(String::as_str), Some("Ftp"));
+        assert_eq!(offered.last().map(String::as_str), Some("ModbusUdp"));
+
+        // The entry the user picks goes to `decode_as` as it is.
+        let picked = DecodeAsProtocol::ALL[0];
+        assert_eq!(picked, DecodeAsProtocol::Ftp);
+        let _config = ParseConfig::new().decode_as(2121, picked);
+    }
+    // ANCHOR_END: decode_as_all
 
     // ANCHOR: owned_and_json
     #[test]

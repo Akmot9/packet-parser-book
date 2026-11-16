@@ -10,7 +10,7 @@ The crate is built so that adding a protocol is a mechanical job with the same s
 - **Errors** in a dedicated file, with `thiserror`, carrying the offending values. Never a bare `String`.
 - **Checks** in a separate file under `src/checks`, not inline in the parser.
 - The main struct's rustdoc documents the wire format with a Mermaid `packet-beta` diagram.
-- No `unwrap()` in a parser. The CI runs clippy with `-D warnings` and the `unwrap_used`/`expect_used`/`panic` lints.
+- No `unwrap()` in a parser, and no `as` cast that can truncate: a length read from the wire goes through `usize::from` or `try_from`. The CI runs clippy with `-D warnings` and the `unwrap_used`/`expect_used`/`panic` lints, joined in 12.1.0 by `cast_possible_truncation`.
 - Golden tests use **real frames** from a capture under `pcaps_exemple/`, with the pcap file and frame number cited in a comment. Synthetic bytes are for targeted unit tests (truncation, invalid value, limits) and are labelled as such.
 
 ![The TryFrom of FooPacket as a straight line: length pre-check, one extract per field, cross-field checks, then the struct; each step can return a typed FooError; below, the file each part lives in](images/adding_a_protocol/tryfrom_line.svg)
