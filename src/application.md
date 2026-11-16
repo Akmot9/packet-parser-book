@@ -242,7 +242,7 @@ The reverse defect exists too, a parser refusing its own traffic, and 11.5.0 fix
 
 Port guards mean a server on a non-standard port is invisible to a port-guarded rule. `ParseConfig::decode_as(port, DecodeAsProtocol::Xxx)` declares extra ports, and `parse_with` applies them. Declared ports are evaluated **before** the table, with the same three constraints: port *and* content, the protocol's transport guard, and failures memoized like the table's. Ports the table marks terminal (mDNS 5353, LLMNR 5355) cannot be overridden: the caller extends the guards, never replaces them.
 
-`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`, 11.8.0 one more, `ValmetDna`, and 12.0.0 another, `ModbusUdp`. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch/tests.rs` checks that the label and the probe are those of a rule of the table (for `WireGuard`, those of its 51820 twin), so that the two lists cannot drift apart:
+`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`, 11.8.0 one more, `ValmetDna`, and 12.0.0 another, `ModbusUdp`: 29 in all. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch/tests.rs` checks that the label and the probe are those of a rule of the table (for `WireGuard`, those of its 51820 twin), so that the two lists cannot drift apart:
 
 | Variant | Label | Guard | `ProbeId` |
 | --- | --- | --- | --- |
@@ -277,6 +277,12 @@ Port guards mean a server on a non-standard port is invisible to a port-guarded 
 | `ModbusUdp` | [ModbusUDP](./modbus.md#modbus-over-udp) | `Udp` | `ModbusTcp` |
 
 A declared port gets the probe of the protocol's standard port: the compatible shape of PostgreSQL on 5432, the lenient reading of DIS on 3000, the envelope of Modbus/TCP on 502, every message family and the beacon of Valmet DNA on 2517, 4516 and 4517. `WireGuard` goes further than the 51820 rule: its probe, `WireGuardPacket::try_from`, accepts the reserved bytes whatever the message type, where the port rule wants them null in a cookie or a data message, 51820 being a port that any peer can draw at random. Because declared ports come before the table, a declared port names the protocol of everything its probe accepts: on a port declared `ModbusTcp`, a UMAS frame is `"ModbusTCP"` (see [Modbus/TCP and UMAS](./modbus.md)).
+
+Since 12.1.0, `DecodeAsProtocol::ALL` is every variant, in declaration order: the list a caller shows when it lets its user bind a protocol to a port ([#274](https://github.com/Akmot9/Packet-parser/issues/274)). The enum and `ALL` are written by one macro from one list, as `ApplicationProtocol` and its own `ALL` are, so a variant cannot be missing from it. Three lists were written by hand until then, the one of the dispatch tests and those of the fuzz targets `parse_packetflow` and `policy_dispatch`; in 11.8.0 the fuzz one lacked `ValmetDna`. All three now read `ALL` (*tested*):
+
+```rust
+{{#include ../examples/src/lib.rs:decode_as_all}}
+```
 
 The seventeen labels without a variant are all given by a rule without a port guard, which probes any port, except NAT-keepalive, which only UDP 4500 knows. For NTP, whose port rule is more tolerant than its blind probe, this means that off port 123 the strict probe is the only way to the label.
 
