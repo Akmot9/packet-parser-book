@@ -36,11 +36,11 @@ The `PacketFlow` of the packet a tunnel carries, held in the `inner` field of th
 
 ## Label
 
-The name the crate gives the application protocol of a flow: a variant of `ApplicationProtocol`, written as text in the JSON output. See [Protocols](./protocols.md#the-55-labels).
+The name the crate gives the application protocol of a flow: a variant of `ApplicationProtocol`, written as text in the JSON output. See [Protocols](./protocols.md#the-56-labels).
 
 ## Oracle
 
-The output of tshark on the corpus, frozen in a file of the repository. A golden test compares the crate with it, field by field. See [Protocols](./protocols.md#the-55-labels).
+The output of tshark on the corpus, frozen in a file of the repository. A golden test compares the crate with it, field by field. See [Protocols](./protocols.md#the-56-labels).
 
 ## Owned flow
 

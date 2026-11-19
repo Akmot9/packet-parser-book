@@ -10,7 +10,7 @@ pub struct Application {
 }
 ```
 
-`PacketFlow::application` is a **label**. It says *which* protocol the transport payload looks like, not what the message contains. Since 12.0.0 the label is an enum, `ApplicationProtocol`, `#[non_exhaustive]`, with one variant per label: a `match` on it is checked by the compiler, where 11.x compared strings (`application_protocol: &'static str`). It is `Copy`, so classification still costs no allocation. `protocol.label()` gives the text the crate has always written, byte for byte (`"DNS"`, `"IEC 104"`, `"BACnet/IP"`); `Display` and the JSON output write that text, under the key `application_protocol` as before, and `FromStr` reads it back, refusing a text that is no label (`UnknownApplicationLabel`). `ApplicationProtocol::ALL` lists the 55 labels of the crate: the 47 of the dispatch table, the six tunnels, `Stp` and `Unknown`.
+`PacketFlow::application` is a **label**. It says *which* protocol the transport payload looks like, not what the message contains. Since 12.0.0 the label is an enum, `ApplicationProtocol`, `#[non_exhaustive]`, with one variant per label: a `match` on it is checked by the compiler, where 11.x compared strings (`application_protocol: &'static str`). It is `Copy`, so classification still costs no allocation. `protocol.label()` gives the text the crate has always written, byte for byte (`"DNS"`, `"IEC 104"`, `"BACnet/IP"`); `Display` and the JSON output write that text, under the key `application_protocol` as before, and `FromStr` reads it back, refusing a text that is no label (`UnknownApplicationLabel`). `ApplicationProtocol::ALL` lists the 56 labels of the crate: the 48 of the dispatch table, the six tunnels, `Stp` and `Unknown`.
 
 Since 13.0.0 one more variant, `Custom(&'static str)`, carries the label of a [parser added by the caller](./custom_parsers.md). It is not in `ALL`, and `FromStr` does not build it: the text alone does not say which parser gave it. `ParseConfig::application_protocol` (13.1.0) reads a label back with the configuration that produced it, `Custom` included. A variant that carries data takes away the discriminants of the others, so a cast `protocol as u8` no longer compiles. The rewrite of a 11.x `match` is in `MIGRATION-12.md`, that of a cast in `MIGRATION-13.md`, in the crate repository.
 
@@ -34,7 +34,7 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 The [Protocols](./protocols.md) page has one row per label: its detection route, its page, its oracle and the release it arrived in.
 
-The dispatch table gives 47 labels: [DNS](./dns.md) (plus its mDNS and LLMNR forms), [TLS](./tls.md), SNMP, [NTP](./ntp.md), DHCP, DHCPv6, [HTTP](./http.md) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](./postgresql.md), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](./modbus.md) (and, since 12.0.0, Modbus over UDP 502), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems; since 13.0.0, [Java RMI](./java_rmi.md). STP gets its label from the link layer (see below).
+The dispatch table gives 48 labels: [DNS](./dns.md) (plus its mDNS and LLMNR forms), [TLS](./tls.md), SNMP, [NTP](./ntp.md), DHCP, DHCPv6, [HTTP](./http.md) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](./postgresql.md), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](./modbus.md) (and, since 12.0.0, Modbus over UDP 502), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems; since 13.0.0, [Java RMI](./java_rmi.md); since 13.2.0, [SIP](./sip.md). STP gets its label from the link layer (see below).
 
 Some protocols are decoded below the table and get no label: PTP straight over Ethernet (EtherType `0x88F7`), [GOOSE](./goose.md) (`0x88B8`) and [LLDP](./lldp.md) (`0x88CC`) are [internet layers](./network.md), and native ESP, IP protocol 50, is a transport layer whose SPI and sequence number are in `TransportDetails::Esp`, with no application payload, like ICMP.
 
@@ -66,7 +66,7 @@ struct Rule {
 and the invariants are:
 
 1. **A rule with a port guard labels only if port *and* content agree.** The port alone never decides. `OPC UA` on port 4840 is still checked by `OpcuaPacket::try_from`.
-2. **Every probe runs at most once per payload.** Failures are memoized by `ProbeId` in a bitmask, one bit of a `u128` for each of the 66 probes (a `u64` until 12.1.0, which had 59): a rule sharing a probe with an earlier one (port-priority then blind fallback) never re-runs it.
+2. **Every probe runs at most once per payload.** Failures are memoized by `ProbeId` in a bitmask, one bit of a `u128` for each of the 67 probes (a `u64` until 12.1.0, which had 59): a rule sharing a probe with an earlier one (port-priority then blind fallback) never re-runs it.
 3. **A probe judges the bytes its decoder will read; only the text probes stop at `PROBE_CAP`** ([Limits](./limits.md#what-the-crate-chooses-not-to-do))**.** Since 11.7.0 every other probe runs on the real payload ([#184](https://github.com/Akmot9/Packet-parser/issues/184), [#185](https://github.com/Akmot9/Packet-parser/issues/185)): most decoders want it tiled to the last byte (SNMP, Modbus/TCP, ASTERIX, DIS, RTPS...) or covered by a declared length that must fit in it (NBSS, DNS over TCP, TLS...), and a prefix proves neither. The probes of the four text protocols, FTP, SMTP, NNTP and HTTP, keep the cap, `PROBE_CAP` = 18 432 bytes (18 KiB). They validate their text over its whole length: in UTF-8 for FTP and SMTP, the first line in UTF-8 and the octets of what follows for NNTP, the head in UTF-8 for HTTP. The fuzz oracle of FTP, SMTP and NNTP off their ports, `fuzz/oracles/text_protocols.rs`, copies the cap so that it judges the same bytes as their probes. What lies beyond the cap is not seen: a text message is judged on its first 18 432 bytes alone.
 
    Before 11.7.0, 43 of the 57 probes read only that prefix, the bound that [#20](https://github.com/Akmot9/Packet-parser/issues/20) put on the cost of 64 KiB GRO segments. Beyond the prefix, a probe could label what its decoder refuses, or miss a complete message:
@@ -94,16 +94,17 @@ Each rule is three gates in a row, and a payload stops at the first rule whose t
 
 ### Reading the table
 
-In 13.1.1 the table has 73 rules in two blocks: the 45 rules of the port block, then a blind cascade of 28. 12.0.0 had 65, 40 then 25. Eight rules came in with 13.x:
+In 13.2.0 the table has 74 rules in two blocks: the 45 rules of the port block, then a blind cascade of 29. 12.0.0 had 65, 40 then 25. Nine rules came in with 13.x:
 
 | Release | Rules | Why |
 | --- | --- | --- |
-| 13.0.0 | 35 and 66, Java RMI on TCP 1099, then blind after GIOP | the new decoder ([#313](https://github.com/Akmot9/Packet-parser/issues/313)) |
+| 13.0.0 | 35 and 67, Java RMI on TCP 1099, then blind after GIOP | the new decoder ([#313](https://github.com/Akmot9/Packet-parser/issues/313)) |
 | 13.1.0 | 3, DHCP on UDP 67 and 68 | a DHCP message whose `secs` equals the datagram length came out DIS, even from 68 to 67 ([#294](https://github.com/Akmot9/Packet-parser/issues/294)) |
 | 13.1.0 | 4 and 5, SRVLOC on UDP and TCP 427 | an SLPv1 SrvTypeRqst of 20 bytes came out RADIUS on UDP 427 ([#294](https://github.com/Akmot9/Packet-parser/issues/294)) |
 | 13.1.0 | 24, QUIC long header of any version on UDP 443 | a Version Negotiation or a reserved version came out Unknown ([#299](https://github.com/Akmot9/Packet-parser/issues/299)) |
 | 13.1.0 | 57, EtherNet/IP on UDP | the blind EtherNet/IP rule split in two: on TCP, several complete messages may tile a segment ([#288](https://github.com/Akmot9/Packet-parser/issues/288)) |
-| 13.1.0 | 64, SSH after other lines | a server may send lines before its banner (RFC 4253 §4.2); this rule comes after HTTP ([#307](https://github.com/Akmot9/Packet-parser/issues/307)) |
+| 13.1.0 | 65, SSH after other lines | a server may send lines before its banner (RFC 4253 §4.2); this rule comes after HTTP ([#307](https://github.com/Akmot9/Packet-parser/issues/307)) |
+| 13.2.0 | 63, SIP, blind on TCP and UDP, before HTTP | the new decoder ([#342](https://github.com/Akmot9/Packet-parser/issues/342)) |
 
 Every rule from DHCP on is therefore lower than in an edition of the book for 12.x: compare rules by label, not by number. The port block also holds four rules without a port guard that must come early: the blind S7Comm rule, which must beat COTP even on port 102, and the three rules that recognize FTP, SMTP and NNTP off their ports. The source writes a rule with one of two constructors, or with the whole struct when a field differs from their defaults:
 
@@ -132,7 +133,7 @@ static RULES: &[Rule] = &[
 
 Since 12.0.0 the label of a rule is a variant of `ApplicationProtocol`, where 11.x wrote the text: a rule cannot give a label the enum does not have. The tables below show the text, `label()`.
 
-Here is the whole table, in order. A port guard matches when either port of the segment or datagram is in its list; a veto skips the rule when either port is in the veto list. Every probe reads the whole payload, except the text probes of rules 8 to 13 and 63, which read its first `PROBE_CAP` bytes (invariant 3).
+Here is the whole table, in order. A port guard matches when either port of the segment or datagram is in its list; a veto skips the rule when either port is in the veto list. Every probe reads the whole payload, except the text probes of rules 8 to 13, 63 and 64, which read its first `PROBE_CAP` bytes (invariant 3).
 
 **Port rules**
 
@@ -205,19 +206,20 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 60 | SNMP | `Any` | none | `Snmp` | rule 1's probe |
 | 61 | [TLS](./tls.md) | `Tcp` | none | `Tls` | `TlsPacket::try_from` |
 | 62 | SSH | `Tcp` | none | `Ssh` | a segment that starts with `SSH-`, then `SshPacket::try_from` |
-| 63 | [HTTP](./http.md) | `Tcp` | none | `Http` | `HttpRequest::try_from` or `HttpResponse::try_from`, first `PROBE_CAP` bytes |
-| 64 | SSH | `Tcp` | none | `SshAfterLines` | `SshPacket::try_from`: the banner after other lines of text, at most 1 024 bytes of them (`SSH_MAX_PRELUDE_LENGTH`) |
-| 65 | [GIOP](./giop.md) | `Tcp` | none | `Giop` | magic `GIOP`, then `GiopPacket::try_from` |
-| 66 | [Java RMI](./java_rmi.md) | `Tcp` | none | `JavaRmiBlind` | `JavaRmiPacket::try_from` and `is_self_identifying`: a stream header, a Call or a Return |
-| 67 | DHCP | `Udp` | none | `Dhcp` | rule 3's probe |
-| 68 | SRVLOC | `Any` | none | `Srvloc` | rule 4's probe |
-| 69 | [UMAS](./modbus.md) | `Tcp` | none | `Umas` | rule 41's probe |
-| 70 | [ModbusTCP](./modbus.md) | `Tcp` | none | `ModbusTcpBlind` | `ModbusTcpPacket::is_blind_tcp_match` |
-| 71 | QUIC | `Udp` | none | `QuicLongHeader` | `QuicPacket::is_blind_udp_match`: a QUIC v1 long header, whose length fits in the datagram |
-| 72 | [WireGuard](./wireguard.md) | `Udp` | none | `WireGuardBlind` | `WireGuardPacket::is_blind_udp_match` |
-| 73 | MQTT | `Tcp` | none | `Mqtt` | `MqttPacket::try_from` |
+| 63 | [SIP](./sip.md) | `Any` | none | `Sip` | `may_start_sip`, then `SipMessage::try_from`: a complete head and the five mandatory headers, first `PROBE_CAP` bytes |
+| 64 | [HTTP](./http.md) | `Tcp` | none | `Http` | `HttpRequest::try_from` or `HttpResponse::try_from`, first `PROBE_CAP` bytes |
+| 65 | SSH | `Tcp` | none | `SshAfterLines` | `SshPacket::try_from`: the banner after other lines of text, at most 1 024 bytes of them (`SSH_MAX_PRELUDE_LENGTH`) |
+| 66 | [GIOP](./giop.md) | `Tcp` | none | `Giop` | magic `GIOP`, then `GiopPacket::try_from` |
+| 67 | [Java RMI](./java_rmi.md) | `Tcp` | none | `JavaRmiBlind` | `JavaRmiPacket::try_from` and `is_self_identifying`: a stream header, a Call or a Return |
+| 68 | DHCP | `Udp` | none | `Dhcp` | rule 3's probe |
+| 69 | SRVLOC | `Any` | none | `Srvloc` | rule 4's probe |
+| 70 | [UMAS](./modbus.md) | `Tcp` | none | `Umas` | rule 41's probe |
+| 71 | [ModbusTCP](./modbus.md) | `Tcp` | none | `ModbusTcpBlind` | `ModbusTcpPacket::is_blind_tcp_match` |
+| 72 | QUIC | `Udp` | none | `QuicLongHeader` | `QuicPacket::is_blind_udp_match`: a QUIC v1 long header, whose length fits in the datagram |
+| 73 | [WireGuard](./wireguard.md) | `Udp` | none | `WireGuardBlind` | `WireGuardPacket::is_blind_udp_match` |
+| 74 | MQTT | `Tcp` | none | `Mqtt` | `MqttPacket::try_from` |
 
-Seven probes serve more than one rule. `Srvloc` serves three, its UDP and TCP ports and the blind rule (4, 5, 68), and `ModbusTcp` two, port 502 on TCP and on UDP (42, 43). Five others serve a port rule that gives them priority and a blind rule further down: `Snmp` (1, 60), `Dhcp` (3, 67), `Radius` (30, 52), `Bacnet` (31, 53) and `Umas` (41, 69). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, the three verb checks, `is_plausible_short_header`, the `is_blind_*`, `is_port_*` and `is_tcp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. In the real file most lines carry a comment that says why they are there, often with the issue, the capture frame or the RFC section behind them. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
+Seven probes serve more than one rule. `Srvloc` serves three, its UDP and TCP ports and the blind rule (4, 5, 69), and `ModbusTcp` two, port 502 on TCP and on UDP (42, 43). Five others serve a port rule that gives them priority and a blind rule further down: `Snmp` (1, 60), `Dhcp` (3, 68), `Radius` (30, 52), `Bacnet` (31, 53) and `Umas` (41, 70). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, the three verb checks, `is_plausible_short_header`, the `is_blind_*`, `is_port_*` and `is_tcp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. In the real file most lines carry a comment that says why they are there, often with the issue, the capture frame or the RFC section behind them. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
 
 ### Three detection routes
 
@@ -237,8 +239,8 @@ Three protocols have more than one rule for another reason:
 
 | Protocol | Rules | Why |
 | --- | --- | --- |
-| QUIC | 23 and 24 on UDP 443, 71 on any UDP port | the opaque short header and a long header of any version only on 443; off it, the long header of QUIC v1 alone |
-| SSH | 62 before HTTP, 64 after it | a segment that starts with its banner is tried first; a banner behind other lines comes after HTTP, so that an HTTP response whose body quotes a banner stays HTTP |
+| QUIC | 23 and 24 on UDP 443, 72 on any UDP port | the opaque short header and a long header of any version only on 443; off it, the long header of QUIC v1 alone |
+| SSH | 62 before HTTP, 65 after it | a segment that starts with its banner is tried first; a banner behind other lines comes after HTTP, so that an HTTP response whose body quotes a banner stays HTTP |
 | EtherNet/IP | 56 on TCP, 57 on UDP | TCP may put several messages in a segment; a UDP datagram carries one |
 
 ### Tightening a blind probe
@@ -269,7 +271,7 @@ ASTERIX, whose data blocks must tile the datagram, was judged on the same prefix
 
 | Probe | Before 13.1.0 | Since 13.1.0 |
 | --- | --- | --- |
-| UMAS (rules 41, 69) | the first MBAP header alone: a UMAS header followed by text came out `"UMAS"` on any TCP port | MBAP headers that tile the segment, each of function `0x5A` with a UMAS header ([#295](https://github.com/Akmot9/Packet-parser/issues/295)) |
+| UMAS (rules 41, 70) | the first MBAP header alone: a UMAS header followed by text came out `"UMAS"` on any TCP port | MBAP headers that tile the segment, each of function `0x5A` with a UMAS header ([#295](https://github.com/Akmot9/Packet-parser/issues/295)) |
 | OPC UA, blind (rule 55) | three letters of message type and one of chunk type: `CLOCK 12:00:00` came out `"OPC UA"` | chunks that tile the segment, the last one partial of at most 16 MiB, `OPCUA_BLIND_MAX_PARTIAL_SIZE` ([#296](https://github.com/Akmot9/Packet-parser/issues/296)) |
 
 The 181 UMAS frames and the 187 OPC UA frames of the corpus kept their labels.
@@ -307,7 +309,7 @@ QUIC also lost a field it could not read. Header protection (RFC 9001 §5.4) mas
 
 Port guards mean a server on a non-standard port is invisible to a port-guarded rule. `ParseConfig::decode_as(port, DecodeAsProtocol::Xxx)` declares extra ports, and `parse_with` applies them. Declared ports are evaluated **before** the table, with the same three constraints: port *and* content, the protocol's transport guard, and failures memoized like the table's. Ports the table marks terminal (mDNS 5353, LLMNR 5355) cannot be overridden: the caller extends the guards, never replaces them.
 
-`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`, 11.8.0 one more, `ValmetDna`, 12.0.0 another, `ModbusUdp`, and 13.0.0 `JavaRmi`: 30 in all. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch/tests.rs` checks that the label and the probe are those of a rule of the table (for `WireGuard`, those of its 51820 twin), so that the two lists cannot drift apart:
+`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`, 11.8.0 one more, `ValmetDna`, 12.0.0 another, `ModbusUdp`, 13.0.0 `JavaRmi`, and 13.2.0 `Sip`: 31 in all. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch/tests.rs` checks that the label and the probe are those of a rule of the table (for `WireGuard`, those of its 51820 twin), so that the two lists cannot drift apart:
 
 | Variant | Label | Guard | `ProbeId` |
 | --- | --- | --- | --- |
@@ -326,7 +328,7 @@ Port guards mean a server on a non-standard port is invisible to a port-guarded 
 | `OpcUa` | OPC UA | `Tcp` | `Opcua` |
 | `PostgreSql` | [PostgreSQL](./postgresql.md) | `Tcp` | `PostgresqlPort` |
 | `ModbusTcp` | [ModbusTCP](./modbus.md) | `Tcp` | `ModbusTcp` |
-| `EthernetIp` | EtherNet/IP | `Any` | `EthernetIp` |
+| `EthernetIp` | EtherNet/IP | `Tcp` on TCP, `Any` otherwise | `EthernetIpTcp` on TCP, `EthernetIp` otherwise |
 | `Ams` | AMS | `Tcp` on TCP, `Any` otherwise | `AmsTcp` on TCP, `Ams` otherwise |
 | `QuicShortHeader` | QUIC | `Udp` | `QuicShortHeader` |
 | `OpenVpn` | OpenVPN | `Tcp` on TCP, `Udp` otherwise | `OpenVpnTcp` on TCP, `OpenVpnUdp` otherwise |
@@ -341,6 +343,7 @@ Port guards mean a server on a non-standard port is invisible to a port-guarded 
 | `ValmetDna` | [Valmet DNA](./valmet_dna.md) | `Udp` | `ValmetDna` |
 | `ModbusUdp` | [ModbusUDP](./modbus.md#modbus-over-udp) | `Udp` | `ModbusTcp` |
 | `JavaRmi` | [Java RMI](./java_rmi.md) | `Tcp` | `JavaRmi` |
+| `Sip` | [SIP](./sip.md) | `Any` | `Sip` |
 
 A declared port gets the probe of the protocol's standard port: the compatible shape of PostgreSQL on 5432, the lenient reading of DIS on 3000, the envelope of Modbus/TCP on 502, the AMS/TCP header of 48898 on TCP, every message family and the beacon of Valmet DNA on 2517, 4516 and 4517. `WireGuard` goes further than the 51820 rule: its probe, `WireGuardPacket::try_from`, accepts the reserved bytes whatever the message type, where the port rule wants them null in a cookie or a data message, 51820 being a port that any peer can draw at random. Because declared ports come before the table, a declared port names the protocol of everything its probe accepts: on a port declared `ModbusTcp`, a UMAS frame is `"ModbusTCP"` (see [Modbus/TCP and UMAS](./modbus.md)).
 

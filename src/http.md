@@ -27,7 +27,7 @@ Both are `#[non_exhaustive]`. `HttpHeaders` is the view over the header block th
 
 ## Detection: requests and responses
 
-The rule is a blind probe on TCP, `rule(ApplicationProtocol::Http, Guard::Tcp, ProbeId::Http)`, rule 63 of the table, between the two SSH rules and before GIOP; no port is involved. The SSH rule after it, added in 13.1.0, reads a banner behind other lines, so that an HTTP response whose body quotes a banner stays HTTP. Before 11.7.0 the probe was `HttpRequest::try_from` alone: a response came out `"Unknown"` while the request that caused it came out `"HTTP"`, and since the whole payload had to be valid UTF-8, so did a request whose binary body fitted in the same segment. The probe now accepts either of two start lines:
+The rule is a blind probe on TCP, `rule(ApplicationProtocol::Http, Guard::Tcp, ProbeId::Http)`, rule 64 of the table, after the first SSH rule and the [SIP](./sip.md) rule, before the second SSH rule and GIOP; no port is involved. The SSH rule after it, added in 13.1.0, reads a banner behind other lines, so that an HTTP response whose body quotes a banner stays HTTP. Before 11.7.0 the probe was `HttpRequest::try_from` alone: a response came out `"Unknown"` while the request that caused it came out `"HTTP"`, and since the whole payload had to be valid UTF-8, so did a request whose binary body fitted in the same segment. The probe now accepts either of two start lines:
 
 - a request line: a method among GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE and PATCH, a URI, and a version, `HTTP/` then one digit, or two separated by a dot;
 - a status line (RFC 9112 §4): the same version, a code of exactly three digits, and a reason phrase, possibly empty.
@@ -58,7 +58,7 @@ The rule has no port, so its start line is all that keeps other text protocols o
 | `PROPFIND / HTTP/1.1`, `NOTIFY * HTTP/1.1` | `"Unknown"` | the method is not one of the nine |
 | `PRI * HTTP/2.0`, the HTTP/2 preface | `"Unknown"` | `PRI` is not one of the nine |
 | `OPTIONS rtsp://… RTSP/1.0` | `"Unknown"` | the version does not start with `HTTP/` |
-| `INVITE sip:… SIP/2.0` | `"Unknown"` | neither the method nor the version |
+| `INVITE sip:… SIP/2.0` | `"SIP"` | neither the method nor the version is HTTP's; since 13.2.0 the [SIP](./sip.md) rule, just before, labels a complete message |
 | `ICY 200 OK` | `"Unknown"` | a status line starts with `HTTP/` |
 | `HTTP/1.1 20 OK` | `"Unknown"` | the code is not three digits |
 | a header line without a colon | `"Unknown"` | `HttpParseError::InvalidHeader` |
@@ -82,13 +82,13 @@ The head is text, so the table counts lines, not bytes.
 | Status code | exactly three digits | `InvalidStatusCode`, with the text |
 | Header line | a colon | `InvalidHeader` |
 
-## Oracle: 296 frames
+## Oracle: 298 frames
 
-`tests/http_golden.rs` compares the crate with tshark 4.6.6 without TCP reassembly, the view of a stateless parser (`tools/http_oracle.sh`, frozen in `tests/data/http_tshark_oracle.tsv`). For each frame it checks the kind, the version, and the method and URI or the code and phrase. It runs on every capture of `pcaps_exemple/protocols/` and on `The-Ultimate-PCAP.pcapng`: 144 requests and 152 responses match.
+`tests/http_golden.rs` compares the crate with tshark 4.6.9 without TCP reassembly, the view of a stateless parser (`tools/http_oracle.sh`, frozen in `tests/data/http_tshark_oracle.tsv`). For each frame it checks the kind, the version, and the method and URI or the code and phrase. It runs on every capture of `pcaps_exemple/protocols/` and on `The-Ultimate-PCAP.pcapng`: 145 requests and 153 responses match. The last two came with 13.2.0: `protocols/sip/ndpi_http_on_sip_port.pcap`, from the nDPI test corpus, is a GET and its 403 on TCP 5060, the port of SIP. tshark dissects that port as SIP, so `tools/http_oracle.sh` declares it HTTP with `-d tcp.port==5060,http`, and the crate labels both frames `"HTTP"`.
 
 The crate labels no other frame of these captures `"HTTP"`, retransmissions apart. tshark does not dissect a retransmission; the crate labels six of them like the segments they repeat, and they are left out of the comparison. The two responses that tshark decrypts in `tls12-dsb.pcapng`, with the key the capture carries, stay TLS.
 
-With 11.7.0 the golden histogram went from 72 to 146 HTTP labels: 72 responses more, and 2 retransmissions of responses. `"Unknown"` went from 9 579 to 9 505.
+With 11.7.0 the golden histogram went from 72 to 146 HTTP labels: 72 responses more, and 2 retransmissions of responses. `"Unknown"` went from 9 579 to 9 505. With 13.2.0 the two frames of the SIP negative bring it to 148.
 
 ## What is left out
 

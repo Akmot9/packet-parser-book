@@ -621,5 +621,40 @@ JAVA_RMI = {
     ]},
 }
 
+# SIP (13.2.0): the bytes of frame 649, taken with tshark 4.6.9. The values
+# of Call-ID, From, To and Via are summarised, not drawn.
+SIP = {
+    "out": "images/application/sip_response.svg",
+    "title": "SIP: a status line, six header lines, an empty line",
+    "subtitle": "frame 649 of wireshark_aaa.pcap, UDP 5060 → 5060 · 300 bytes",
+    "desc": "The SIP response of frame 649 of wireshark_aaa.pcap, 32 bits per row: the status line, the version SIP/2.0, a space, the three-digit code 100, a space, the reason phrase Trying and CR LF; then six header lines in the order this server sends them, Call-ID first, then CSeq: 6 REGISTER, From, To, Via and Content-Length: 0, and the empty line that ends the head; SipMessage keeps the start line, the five mandatory headers, the CSeq split into its number and its method, a Content-Length of 0 and an empty body.",
+    "palette": "app",
+    "fields": [
+        {"label": "Version · SIP/2.0", "hex": "5349502f322e30", "color": "orange", "cont": "Version, continued"},
+        {"label": "SP", "hex": "20"},
+        {"label": "Code · 100", "hex": "313030", "color": "orange", "emph": True},
+        {"label": "SP", "hex": "20"},
+        {"label": "Reason · Trying", "hex": "547279696e67", "color": "yellow", "cont": "Reason, continued"},
+        {"label": "CR LF", "hex": "0d0a"},
+        {"skip": "… header line Call-ID, 46 bytes with its CR LF"},
+        {"label": "Header line · CSeq: 6 REGISTER", "hex": "435365713a2036205245474953544552", "color": "orange", "cont": "CSeq, continued"},
+        {"label": "CR LF", "hex": "0d0a"},
+        {"skip": "… From, To, Via: 195 bytes"},
+        {"label": "Header line · Content-Length: 0", "hex": "436f6e74656e742d4c656e6774683a2030", "color": "yellow", "cont": "Content-Length: 0, continued"},
+        {"label": "CR LF", "hex": "0d0a"},
+        {"label": "Empty line", "hex": "0d0a", "cont": "Empty line"},
+        {"skip": "… no body, as Content-Length says"},
+    ],
+    "card": {"title": "SipMessage", "width": 260, "fields": [
+        {"name": "start_line", "value": "Response · 100, \"Trying\"", "color": "orange", "arrow": 2},
+        {"name": "call_id", "value": "&str · the first line", "arrow": 6, "arrow_color": "gray"},
+        {"name": "cseq", "value": "6, \"REGISTER\"", "color": "orange", "arrow": 7},
+        {"name": "from, to, via", "value": "&str · raw values", "arrow": 9, "arrow_color": "gray"},
+        {"name": "content_length", "value": "Some(0)", "color": "yellow", "arrow": 10, "arrow_color": "dark"},
+        {"name": "headers", "value": "SipHeaders, 6 · wire order"},
+        {"name": "body", "value": "&[u8], empty", "arrow": 13, "arrow_color": "gray"},
+    ]},
+}
+
 ALL = [IKE, RADIUS, RDP, RTPS, RTPS_DDS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
-       NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS, JAVA_RMI]
+       NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS, JAVA_RMI, SIP]

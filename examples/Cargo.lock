@@ -53,9 +53,9 @@ dependencies = [
 
 [[package]]
 name = "packet_parser"
-version = "13.1.1"
+version = "13.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "585f02751bcc3e7c1890c2087d50dc73f395fcbeb9a057df34122e021463147d"
+checksum = "d458112355087f18939e5f5647ed5fac8e0860f9e035dacc6495b8e7d4aa8583"
 dependencies = [
  "serde",
  "thiserror",

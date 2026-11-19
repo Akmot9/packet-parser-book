@@ -17,6 +17,7 @@ mod java_rmi;
 mod link_layer;
 mod remote_vpn;
 mod scada;
+mod sip;
 mod shared;
 mod tls;
 
@@ -67,7 +68,7 @@ mod tests {
     fn protocol_index_lists_every_label() {
         use packet_parser::ApplicationProtocol;
         let page = include_str!("../../src/protocols.md");
-        let table = page.split("## The 55 labels").nth(1).unwrap().split("\n## ").next().unwrap();
+        let table = page.split("## The 56 labels").nth(1).unwrap().split("\n## ").next().unwrap();
         let listed: Vec<&str> =
             table.lines().filter_map(|l| l.strip_prefix("| `")?.split('`').next()).collect();
         for protocol in ApplicationProtocol::ALL {
@@ -277,9 +278,9 @@ mod tests {
             .iter()
             .map(|protocol| format!("{protocol:?}"))
             .collect();
-        assert_eq!(offered.len(), 30);
+        assert_eq!(offered.len(), 31);
         assert_eq!(offered.first().map(String::as_str), Some("Ftp"));
-        assert_eq!(offered.last().map(String::as_str), Some("JavaRmi"));
+        assert_eq!(offered.last().map(String::as_str), Some("Sip"));
 
         // The entry the user picks goes to `decode_as` as it is.
         let picked = DecodeAsProtocol::ALL[0];
