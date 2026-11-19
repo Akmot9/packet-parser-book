@@ -109,7 +109,7 @@ Only the link layer can fail the parse. Above it, three outcomes are distinct an
 | --- | --- | --- |
 | `Some(..)` | `None` | The layer was recognized and decoded. |
 | `None` | `None` | The protocol is **not supported** (e.g. the experimental EtherType `0x88B5`), nothing above it can be reached. |
-| `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why. |
+| `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why: since 13.0.0 the decoder's error, typed. |
 | `Some(..)` | `Some(..)` | Semantic anomaly: the header is readable but no conforming stack emits it (TCP SYN+FIN, reserved bits set). The layer is **kept** so its ports remain available for flow correlation; nothing is parsed above it. |
 
 ![What parse returns: Err only from the link layer, otherwise a PacketFlow in one of four shapes, decoded, not supported, corrupted or anomalous](images/getting_started/parse_outcomes.svg)
@@ -241,4 +241,4 @@ Measuring does not change the path: the pipeline is written once, over a `Timing
 
 ## Known limitations
 
-The parser is stateless: it sees one packet at a time, reassembles nothing, verifies no checksum and decrypts nothing. The application layer is a label, not a decode. The [Limits](./limits.md) page lists what follows from each of these, and what the crate exposes to detect it; the [Protocols](./protocols.md) page lists every label.
+The parser is stateless: it sees one packet at a time, reassembles nothing, verifies no checksum and decrypts nothing. The application layer is a label, not a decode. The [Limits](./limits.md) page lists what follows from each of these, and what the crate exposes to detect it; the [Protocols](./protocols.md) page lists every label. A protocol the crate does not decode can still be named by a parser of the caller ([Custom parsers and rules](./custom_parsers.md)).

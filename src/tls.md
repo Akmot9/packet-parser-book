@@ -8,7 +8,7 @@ The crate reads the envelope and nothing inside it. It does not decode the hands
 
 ## Detection: one blind rule on TCP
 
-Rule 55 of the [dispatch table](./application.md#reading-the-table) has a TCP guard, no port, and `TlsPacket::try_from` as its probe. A segment is `"TLS"` when it starts with a record header and holds the whole record:
+Rule 61 of the [dispatch table](./application.md#reading-the-table) has a TCP guard, no port, and `TlsPacket::try_from` as its probe. A segment is `"TLS"` when it starts with a record header and holds the whole record:
 
 - the first byte is a content type, 20 to 24;
 - the next two are a version, 3.1 to 3.4;
@@ -18,7 +18,7 @@ The probe looks at the first record only. What follows it in the segment is not 
 
 Port 443 plays no part. TLS is where its handshake is: on 443, on 8443, on a mail port after STARTTLS, on a database port after an `SSLRequest`. The rule comes late in the table, after every port rule and most blind ones, because five bytes are thin evidence next to a decoder that checks a whole message.
 
-That order explains a label that surprises at first. On port 3389, the [RDP](./rdp.md#detection-port-3389-then-tls) rule is tried first; once the server has selected TLS or CredSSP, the segments no longer start with a TPKT header, the RDP probe refuses them, and rule 55 labels them `"TLS"`. The same happens to [PostgreSQL](./postgresql.md) after an accepted `SSLRequest`. The label follows the bytes of each segment, not the history of the connection.
+That order explains a label that surprises at first. On port 3389, the [RDP](./rdp.md#detection-port-3389-then-tls) rule is tried first; once the server has selected TLS or CredSSP, the segments no longer start with a TPKT header, the RDP probe refuses them, and rule 61 labels them `"TLS"`. The same happens to [PostgreSQL](./postgresql.md) after an accepted `SSLRequest`. The label follows the bytes of each segment, not the history of the connection.
 
 A Client Hello, on port 443 and off it (*tested*):
 
@@ -40,6 +40,8 @@ pub struct TlsPacket<'a> {
 ```
 
 The version of the record header is not the version of the session. A TLS 1.2 client writes 3.1 in its first record, for the middleboxes that refuse anything newer, and TLS 1.3 writes 3.3 in every record: the negotiated version is in the handshake, which the crate does not read. `TlsVersion` displays what the header says.
+
+The record version may be 3.0 since 13.1.0, displayed `SSL 3.0`. RFC 5246 (appendix E.1) lets a client send its Client Hello in a 3.0 record to reach an old server, and SSL 3.0 uses it itself. Until then such records came out `"Unknown"`, even on TCP 443 [#300](https://github.com/Akmot9/Packet-parser/issues/300).
 
 `payload` is the record as it is on the wire. For a handshake before the keys are set, it is cleartext: the Client Hello of the example carries the name `example.com` in its bytes. After the Change Cipher Spec, or in every TLS 1.3 record after the Server Hello, it is ciphertext.
 
@@ -94,7 +96,7 @@ The limits every protocol shares, reassembly and checksums among them, are on th
 
 - **The handshake.** No message is decoded: no server name, no ALPN, no cipher suite, no certificate. A consumer that wants the SNI reads it in `payload`.
 - **The negotiated version.** The label does not tell TLS 1.2 from TLS 1.3, and the record version does not either.
-- **SSL 3.0 and the SSLv2-compatible Client Hello.** Version 3.0 is refused, and the SSLv2 form has no record header.
+- **The SSLv2-compatible Client Hello.** It has no record header.
 - **DTLS.** The rule has a TCP guard, and the DTLS record header is not the TLS one.
 - **A record over several segments.** Only a segment that starts with a whole record is labelled.
 - **Decryption.** Never, even when the capture holds the keys.

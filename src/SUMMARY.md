@@ -61,6 +61,8 @@
 
 - [Adding a new protocol](./adding_a_protocol.md)
 
+- [Custom parsers and rules](./custom_parsers.md)
+
 - [Glossary](./glossary.md)
 
 [About](./about.md)

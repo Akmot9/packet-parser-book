@@ -27,7 +27,7 @@ No conforming stack opens and closes a connection in the same segment: SYN with 
 
 `anomaly()` names one anomaly: when both are present it returns `ReservedBitsSet`, which it checks first. `TcpPacket::is_anomalous()` gives the same verdict as a plain `bool`.
 
-The pipeline **keeps** an anomalous transport, with its ports, and reports it in `corrupted` (`layer: Transport`, `error: "TCP error: Invalid TCP flags 0x03: SYN and FIN are both set"`). Before 11.0.0 such a segment lost its transport layer, which deprived the caller of the ports, so of any flow correlation, at the precise moment the packet is interesting ([#24](https://github.com/Akmot9/Packet-parser/issues/24)). Its payload stays in `transport.payload` but is *not* handed to the application probes nor to tunnel detection (`application` and `inner` are `None`): bytes that did not come from a conforming stack are not worth classifying. This case runs in a cold function outside the common pipeline: weaving it into the L4 and L7 stages cost about 10 ns on every TCP segment, for a case that almost never occurs.
+The pipeline **keeps** an anomalous transport, with its ports, and reports it in `corrupted` (`layer: Transport`, and an `error` that is `TcpError::InvalidFlags { flags: 0x03 }` and displays `TCP error: Invalid TCP flags 0x03: SYN and FIN are both set`). Before 11.0.0 such a segment lost its transport layer, which deprived the caller of the ports, so of any flow correlation, at the precise moment the packet is interesting ([#24](https://github.com/Akmot9/Packet-parser/issues/24)). Its payload stays in `transport.payload` but is *not* handed to the application probes nor to tunnel detection (`application` and `inner` are `None`): bytes that did not come from a conforming stack are not worth classifying. This case runs in a cold function outside the common pipeline: weaving it into the L4 and L7 stages cost about 10 ns on every TCP segment, for a case that almost never occurs.
 
 ```rust
 if let Some(corrupted) = &flow.corrupted
@@ -37,5 +37,9 @@ if let Some(corrupted) = &flow.corrupted
         None => { /* structural: unreadable header */ }
         Some(transport) => { /* semantic: ports usable, packet suspicious */ }
     }
+    // Since 13.0.0 the cause is typed:
+    if let CorruptedLayerError::Transport(TransportError::TcpError(TcpError::InvalidFlags { .. })) =
+        &corrupted.error
+    { /* SYN and FIN together */ }
 }
 ```
