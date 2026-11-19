@@ -232,7 +232,7 @@ mod tests {
         let corrupted = flow.corrupted.unwrap();
         assert_eq!(corrupted.layer, CorruptedLayerKind::Internet);
         assert_eq!(
-            corrupted.error,
+            corrupted.error.to_string(),
             "GOOSE error: GOOSE length 108 does not match the 107 bytes after the EtherType"
         );
     }
@@ -342,7 +342,7 @@ mod tests {
         let corrupted = flow.corrupted.unwrap();
         assert_eq!(corrupted.layer, CorruptedLayerKind::Internet);
         assert_eq!(
-            corrupted.error,
+            corrupted.error.to_string(),
             "LLDP error: LLDP TLV type 6 at offset 48 declares 243 bytes, 36 remain"
         );
     }
@@ -432,7 +432,7 @@ mod tests {
         let corrupted = flow.corrupted.unwrap();
         assert_eq!(corrupted.layer, CorruptedLayerKind::Internet);
         assert_eq!(
-            corrupted.error,
+            corrupted.error.to_string(),
             "Profinet error: DCP data length 4 exceeds the 2 bytes after the header"
         );
         assert_eq!(

@@ -21,11 +21,12 @@
 |---|---|---|
 | Someone who integrates the crate | What does `parse` return, and what can be built on it? | [Getting started](./getting_started.md), then the [`PacketFlow` struct](./packet.md), the [Protocols](./protocols.md) index and the [Limits](./limits.md) |
 | Someone who audits it | How is a label chosen, and how far is each decoder verified? | [Data validation procedure](./data_validation.md), the dispatch table of the [Application](./application.md) chapter, then the "Oracle" and "What is left out" sections of the protocol pages |
+| Someone whose protocol the crate does not decode | How can it still get a name, without forking the crate? | [Custom parsers and rules](./custom_parsers.md) |
 | Someone who contributes to it | Where does a new protocol go, and what must it prove? | [Adding a new protocol](./adding_a_protocol.md), after the [Data validation procedure](./data_validation.md) |
 
 ## What the book guarantees
 
-- **A pinned version.** The book describes `packet_parser` 12.1.0 ([crates.io](https://crates.io/crates/packet_parser/12.1.0), tag `v12.1.0` in the [repository](https://github.com/Akmot9/Packet-parser)). When the crate moves, the book is updated with it and this line changes.
+- **A pinned version.** The book describes `packet_parser` 13.1.1 ([crates.io](https://crates.io/crates/packet_parser/13.1.1), tag `v13.1.1` in the [repository](https://github.com/Akmot9/Packet-parser)). When the crate moves, the book is updated with it and this line changes.
 - **Tested examples.** A snippet marked *tested* is compiled and run against that version by the `examples/` crate of the book, on every change.
 - **Oracles.** The counts the book quotes come from the golden tests of the crate, many of which compare each decoded field with tshark on real captures. The [Protocols](./protocols.md) index gives the size of each oracle.
 
@@ -37,5 +38,5 @@ The excerpts of the crate's internals are not compiled: they are quoted from the
 2. The [`PacketFlow` struct](./packet.md) shows what a parsed packet looks like, and the [data validation procedure](./data_validation.md) how every struct is built.
 3. The layers follow, from the bottom: [data link](./data_link.md), [internet](./network.md), [transport](./transport.md), [application](./application.md), each with one page per protocol.
 4. [Protocols](./protocols.md) is the index of every label, and [Tunnels](./tunnels.md) covers encapsulation.
-5. [Limits](./limits.md) says what a stateless parser cannot see, and [Adding a new protocol](./adding_a_protocol.md) is the contributor's path.
+5. [Limits](./limits.md) says what a stateless parser cannot see, [Adding a new protocol](./adding_a_protocol.md) is the contributor's path, and [Custom parsers and rules](./custom_parsers.md) the caller's, for a protocol that stays out of the crate.
 6. The [Glossary](./glossary.md) defines the words the book relies on.

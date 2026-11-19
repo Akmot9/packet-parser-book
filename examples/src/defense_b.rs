@@ -1,8 +1,8 @@
 //! Examples of the RTPS and ASTERIX chapters (defense lot, packet_parser
-//! 11.6.0). Every frame comes from the crate's tracked corpus,
-//! `pcaps_exemple/protocols/`, byte for byte: the comment above each constant
-//! names the capture and the frame number. Where a test alters a frame, its
-//! comments say how.
+//! 11.6.0; the DDS layer of RTPS, 13.0.0). Every frame comes from the
+//! crate's tracked corpus, `pcaps_exemple/protocols/`, byte for byte: the
+//! comment above each constant names the capture and the frame number. Where
+//! a test alters a frame, its comments say how.
 
 #[cfg(test)]
 mod tests {
@@ -15,10 +15,14 @@ mod tests {
         AsterixPacket, cat001, cat002, cat008, cat023, cat034, cat048, cat062, cat063, cat065,
         cat247,
     };
+    use packet_parser::parse::application::protocols::rtps::dds::{
+        RtpsBuiltinTopic, RtpsEncapsulation, RtpsLocatorRole, RtpsReliabilityKind,
+    };
     use packet_parser::parse::application::protocols::rtps::{
-        RtpsChecksum, RtpsPacket, SubmessageDetails, SubmessageKind,
+        RtpsChecksum, RtpsPacket, RtpsSubmessage, SubmessageDetails, SubmessageKind,
     };
     use packet_parser::{LinkType, parse};
+    use std::net::Ipv4Addr;
 
     // rtps/talker-listener-rtps.pcapng frame 9 (LINKTYPE_NULL, 164 bytes):
     // Cyclone DDS (ROS 2 talker/listener), 10.0.0.46:54020 -> 10.0.0.46:58584.
@@ -45,6 +49,56 @@ mod tests {
     const RTI_PING_FRAME_1_HEX: &str = concat!(
         "00000000000000000000000008004500002c0000400040113cbf7f0000017f00",
         "00016dcc1cf20018fe2b52545053020101014e44445350494e47"
+    );
+
+    // rtps/talker-listener-rtps.pcapng frame 3 (LINKTYPE_NULL, 316 bytes):
+    // the SPDP announcement of the participant of frame 9,
+    // 10.0.0.46:54020 -> 239.255.0.1:7400.
+    const CYCLONE_FRAME_3_HEX: &str = concat!(
+        "02000000450001386cdc0000201132ab0a00002eefff0001d3041ce80124fb63",
+        "525450530201011054a61001319843eca3669a3509010800b7eee9609fcc3f6e",
+        "1505f8000000100000000000000100c20000000001000000000300002c001000",
+        "0a000000656e636c6176653d2f3b000015000400020100001600040001100000",
+        "020008000a000000000000005000100054a61001319843eca3669a35000001c1",
+        "580004003f0c00000f00040000000000310018000100000091ef000000000000",
+        "00000000000000000a00002e320018000100000091ef00000000000000000000",
+        "000000000a00002e07804400000000002c000000000000000000000000000000",
+        "2c0000004a6f686e732d4d6163426f6f6b2d50726f2e6c6f63616c2f302e382e",
+        "302f44617277696e2f44617277696e00198004000000100001000000"
+    );
+
+    // rtps/talker-listener-rtps.pcapng frame 57 (LINKTYPE_NULL, 236 bytes):
+    // SEDP, the same participant announces its writer of rt/chatter,
+    // 10.0.0.46:54020 -> 10.0.0.46:58584.
+    const CYCLONE_FRAME_57_HEX: &str = concat!(
+        "02000000450000e858410000401100000a00002e0a00002ed304e4d800d41541",
+        "525450530201011054a61001319843eca3669a3509010800b7eee9606b0e1084",
+        "1505a8000000100000000000000003c2000000000a0000000003000005001000",
+        "0b00000072742f636861747465720000070024001d0000007374645f6d736773",
+        "3a3a6d73673a3a6464735f3a3a537472696e675f000000001a000c0002000000",
+        "ffffff7fffffffff400008000000000007000000150004000201000016000400",
+        "011000005a00100054a61001319843eca3669a35000015030c80040001000000",
+        "038004000000000001000000"
+    );
+
+    // rtps/talker-listener-rtps.pcapng frame 70 (LINKTYPE_NULL, 144 bytes):
+    // the first sample of that writer, 10.0.0.46:54020 -> 10.0.0.46:58584.
+    const CYCLONE_FRAME_70_HEX: &str = concat!(
+        "020000004500008c07470000401100000a00002e0a00002ed304e4d8007814e5",
+        "525450530201011054a61001319843eca3669a3509010800b8eee960c505a085",
+        "15052c000000100000000000000015030000000001000000000100000f000000",
+        "48656c6c6f20576f726c643a2031000007011c00000000000000150300000000",
+        "01000000000000000100000002000000"
+    );
+
+    // rtps/rtps.pcap frame 29 (Ethernet, 130 bytes, nDPI test corpus): RTI
+    // Connext, a participant that leaves, 127.0.0.1:28108 -> 127.0.0.1:7410.
+    const RTI_FRAME_29_HEX: &str = concat!(
+        "0000000000000000000000000800450000740000400040113c777f0000017f00",
+        "00016dcc1cf20060fe735254505302010101c0a87a0100003a4c000000010901",
+        "0800790d4a5931b4c8ae150334000000100000000000000100c2000000000200",
+        "000070001000c0a87a0100003a4c00000001000001c171000400000000030100",
+        "0100"
     );
 
     // asterix/cat_034_048.pcap frame 3 (Ethernet, 108 bytes, CroatiaControlLtd
@@ -376,6 +430,212 @@ mod tests {
         );
     }
     // ANCHOR_END: rtps_header_extension
+
+    // ANCHOR: rtps_spdp
+    #[test]
+    fn a_participant_announces_itself_through_spdp() {
+        // Frame 3 of talker-listener-rtps.pcapng: the participant of frame 9
+        // announces itself to the SPDP multicast group, an INFO_TS then a DATA.
+        let raw = hex::decode(CYCLONE_FRAME_3_HEX).unwrap();
+        let flow = parse(LinkType::NULL, &raw).unwrap();
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RTPS");
+        let payload = flow.transport.as_ref().unwrap().payload.unwrap();
+        let packet = RtpsPacket::try_from(payload).unwrap();
+        let message = packet.message().expect("a message, not a ping");
+        let data = &message.submessages[1];
+        assert_eq!(data.kind, SubmessageKind::Data);
+
+        // Decoded on demand, from the submessage: the writer 0x000100c2 is SPDP's.
+        assert!(data.inline_qos().is_none()); // no flag Q
+        let discovery = data.discovery().expect("an SPDP writer").unwrap();
+        assert_eq!(discovery.topic, RtpsBuiltinTopic::Participant);
+        assert_eq!(discovery.topic.name(), "DCPSParticipant");
+        assert_eq!(discovery.encapsulation, RtpsEncapsulation::PlCdrLe);
+        assert!(!discovery.secure && !discovery.key_only);
+
+        let list = discovery.parameters;
+        let guid = list.participant_guid().unwrap();
+        assert_eq!(guid[..12], message.header.guid_prefix); // the sender itself
+        assert_eq!(guid[12..], [0x00, 0x00, 0x01, 0xc1]); // ENTITYID_PARTICIPANT
+        assert_eq!(list.vendor_id(), Some(0x0110)); // Cyclone DDS
+        assert_eq!(list.protocol_version(), Some((2, 1)));
+        assert_eq!(list.domain_id(), Some(0));
+        assert_eq!(list.builtin_endpoint_set(), Some(0x0000_0c3f));
+        let lease = list.participant_lease_duration().unwrap();
+        assert_eq!((lease.seconds, lease.fraction), (10, 0));
+        assert_eq!(list.entity_name(), None); // Cyclone DDS sends none
+        // Where to reach the participant: its data, and its metatraffic.
+        let locators: Vec<(RtpsLocatorRole, Option<Ipv4Addr>, u32)> = list
+            .locators()
+            .map(|(role, locator)| (role, locator.ipv4(), locator.port))
+            .collect();
+        let host = Some(Ipv4Addr::new(10, 0, 0, 46));
+        assert_eq!(
+            locators,
+            [
+                (RtpsLocatorRole::DefaultUnicast, host, 61_329),
+                (RtpsLocatorRole::MetatrafficUnicast, host, 61_329),
+            ]
+        );
+
+        // Every parameter in wire order, the PID_SENTINEL left out.
+        let ids: Vec<u16> = list.iter().map(|parameter| parameter.id).collect();
+        assert_eq!(
+            ids,
+            [0x002c, 0x0015, 0x0016, 0x0002, 0x0050, 0x0058, 0x000f, 0x0031, 0x0032, 0x8007, 0x8019]
+        );
+        // Bit 15: two PIDs of Cyclone DDS, which the specification does not name.
+        let vendor: Vec<u16> = list
+            .iter()
+            .filter(|parameter| parameter.is_vendor_specific())
+            .map(|parameter| parameter.id)
+            .collect();
+        assert_eq!(vendor, [0x8007, 0x8019]);
+        assert!(list.iter().all(|parameter| !parameter.must_understand()));
+        assert_eq!(list.get(0x8007).unwrap().name(), None);
+        // A PID without an accessor: its value, borrowed. ROS 2 writes its
+        // enclave in PID_USER_DATA, a sequence of 10 octets.
+        let user_data = list.get(0x002c).unwrap();
+        assert_eq!(user_data.name(), Some("PID_USER_DATA"));
+        assert_eq!(user_data.u32_value(), Some(10));
+        assert_eq!(&user_data.value[4..14], b"enclave=/;");
+    }
+    // ANCHOR_END: rtps_spdp
+
+    // ANCHOR: rtps_sedp
+    #[test]
+    fn a_publication_announced_by_sedp_then_its_first_sample() {
+        /// The UDP payload of a LINKTYPE_NULL frame the pipeline labels RTPS.
+        fn datagram(raw: &[u8]) -> &[u8] {
+            let flow = parse(LinkType::NULL, raw).unwrap();
+            assert_eq!(flow.application.unwrap().protocol.label(), "RTPS");
+            flow.transport.unwrap().payload.unwrap()
+        }
+
+        // Frame 57 of talker-listener-rtps.pcapng: the SEDP publications
+        // writer, 0x000003c2, announces a writer of the participant.
+        let raw = hex::decode(CYCLONE_FRAME_57_HEX).unwrap();
+        let packet = RtpsPacket::try_from(datagram(&raw)).unwrap();
+        let message = packet.message().unwrap();
+        let discovery = message.submessages[1].discovery().expect("an SEDP writer").unwrap();
+        assert_eq!(discovery.topic, RtpsBuiltinTopic::Publication);
+        let list = discovery.parameters;
+        assert_eq!(list.topic_name(), Some(&b"rt/chatter"[..]));
+        assert_eq!(list.type_name(), Some(&b"std_msgs::msg::dds_::String_"[..]));
+        let writer = list.endpoint_guid().unwrap();
+        assert_eq!(writer[..12], message.header.guid_prefix);
+        assert_eq!(writer[12..], [0x00, 0x00, 0x15, 0x03]); // a user writer, no key
+        let reliability = list.reliability().unwrap();
+        assert_eq!(reliability.kind, RtpsReliabilityKind::Reliable);
+        assert!(reliability.max_blocking_time.unwrap().is_infinite());
+        assert_eq!(list.durability(), None); // no PID_DURABILITY in the list
+
+        // Frame 70: a DATA of that writer. A user writer: no discovery, and
+        // a payload that is not a ParameterList.
+        let raw = hex::decode(CYCLONE_FRAME_70_HEX).unwrap();
+        let packet = RtpsPacket::try_from(datagram(&raw)).unwrap();
+        let data = &packet.message().unwrap().submessages[1];
+        let SubmessageDetails::Data { writer_id, .. } = data.details else {
+            panic!("expected a DATA");
+        };
+        assert_eq!(writer_id.to_be_bytes(), writer[12..]);
+        assert_eq!(data.discovery(), None);
+        let payload = data.serialized_payload().expect("flag D").unwrap();
+        assert_eq!(payload.encapsulation, RtpsEncapsulation::CdrLe);
+        assert_eq!(payload.encapsulation.name(), Some("CDR_LE"));
+        assert_eq!(payload.encapsulation.little_endian(), Some(true));
+        assert_eq!(payload.options, 0);
+        assert_eq!(payload.parameters(), None); // PL_CDR only
+
+        // The crate stops at the bytes. The IDL of std_msgs/String reads
+        // them as a CDR string: a u32 length, NUL included, then the text.
+        assert_eq!(payload.data.len(), 20); // to the end of the submessage
+        let length = u32::from_le_bytes(payload.data[..4].try_into().unwrap()) as usize;
+        assert_eq!(&payload.data[4..4 + length], b"Hello World: 1\0");
+    }
+    // ANCHOR_END: rtps_sedp
+
+    // ANCHOR: rtps_dds_refusals
+    #[test]
+    fn inline_qos_and_the_refusals_of_the_dds_layer() {
+        /// The DATA of a message, which must still decode as RTPS.
+        fn data_of(message: &[u8]) -> RtpsSubmessage<'_> {
+            let packet = RtpsPacket::try_from(message).expect("still an RTPS message");
+            packet.message().unwrap().submessages[1]
+        }
+
+        // Frame 29 of rtps.pcap: an RTI Connext participant leaves. Its SPDP
+        // writer sends a DATA with flags Q and E, neither data nor key: the
+        // inline QoS alone say which instance, and what happened to it.
+        let raw = hex::decode(RTI_FRAME_29_HEX).unwrap();
+        let flow = parse(LinkType::ETHERNET, &raw).unwrap();
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RTPS");
+        let payload = flow.transport.as_ref().unwrap().payload.unwrap();
+        let data = data_of(payload);
+        assert_eq!(data.flags, 0x03);
+        let qos = data.inline_qos().expect("flag Q").unwrap();
+        assert!(qos.little_endian); // the byte order of the submessage
+        let key = qos.key_hash().unwrap(); // the GUID of the participant
+        assert_eq!(key[..12], payload[8..20]); // the guidPrefix of the header
+        let status = qos.status_info().unwrap();
+        assert_eq!(status.flags, 0x03);
+        assert!(status.disposed() && status.unregistered() && !status.filtered());
+        assert_eq!(data.serialized_payload(), None); // neither D nor K
+        assert_eq!(data.discovery(), None);
+
+        // The 88-byte message: the DATA at offset 32, its octetsToInlineQos
+        // at 38, the inline QoS from 56 to the end, their PID_SENTINEL at 84.
+        assert_eq!(payload.len(), 88);
+        let mut pointer = payload.to_vec();
+        pointer[38] = 64; // beyond the 52 bytes of the body
+        assert_eq!(
+            data_of(&pointer).inline_qos(),
+            Some(Err(RtpsParseError::InvalidOctetsToInlineQos {
+                octets_to_inline_qos: 64,
+                body: 52,
+            }))
+        );
+        let mut unterminated = payload.to_vec();
+        unterminated[84] = 0x00; // PID_SENTINEL turned PID_PAD, its length 1 kept
+        assert_eq!(
+            data_of(&unterminated).inline_qos(),
+            Some(Err(RtpsParseError::ParameterTruncated { offset: 28, expected: 1, actual: 0 }))
+        );
+        unterminated[86] = 0x00; // length 0: the list fits, and nothing ends it
+        assert_eq!(
+            data_of(&unterminated).inline_qos(),
+            Some(Err(RtpsParseError::ParameterListUnterminated { length: 32 }))
+        );
+        let mut no_data = payload.to_vec();
+        no_data[33] = 0x07; // flag D, and nothing after the inline QoS
+        assert_eq!(
+            data_of(&no_data).serialized_payload(),
+            Some(Err(RtpsParseError::SerializedPayloadTooShort { actual: 0 }))
+        );
+        assert_eq!(
+            data_of(&no_data).discovery(),
+            Some(Err(RtpsParseError::SerializedPayloadTooShort { actual: 0 }))
+        );
+
+        // Frame 70 of talker-listener-rtps.pcapng, its writer id at 44 turned
+        // into SPDP's: a CDR_LE payload is no discovery.
+        let frame_70 = hex::decode(CYCLONE_FRAME_70_HEX).unwrap();
+        let mut not_a_list = frame_70[4 + 20 + 8..].to_vec();
+        not_a_list[44..48].copy_from_slice(&[0x00, 0x01, 0x00, 0xc2]);
+        assert_eq!(
+            data_of(&not_a_list).discovery(),
+            Some(Err(RtpsParseError::NotAParameterList { encapsulation: 0x0001 }))
+        );
+
+        // None of them refuses the message: the frame is still RTPS, and
+        // nothing is corrupted.
+        let mut frame = raw.clone();
+        frame[14 + 20 + 8 + 38] = 64;
+        let flow = parse(LinkType::ETHERNET, &frame).unwrap();
+        assert_eq!(flow.application.as_ref().unwrap().protocol.label(), "RTPS");
+        assert!(flow.corrupted.is_none());
+    }
+    // ANCHOR_END: rtps_dds_refusals
 
     // ANCHOR: asterix_typed_values
     #[test]

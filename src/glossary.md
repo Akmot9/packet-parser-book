@@ -2,6 +2,10 @@
 
 The words the book relies on, each with the page that puts it to work.
 
+## Added parser
+
+A parser the caller registers in `ParseConfig`, in Rust, in a plugin, or as a rule file. It runs after the table, on a TCP or UDP payload the table left `"Unknown"`, and its label is `ApplicationProtocol::Custom`. See [Custom parsers and rules](./custom_parsers.md).
+
 ## Blind
 
 A blind [rule](#rule) has no port guard: its [probe](#probe) runs on any port, and the content alone gives the label. A blind probe is stricter than the probe of the same protocol behind a port. See [Three detection routes](./application.md#three-detection-routes).
@@ -12,7 +16,7 @@ The real captures of the crate, under `pcaps_exemple/`, each with its provenance
 
 ## Corrupted layer
 
-A layer that a lower layer announced and whose bytes were refused. It stays `None`, and `PacketFlow::corrupted` names it and carries the text of the error. See [Reading the outcome](./getting_started.md#reading-the-outcome).
+A layer that a lower layer announced and whose bytes were refused. It stays `None`, and `PacketFlow::corrupted` names it and carries the error, typed since 13.0.0. See [Reading the outcome](./getting_started.md#reading-the-outcome).
 
 ## Decode As
 
@@ -32,11 +36,11 @@ The `PacketFlow` of the packet a tunnel carries, held in the `inner` field of th
 
 ## Label
 
-The name the crate gives the application protocol of a flow: a variant of `ApplicationProtocol`, written as text in the JSON output. See [Protocols](./protocols.md#the-54-labels).
+The name the crate gives the application protocol of a flow: a variant of `ApplicationProtocol`, written as text in the JSON output. See [Protocols](./protocols.md#the-55-labels).
 
 ## Oracle
 
-The output of tshark on the corpus, frozen in a file of the repository. A golden test compares the crate with it, field by field. See [Protocols](./protocols.md#the-54-labels).
+The output of tshark on the corpus, frozen in a file of the repository. A golden test compares the crate with it, field by field. See [Protocols](./protocols.md#the-55-labels).
 
 ## Owned flow
 
@@ -61,6 +65,10 @@ One row of the dispatch table: a label, a transport guard, an optional port guar
 ## Stateless
 
 `parse` reads one packet and keeps nothing between two calls: no reassembly, no memory of a flow. See [Limits](./limits.md).
+
+## Tile
+
+Messages tile a payload when each one starts where the previous one ends and the last one ends at the last byte. A blind probe on TCP often asks for it, since a segment may carry several messages. See [Tightening a blind probe](./application.md#tightening-a-blind-probe).
 
 ## Terminal port
 

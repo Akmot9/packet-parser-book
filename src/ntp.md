@@ -50,10 +50,15 @@ pub struct NtpPacket {
     pub root_delay: u32,
     pub root_dispersion: u32,
     pub reference_id: Refid,
-    pub reference_timestamp: DateTime<Utc>,
-    pub originate_timestamp: DateTime<Utc>,
-    pub receive_timestamp: DateTime<Utc>,
-    pub transmit_timestamp: DateTime<Utc>,
+    pub reference_timestamp: NtpTimestamp,
+    pub originate_timestamp: NtpTimestamp,
+    pub receive_timestamp: NtpTimestamp,
+    pub transmit_timestamp: NtpTimestamp,
+}
+
+pub struct NtpTimestamp {
+    pub seconds: u32,                     // since the start of the era
+    pub fraction: u32,                    // in units of 2^-32 s
 }
 
 pub enum Refid {
@@ -92,10 +97,21 @@ The reference id depends on the stratum (RFC 5905 §7.3), and 11.6.0 widened the
 
 ## Timestamps: an era and two clocks
 
-A timestamp is 32 bits of seconds since 1900 and 32 bits of fraction, which the crate turns into a `DateTime<Utc>`:
+A timestamp is 32 bits of seconds since the start of an era and 32 bits of fraction. Since 13.0.0 the crate keeps them as they are on the wire, in `NtpTimestamp`; until 12.x it turned them into a `DateTime<Utc>` of `chrono`, which is no longer maintained (RUSTSEC-2026-0543) and is no longer a dependency [#315](https://github.com/Akmot9/Packet-parser/issues/315). The dates did not change: they were checked against tshark on every NTP datagram of the corpus. The type reads them:
+
+| Method | Gives |
+| --- | --- |
+| `unix_seconds()` | whole seconds since 1970, negative before; 0 for a null timestamp |
+| `subsec_nanos()` | the fraction, in nanoseconds, rounded down |
+| `is_null()` | whether all 64 bits are zero: "unknown" |
+| `to_system_time()` | a `SystemTime`, `None` only where the platform cannot hold the date |
+| `Display` | RFC 3339 in UTC, to the nanosecond: `2008-07-31T11:45:31.067669303Z` |
+| `Ord` | the order in time, eras included |
+
+`NtpPacketParseError::TimestampConversionError` is gone: every timestamp has a date. The rules:
 
 - the **era** is given by the most significant bit of the seconds (RFC 4330 §3): set, era 0, from 1968 to 2036; clear, era 1, from 2036 to 2104, as tshark reads it. Until 11.6.0 every timestamp counted from 1900, and a Java client of the corpus that sent 37 seconds came out at `1900-01-01T00:00:37Z`, where tshark reads `2036-02-07T06:28:53Z` ([#162](https://github.com/Akmot9/Packet-parser/issues/162));
-- an all-zero timestamp means "unknown" (RFC 5905 §6) and comes out as the Unix epoch, `1970-01-01T00:00:00Z`;
+- an all-zero timestamp means "unknown" (RFC 5905 §6) and comes out as the Unix epoch, `1970-01-01T00:00:00.000000000Z`;
 - the fraction becomes nanoseconds, rounded down.
 
 Originate (T1) is the client's timestamp, copied as is into the reply; Reference, Receive (T2) and Transmit (T3) are the server's. Until 11.6.0 the decoder demanded `reference <= originate <= receive <= transmit`: as soon as the client's clock was a few milliseconds ahead, which is what NTP is there to correct, or a first request left originate null, the server's reply was `InconsistentTimestamps`, hence `"Unknown"`, and so were 20 of the 26 real replies of the IEC 61850 substation of `protocols/goose/iti_Sample_File_MMS_and_GOOSE.pcap` ([#161](https://github.com/Akmot9/Packet-parser/issues/161)). The decoder now compares no timestamp: Receive and Transmit do share a clock, but in interleaved mode (chrony `xleave`) a reply carries the Transmit of the previous one ([#165](https://github.com/Akmot9/Packet-parser/issues/165)). Only the blind probe checks that Receive does not follow Transmit.

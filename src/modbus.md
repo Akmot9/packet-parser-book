@@ -15,7 +15,7 @@ rule(ApplicationProtocol::Umas, Guard::Tcp, ProbeId::Umas),
 rule(ApplicationProtocol::ModbusTcp, Guard::Tcp, ProbeId::ModbusTcpBlind),
 ```
 
-UMAS comes first, on the port and off it: it is carried by a valid Modbus envelope, so the Modbus probe would accept its frames too, and the most specific protocol gets the label, as S7Comm does before COTP. Its probe, `UmasPacket::try_from`, is the same in both rules: a valid MBAP whose function code is `0x5A`, then a session id and a UMAS function byte.
+UMAS comes first, on the port and off it: it is carried by a valid Modbus envelope, so the Modbus probe would accept its frames too, and the most specific protocol gets the label, as S7Comm does before COTP. Its probe, `ProbeId::Umas`, is the same in both rules. Since 13.1.0 it asks what Modbus/TCP asks: MBAP headers that tile the segment, each of function code `0x5A`, with a session id and a UMAS function byte after it (`UmasPacket::is_tcp_match`, [#295](https://github.com/Akmot9/Packet-parser/issues/295)). Until then it read the first MBAP alone, as `UmasPacket::try_from` does, and ignored the rest of the segment: four bytes `5a ss ff` after an MBAP header, followed by text, came out `"UMAS"` on any TCP port, ahead of the Modbus probe that 11.6.0 had tightened. The 181 UMAS frames of the corpus kept their label.
 
 On **TCP 502**, `ProbeId::ModbusTcp` runs the decoder alone, `ModbusTcpPacket::try_from`: a well-formed envelope is enough, whatever the function code.
 

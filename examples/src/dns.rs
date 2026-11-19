@@ -126,11 +126,16 @@ mod tests {
         let moved = with_ports(&raw, 40000, 40001);
         assert_eq!(label(&parse(LinkType::ETHERNET, &moved).unwrap()), Some("Unknown"));
 
-        // The wireshark.org response on the LLMNR port: its RA bit falls in
-        // the bits LLMNR reserves, the probe refuses it, and the port is
-        // terminal. No later rule is tried, and the flow has no application.
+        // The wireshark.org response on the LLMNR port. Its RA bit falls in
+        // the Z bits of LLMNR, which a receiver ignores (RFC 4795 §2.1.1):
+        // since 13.1.0 the header is a valid LLMNR one.
         let raw = hex::decode(DNS_RESPONSE_HEX).unwrap();
-        let moved = with_ports(&raw, 5355, 1060);
+        let mut moved = with_ports(&raw, 5355, 1060);
+        assert_eq!(label(&parse(LinkType::ETHERNET, &moved).unwrap()), Some("LLMNR"));
+
+        // An opcode other than 0 is refused. The port is terminal: no later
+        // rule is tried, and the flow has no application.
+        moved[44] |= 0x10; // opcode 2, in the flags at byte 2 of the DNS header
         let flow = parse(LinkType::ETHERNET, &moved).unwrap();
         assert!(flow.transport.is_some());
         assert!(flow.application.is_none());

@@ -27,7 +27,7 @@ Both are `#[non_exhaustive]`. `HttpHeaders` is the view over the header block th
 
 ## Detection: requests and responses
 
-The rule is a blind probe on TCP, `rule(ApplicationProtocol::Http, Guard::Tcp, ProbeId::Http)`, rule 57 of the table, after SSH and before GIOP; no port is involved. Before 11.7.0 the probe was `HttpRequest::try_from` alone: a response came out `"Unknown"` while the request that caused it came out `"HTTP"`, and since the whole payload had to be valid UTF-8, so did a request whose binary body fitted in the same segment. The probe now accepts either of two start lines:
+The rule is a blind probe on TCP, `rule(ApplicationProtocol::Http, Guard::Tcp, ProbeId::Http)`, rule 63 of the table, between the two SSH rules and before GIOP; no port is involved. The SSH rule after it, added in 13.1.0, reads a banner behind other lines, so that an HTTP response whose body quotes a banner stays HTTP. Before 11.7.0 the probe was `HttpRequest::try_from` alone: a response came out `"Unknown"` while the request that caused it came out `"HTTP"`, and since the whole payload had to be valid UTF-8, so did a request whose binary body fitted in the same segment. The probe now accepts either of two start lines:
 
 - a request line: a method among GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE and PATCH, a URI, and a version, `HTTP/` then one digit, or two separated by a dot;
 - a status line (RFC 9112 §4): the same version, a code of exactly three digits, and a reason phrase, possibly empty.
@@ -64,7 +64,7 @@ The rule has no port, so its start line is all that keeps other text protocols o
 | a header line without a colon | `"Unknown"` | `HttpParseError::InvalidHeader` |
 | a head that is not UTF-8 | `"Unknown"` | `HttpParseError::InvalidUtf8` |
 
-On UDP nothing is HTTP: the rule has a TCP guard. `NOTIFY` and `M-SEARCH` on UDP 1900 are SSDP, rule 13.
+On UDP nothing is HTTP: the rule has a TCP guard. `NOTIFY` and `M-SEARCH` on UDP 1900 are SSDP, rule 16.
 
 Three shapes are accepted that a strict reader would refuse: a start line with no header after it, line ends that are `LF` alone, and a status line with no reason phrase. `HTTP/2 200` is accepted too, since the version is one digit or two; it is a line no HTTP/2 connection carries in clear.
 

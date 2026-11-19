@@ -2,13 +2,13 @@
 
 This chapter shows how to use the crate. The rest of the book shows how it is built.
 
-> **Reference version: `packet_parser` 12.1.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 13.1.1.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-13.md`, `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "12.1.0"
+packet_parser = "13.1.1"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 
@@ -109,7 +109,7 @@ Only the link layer can fail the parse. Above it, three outcomes are distinct an
 | --- | --- | --- |
 | `Some(..)` | `None` | The layer was recognized and decoded. |
 | `None` | `None` | The protocol is **not supported** (e.g. the experimental EtherType `0x88B5`), nothing above it can be reached. |
-| `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why. |
+| `None` | `Some(..)` | The layer **was recognized** (by its EtherType or IP protocol number) but its bytes are invalid. `CorruptedLayer::layer` says which one, `error` says why: since 13.0.0 the decoder's error, typed. |
 | `Some(..)` | `Some(..)` | Semantic anomaly: the header is readable but no conforming stack emits it (TCP SYN+FIN, reserved bits set). The layer is **kept** so its ports remain available for flow correlation; nothing is parsed above it. |
 
 ![What parse returns: Err only from the link layer, otherwise a PacketFlow in one of four shapes, decoded, not supported, corrupted or anomalous](images/getting_started/parse_outcomes.svg)
@@ -157,7 +157,7 @@ And the two link-layer failures, the only ones that return `Err` (*tested*):
 
 ## "Decode As": an FTP server on port 2121
 
-Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 29 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)); since 12.1.0, `DecodeAsProtocol::ALL` is that list, for a caller that offers the choice. The port never replaces the content check: it only gives the probe its chance before the rest of the table.
+Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 30 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)); since 12.1.0, `DecodeAsProtocol::ALL` is that list, for a caller that offers the choice. The port never replaces the content check: it only gives the probe its chance before the rest of the table.
 
 ```rust
 use packet_parser::{DecodeAsProtocol, LinkType, ParseConfig, parse_with};
@@ -241,4 +241,4 @@ Measuring does not change the path: the pipeline is written once, over a `Timing
 
 ## Known limitations
 
-The parser is stateless: it sees one packet at a time, reassembles nothing, verifies no checksum and decrypts nothing. The application layer is a label, not a decode. The [Limits](./limits.md) page lists what follows from each of these, and what the crate exposes to detect it; the [Protocols](./protocols.md) page lists every label.
+The parser is stateless: it sees one packet at a time, reassembles nothing, verifies no checksum and decrypts nothing. The application layer is a label, not a decode. The [Limits](./limits.md) page lists what follows from each of these, and what the crate exposes to detect it; the [Protocols](./protocols.md) page lists every label. A protocol the crate does not decode can still be named by a parser of the caller ([Custom parsers and rules](./custom_parsers.md)).

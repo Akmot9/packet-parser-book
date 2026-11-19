@@ -6,12 +6,14 @@
 #![allow(clippy::unwrap_used)]
 
 mod building_aaa;
+mod custom;
 mod dcs;
 mod defense_a;
 mod defense_b;
 mod dns;
 mod internet_layer;
 mod ipsec;
+mod java_rmi;
 mod link_layer;
 mod remote_vpn;
 mod scada;
@@ -65,7 +67,7 @@ mod tests {
     fn protocol_index_lists_every_label() {
         use packet_parser::ApplicationProtocol;
         let page = include_str!("../../src/protocols.md");
-        let table = page.split("## The 54 labels").nth(1).unwrap().split("\n## ").next().unwrap();
+        let table = page.split("## The 55 labels").nth(1).unwrap().split("\n## ").next().unwrap();
         let listed: Vec<&str> =
             table.lines().filter_map(|l| l.strip_prefix("| `")?.split('`').next()).collect();
         for protocol in ApplicationProtocol::ALL {
@@ -79,9 +81,10 @@ mod tests {
         GiopMessage, GiopMessageType, GiopPacket, TargetAddress,
     };
     use packet_parser::parse::application::protocols::ptp::{PtpPacket, PtpV2Body};
+    use packet_parser::errors::internet::{InternetError, ipv4::Ipv4Error};
     use packet_parser::{
-        CorruptedLayerKind, DecodeAsProtocol, InternetDetails, LinkType, PacketFlow, ParseConfig,
-        ParseError, is_supported, parse,
+        CorruptedLayerError, CorruptedLayerKind, DecodeAsProtocol, InternetDetails, LinkType,
+        PacketFlow, ParseConfig, ParseError, is_supported, parse,
     };
 
     // ANCHOR: parse_valid_frame
@@ -150,8 +153,18 @@ mod tests {
         assert!(flow.internet.is_none());
         let corrupted = flow.corrupted.expect("recognized layer with invalid bytes");
         assert_eq!(corrupted.layer, CorruptedLayerKind::Internet);
-        assert_eq!(
+
+        // Since 13.0.0 `error` is the decoder's error, typed: a `match`
+        // sorts the causes. Its `Display` is the text of 12.x.
+        assert!(matches!(
             corrupted.error,
+            CorruptedLayerError::Internet(InternetError::Ipv4Error(Ipv4Error::InvalidLength {
+                expected: 20,
+                actual: 6,
+            }))
+        ));
+        assert_eq!(
+            corrupted.error.to_string(),
             "IPv4 error: Invalid IPv4 packet length: expected at least 20 bytes, got 6 bytes"
         );
     }
@@ -264,9 +277,9 @@ mod tests {
             .iter()
             .map(|protocol| format!("{protocol:?}"))
             .collect();
-        assert_eq!(offered.len(), 29);
+        assert_eq!(offered.len(), 30);
         assert_eq!(offered.first().map(String::as_str), Some("Ftp"));
-        assert_eq!(offered.last().map(String::as_str), Some("ModbusUdp"));
+        assert_eq!(offered.last().map(String::as_str), Some("JavaRmi"));
 
         // The entry the user picks goes to `decode_as` as it is.
         let picked = DecodeAsProtocol::ALL[0];

@@ -41,6 +41,7 @@
     - [HTTP](./http.md)
     - [IEC 60870-5-104](./iec104.md)
     - [IKE](./ike.md)
+    - [Java RMI](./java_rmi.md)
     - [Modbus/TCP and UMAS](./modbus.md)
     - [NTP](./ntp.md)
     - [PostgreSQL](./postgresql.md)
@@ -60,6 +61,8 @@
 - [Limits](./limits.md)
 
 - [Adding a new protocol](./adding_a_protocol.md)
+
+- [Custom parsers and rules](./custom_parsers.md)
 
 - [Glossary](./glossary.md)
 

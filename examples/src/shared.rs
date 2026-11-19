@@ -164,8 +164,8 @@ mod tests {
         assert_eq!(request.precision, 32); // what chrony puts in its client requests
         // chrony fills Receive and Transmit with random values: here Receive
         // falls in 2093 and Transmit in 1992.
-        assert!(request.receive_timestamp.to_rfc3339().starts_with("2093-03-22"));
-        assert!(request.transmit_timestamp.to_rfc3339().starts_with("1992-10-31"));
+        assert!(request.receive_timestamp.to_string().starts_with("2093-03-22"));
+        assert!(request.transmit_timestamp.to_string().starts_with("1992-10-31"));
 
         // The same bytes off port 123: the blind probe also wants Receive
         // not after Transmit, and refuses them.
@@ -185,9 +185,10 @@ mod tests {
         assert_eq!(label(&flow), Some("NTP"));
         let request = NtpPacket::try_from(flow.transport.as_ref().unwrap().payload.unwrap()).unwrap();
         assert_eq!(request.stratum, 0);
-        assert_eq!(request.transmit_timestamp.to_rfc3339(), "2036-02-07T06:28:53+00:00");
+        assert_eq!(request.transmit_timestamp.to_string(), "2036-02-07T06:28:53.000000000Z");
         // An all-zero timestamp is "unknown", and comes out as the Unix epoch.
-        assert_eq!(request.receive_timestamp.to_rfc3339(), "1970-01-01T00:00:00+00:00");
+        assert!(request.receive_timestamp.is_null());
+        assert_eq!(request.receive_timestamp.to_string(), "1970-01-01T00:00:00.000000000Z");
 
         // The server's reply. Its clock source is SHM, ntpd's shared memory
         // driver, which the RFC's list of codes does not name.
@@ -207,7 +208,7 @@ mod tests {
         // Receive and Transmit share a clock.
         assert_eq!(reply.originate_timestamp, request.transmit_timestamp);
         assert!(reply.originate_timestamp > reply.receive_timestamp);
-        assert_eq!(reply.receive_timestamp.to_rfc3339(), "2008-07-31T11:45:31.067669303+00:00");
+        assert_eq!(reply.receive_timestamp.to_string(), "2008-07-31T11:45:31.067669303Z");
         assert!(reply.receive_timestamp <= reply.transmit_timestamp);
 
         // Both datagrams are NTP for the blind probe too, off port 123.

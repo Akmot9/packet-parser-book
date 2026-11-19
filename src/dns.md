@@ -14,9 +14,9 @@ The Domain Name System (RFC 1035), with the two protocols that reuse its wire fo
 | 23 | `DNS` | UDP | 53 | `DnsPacket::try_from` |
 | 53 | `DNS` | UDP | none | `DnsPacket::is_blind_udp_match` |
 
-The three formats overlap on the wire. A unicast DNS query with RD set is a valid LLMNR header, since RD sits where LLMNR puts its T bit, and an mDNS query is a valid DNS query. Only the port tells them apart, so each of the two link-local ports is [terminal](./glossary.md#terminal-port): when the probe of rule 11 or 12 refuses a datagram on its port, the dispatch stops and the flow has no application. A later rule would otherwise label a damaged mDNS message `"DNS"`.
+The three formats overlap on the wire. A unicast DNS query with RD set is a valid LLMNR header, since RD sits where LLMNR puts its T bit, and an mDNS query is a valid DNS query. Since 13.1.0 a recursive DNS response is a valid LLMNR header too: its RA bit falls in the Z bits, which an LLMNR receiver ignores. Only the port tells them apart, so each of the two link-local ports is [terminal](./glossary.md#terminal-port): when the probe of rule 14 or 15 refuses a datagram on its port, the dispatch stops and the flow has no application. A later rule would otherwise label a damaged mDNS message `"DNS"`.
 
-On port 53 the decoder alone decides. Off port 53, rule 53 asks for more, because a 12-byte header of plausible flags is weak evidence:
+On port 53 the decoder alone decides. Off port 53, rule 59 asks for more, because a 12-byte header of plausible flags is weak evidence:
 
 - the sections must end exactly where the datagram ends: a DNS message over UDP has no padding (RFC 1035 §4.2.1);
 - the four counts must not all be zero.
@@ -58,7 +58,8 @@ A name is a sequence of labels, each a length byte and that many bytes, ended by
 | At most 8 pointers are followed for one name | `InvalidCompressionPointer` |
 | A length byte starting with `01` or `10` is reserved | `ReservedLabelType` |
 | A name is at most 255 bytes on the wire, the labels reached through pointers included | `OutOfBoundParse` |
-| Every label must be UTF-8 | the UTF-8 error |
+
+A label may hold any byte (RFC 2181 §11). Until 13.1.0 a single label outside UTF-8 made the whole message fail, and a query whose label carried `ä` in Latin-1 came out `"Unknown"` on UDP 53. Such a label now takes the presentation form of RFC 1035 §5.1: graphic ASCII as it is, `.` and `\` escaped, any other byte as `\DDD`, so that the name reads `j\228germeister` [#297](https://github.com/Akmot9/Packet-parser/issues/297). UTF-8 names do not change. The blind UDP probe still wants UTF-8 names: an escaped name is no proof there.
 
 The 255-byte bound is the one of RFC 1035 §3.1, and tshark shows such a name as `<Name too long>`. It is also what bounds the cost of a message: before 11.7.0, records that all pointed to one very long question name had it read again each time, in time quadratic in the size of the message ([#184](https://github.com/Akmot9/Packet-parser/issues/184)). A name of exactly 255 bytes is accepted, one of 256 refused.
 
@@ -76,9 +77,9 @@ Over TCP each message is preceded by its length on two bytes (RFC 1035 §4.2.2).
 
 `try_from_mdns` relaxes two checks of unicast DNS. A responder announces its records without being asked, so a message may carry answers and no question; and RFC 6762 tells a receiver to ignore most header bits, so only a non-zero opcode or response code is refused.
 
-`try_from_llmnr` applies the LLMNR header instead: opcode 0, the four reserved bits at zero, exactly one question, and in a query no response code and no answer or authority record.
+`try_from_llmnr` applies the LLMNR header instead: opcode 0, a response code of at most 5 in a response, and the LLMNR counts, in a query no answer and no authority record. RFC 4795 §2.1.1 asks a receiver to ignore the four Z bits, and to take the response code of a query as zero. Until 13.1.0 the decoder refused both (`InvalidZField`, `InvalidRCode`), and such a query came out `"Unknown"` on UDP 5355; it now ignores them and keeps the flags as read [#288](https://github.com/Akmot9/Packet-parser/issues/288).
 
-An announcement that unicast DNS refuses, and a DNS response on the LLMNR port (*tested*):
+An announcement that unicast DNS refuses, and a DNS response on the LLMNR port, a valid LLMNR header until its opcode changes (*tested*):
 
 ```rust
 {{#include ../examples/src/dns.rs:mdns_terminal_port}}
@@ -102,6 +103,8 @@ The checks of `DnsPacket::try_from`, in order. Bytes count from the start of the
 | after | Records | each name, then ten bytes of type, class, TTL and data length, then that many bytes of data | `DnsQueryParseError` |
 
 Bytes after the last section are accepted on port 53. Only the blind rule refuses them.
+
+Over TCP, `try_from_tcp` reads the two-byte length, then the first message of the segment. Since 13.1.0 a response may leave its question section empty, as the AXFR messages after the first do (RFC 5936 §2.2.1); a query still needs a question [#297](https://github.com/Akmot9/Packet-parser/issues/297).
 
 ## Oracle: counts and digests
 

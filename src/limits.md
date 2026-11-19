@@ -25,7 +25,8 @@
 | The application layer is a label | `parse` names the protocol and decodes nothing above the transport layer. | The decoder of each protocol, called on the transport payload: `XxxPacket::try_from` |
 | Tunnels are peeled four levels deep | At `MAX_TUNNEL_DEPTH`, the fourth level, a tunnel is no longer peeled and its payload stays opaque. | `flatten()`, which returns at most four flows |
 | The text probes read a prefix | The FTP, SMTP, NNTP and HTTP probes validate the first `PROBE_CAP` bytes of a payload, 18 KiB, and nothing beyond. | The decoder, which reads the whole payload when called directly |
-| A truncated capture is not told apart | `parse` receives the captured bytes only. A packet cut by the snapshot length fails its length checks and is reported like a packet with a lying header. | `corrupted`, with the layer and the text of the error |
+| A truncated capture is not told apart | `parse` receives the captured bytes only. A packet cut by the snapshot length fails its length checks and is reported like a packet with a lying header. | `corrupted`, with the layer and the typed error |
+| A protocol the crate does not decode is `"Unknown"` | A proprietary or in-house protocol over TCP or UDP gets no name. | Since 13.0.0, a parser added by the caller, and since 13.1.0 a rule file, name it after the table ([Custom parsers and rules](./custom_parsers.md)) |
 
 ## Three fields to look at
 
