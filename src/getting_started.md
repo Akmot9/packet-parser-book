@@ -2,13 +2,13 @@
 
 This chapter shows how to use the crate. The rest of the book shows how it is built.
 
-> **Reference version: `packet_parser` 12.1.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 13.1.1.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-13.md`, `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "12.1.0"
+packet_parser = "13.1.1"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 
@@ -157,7 +157,7 @@ And the two link-layer failures, the only ones that return `Err` (*tested*):
 
 ## "Decode As": an FTP server on port 2121
 
-Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 29 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)); since 12.1.0, `DecodeAsProtocol::ALL` is that list, for a caller that offers the choice. The port never replaces the content check: it only gives the probe its chance before the rest of the table.
+Some protocols are only detected when the port **and** the content agree (see the [application chapter](./application.md)). `ParseConfig` lets the caller declare extra ports, for the 30 protocols of `DecodeAsProtocol` ([the list](./application.md#decode-as)); since 12.1.0, `DecodeAsProtocol::ALL` is that list, for a caller that offers the choice. The port never replaces the content check: it only gives the probe its chance before the rest of the table.
 
 ```rust
 use packet_parser::{DecodeAsProtocol, LinkType, ParseConfig, parse_with};

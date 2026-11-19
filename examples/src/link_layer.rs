@@ -259,7 +259,7 @@ mod tests {
         let corrupted = flow.corrupted.expect("a corrupted internet layer");
         assert_eq!(corrupted.layer, CorruptedLayerKind::Internet);
         assert_eq!(
-            corrupted.error,
+            corrupted.error.to_string(),
             "IPv4 error: Invalid total length: expected 46 bytes (header: 20 + data: 26), \
              but got 40 bytes"
         );
