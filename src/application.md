@@ -172,7 +172,7 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 32 | [Valmet DNA](./valmet_dna.md) | `Udp` | 2517, 4516, 4517 | `ValmetDna` | `ValmetDnaPacket::is_port_udp_match`: a coherent header, with a known family at its exact size or an unknown one, or the 42-byte beacon (`TimeBeacon`) |
 | 33 | [RDP](./rdp.md) | `Tcp` | 3389 | `Rdp` | `RdpPacket::try_from` |
 | 34 | [IEC 104](./iec104.md) | `Tcp` | 2404 | `Iec104` | `Iec104Packet::try_from` |
-@@RMI_PORT@@
+| 35 | [Java RMI](./java_rmi.md) | `Tcp` | 1099 | `JavaRmi` | `JavaRmiPacket::try_from`: any JRMP message, the one-byte ones, the DgcAck and the ProtocolAck included |
 | 36 | [PostgreSQL](./postgresql.md) | `Tcp` | 5432 | `PostgresqlPort` | `is_plausible_postgresql_payload`: a decode of compatible shape |
 | 37 | [IKE](./ike.md) | `Udp` | 500, 4500 | `Ike` | `IkePacket::from_udp`, bare or behind the non-ESP marker |
 | 38 | [ESP](./esp.md) | `Udp` | 4500 | `EspNatT` | `UdpEncapsulation::classify` finds ESP and `EspPacket::try_from` accepts it |
@@ -208,7 +208,7 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 63 | [HTTP](./http.md) | `Tcp` | none | `Http` | `HttpRequest::try_from` or `HttpResponse::try_from`, first `PROBE_CAP` bytes |
 | 64 | SSH | `Tcp` | none | `SshAfterLines` | `SshPacket::try_from`: the banner after other lines of text, at most 1 024 bytes of them (`SSH_MAX_PRELUDE_LENGTH`) |
 | 65 | [GIOP](./giop.md) | `Tcp` | none | `Giop` | magic `GIOP`, then `GiopPacket::try_from` |
-@@RMI_BLIND@@
+| 66 | [Java RMI](./java_rmi.md) | `Tcp` | none | `JavaRmiBlind` | `JavaRmiPacket::try_from` and `is_self_identifying`: a stream header, a Call or a Return |
 | 67 | DHCP | `Udp` | none | `Dhcp` | rule 3's probe |
 | 68 | SRVLOC | `Any` | none | `Srvloc` | rule 4's probe |
 | 69 | [UMAS](./modbus.md) | `Tcp` | none | `Umas` | rule 41's probe |
@@ -340,7 +340,7 @@ Port guards mean a server on a non-standard port is invisible to a port-guarded 
 | `WireGuard` | [WireGuard](./wireguard.md) | `Udp` | `WireGuard` |
 | `ValmetDna` | [Valmet DNA](./valmet_dna.md) | `Udp` | `ValmetDna` |
 | `ModbusUdp` | [ModbusUDP](./modbus.md#modbus-over-udp) | `Udp` | `ModbusTcp` |
-@@RMI_DECODE_AS@@
+| `JavaRmi` | [Java RMI](./java_rmi.md) | `Tcp` | `JavaRmi` |
 
 A declared port gets the probe of the protocol's standard port: the compatible shape of PostgreSQL on 5432, the lenient reading of DIS on 3000, the envelope of Modbus/TCP on 502, the AMS/TCP header of 48898 on TCP, every message family and the beacon of Valmet DNA on 2517, 4516 and 4517. `WireGuard` goes further than the 51820 rule: its probe, `WireGuardPacket::try_from`, accepts the reserved bytes whatever the message type, where the port rule wants them null in a cookie or a data message, 51820 being a port that any peer can draw at random. Because declared ports come before the table, a declared port names the protocol of everything its probe accepts: on a port declared `ModbusTcp`, a UMAS frame is `"ModbusTCP"` (see [Modbus/TCP and UMAS](./modbus.md)).
 

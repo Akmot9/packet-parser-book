@@ -152,7 +152,7 @@ A parser of hostile bytes must never bring its host down. What the crate does ab
 
   13.x adds two targets:
 
-@@FUZZ_RMI@@
+  - `parse_java_rmi`: `JavaRmiPacket::try_from` on the input and on seven frames of the JDK capture altered by the input: the type is the first byte and every field the one of the wire, what follows a stream header, the arguments and the value end the input, the hostname points into it, and `is_self_identifying` holds exactly for a stream header, a Call or a Return;
   - `parse_rules`: `RuleSet::from_toml` on any text, which is accepted or refused but never panics; an accepted file then runs its rules on its own bytes. The same bytes then go, as a TCP and as a UDP payload on a few ports, through the rules of a fixed file, fields included ([#325](https://github.com/Akmot9/Packet-parser/issues/325)).
 
   The oracle of `parse_opcua` shows what the CI of a pull request cannot catch. 13.1.0 let a complete OPC UA chunk be followed by the start of the next header, but the oracle still wanted chunks that tile the whole input. The CI runs each target once (`-runs=1`), so the nightly run found it, on a mutated seed ([#333](https://github.com/Akmot9/Packet-parser/issues/333)). The failure showed a gap in the decoder too: below three bytes, the start of the next header was not checked. 13.1.1 fixed the decoder and the oracle together.
