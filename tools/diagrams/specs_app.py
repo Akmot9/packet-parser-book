@@ -142,6 +142,46 @@ RTPS = {
     ]},
 }
 
+# The DDS layer (packet_parser 13.0.0, #317), verified with tshark 4.6.9.
+RTPS_DDS = {
+    "out": "images/application/rtps_dds_data.svg",
+    "title": "RTPS DATA: the DDS layer of an SPDP announcement",
+    "subtitle": "frame 3 of talker-listener-rtps.pcapng, UDP (Cyclone DDS, ROS 2) · the DATA submessage, a 248-byte body",
+    "desc": "The DATA submessage of frame 3 of talker-listener-rtps.pcapng, 32 bits per row: id 0x15, flags E and D, octetsToNextHeader 248, then extraFlags, octetsToInlineQos 16, readerId 0, the SPDP writerId 0x000100c2 and writerSN 1; then the encapsulation header, PL_CDR_LE read big-endian, and options 0; then the ParameterList, little-endian: PID_USER_DATA, PID_PROTOCOL_VERSION, PID_VENDORID whose value 01 10 is read big-endian, eight more parameters and the PID_SENTINEL; the card shows what inline_qos() and discovery() make of them.",
+    "palette": "app",
+    "fields": [
+        {"label": "DATA", "hex": "15", "color": "cream", "emph": True},
+        {"label": "flags · E, D", "hex": "05", "color": "cream"},
+        {"label": "octetsToNextHeader (LE)", "hex": "f800", "color": "cream"},
+        {"label": "extraFlags", "hex": "0000"},
+        {"label": "octetsToInlineQos (LE) · 16", "hex": "1000", "color": "yellow"},
+        {"label": "readerId · ENTITYID_UNKNOWN", "hex": "00000000"},
+        {"label": "writerId · the SPDP writer", "hex": "000100c2", "color": "orange", "emph": True},
+        {"label": "writerSN · high half (LE)", "hex": "0000000001000000", "cont": "writerSN · low half (LE), 1"},
+        {"label": "PL_CDR_LE (BE)", "hex": "0003", "color": "orange", "emph": True},
+        {"label": "options", "hex": "0000", "color": "orange"},
+        {"label": "PID_USER_DATA (LE)", "hex": "2c00", "color": "green", "emph": True},
+        {"label": "length (LE) · 16", "hex": "1000", "color": "green"},
+        {"skip": "… 16 bytes, enclave=/;, then PID_PROTOCOL_VERSION"},
+        {"label": "PID_VENDORID (LE)", "hex": "1600", "color": "green"},
+        {"label": "length (LE) · 4", "hex": "0400", "color": "green"},
+        {"label": "vendorId (BE)", "hex": "0110", "color": "yellow"},
+        {"label": "padding", "hex": "0000"},
+        {"skip": "… eight more parameters, 0x8007 and 0x8019 last"},
+        {"label": "PID_SENTINEL (LE)", "hex": "0100", "color": "green", "emph": True},
+        {"label": "length, ignored", "hex": "0000", "color": "green"},
+    ],
+    "card": {"title": "The DATA, on demand", "width": 250, "fields": [
+        {"name": "inline_qos()", "value": "None · no flag Q", "arrow": 1, "arrow_color": "gray"},
+        {"name": "discovery().topic", "value": "Participant · DCPSParticipant", "color": "orange", "arrow": 6},
+        {"name": ".encapsulation", "value": "PlCdrLe · header big-endian", "color": "orange", "arrow": 8, "arrow_color": "dark"},
+        {"name": ".parameters.iter()", "value": "11, in the order of PL_CDR_LE", "color": "green", "arrow": 10, "arrow_color": "dark"},
+        {"name": ".parameters.vendor_id()", "value": "Some(0x0110) · Cyclone DDS", "color": "yellow", "arrow": 15},
+        {"name": ".parameters.bytes", "value": "ends before the sentinel", "color": "green", "arrow": 18, "arrow_color": "gray"},
+        {"name": ".secure · .key_only", "value": "false · false"},
+    ]},
+}
+
 STANAG = {
     "out": "images/application/stanag5066_struct.svg",
     "title": "STANAG 5066 SIS: an S_BIND_REQUEST",
@@ -581,5 +621,5 @@ JAVA_RMI = {
     ]},
 }
 
-ALL = [IKE, RADIUS, RDP, RTPS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
+ALL = [IKE, RADIUS, RDP, RTPS, RTPS_DDS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
        NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS, JAVA_RMI]

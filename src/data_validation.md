@@ -118,7 +118,7 @@ A parser of hostile bytes must never bring its host down. What the crate does ab
   - `parse_asterix`: `AsterixPacket::try_from` over the eleven categories: the data blocks tile the input, every item points into it, and every typed decoder is run on every record;
   - `parse_ptp`: `PtpPacket::try_from` and `try_from_udp`: message, TLVs and trailing bytes tile the input, and the UDP form accepts a subset of the layer 2 one;
   - `parse_profinet`: `validate_frame` and `ProfinetPacket::try_from`: DCP is decoded only for DCP Frame IDs, and its blocks and NameOfStation point into the buffer;
-  - `parse_rtps`: `RtpsPacket::try_from`: the submessages tile the message and borrow from the input;
+  - `parse_rtps`: `RtpsPacket::try_from`: the submessages tile the message and borrow from the input; since 13.0.0 it also calls `inline_qos()`, `serialized_payload()` and `discovery()` on every submessage: each decoded ParameterList, its values and the serialized data point into the body of the submessage, the parameters tile their list, and every typed accessor reads without a panic, with three DDS frames of the corpus added to its mutation seeds;
   - `parse_stanag5066`: `SisPdu::try_from` on chained S_PDUs: `consumed` stays within the input, the U_PDU borrows from it, and a cut S_PDU is the last one, running to the end of the input;
   - `parse_dis`: `DisPacket::try_from` and `try_from_lenient`: the PDUs, then the trailing bytes of the lenient reading, tile the input, and the strict reading accepts exactly the lenient readings that leave no trailing bytes;
   - `parse_ipsec`: `IkePacket::try_from`, `IkePacket::from_udp`, `UdpEncapsulation::classify` and `EspPacket::try_from`: the payloads tile the message, and the demultiplexing of UDP 4500 is a partition;
