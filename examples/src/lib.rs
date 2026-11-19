@@ -13,6 +13,7 @@ mod defense_b;
 mod dns;
 mod internet_layer;
 mod ipsec;
+mod java_rmi;
 mod link_layer;
 mod remote_vpn;
 mod scada;
