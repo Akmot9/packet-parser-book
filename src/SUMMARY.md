@@ -49,6 +49,7 @@
     - [RADIUS](./radius.md)
     - [RDP](./rdp.md)
     - [RTPS](./rtps.md)
+    - [SIP](./sip.md)
     - [STANAG 5066 SIS](./stanag5066.md)
     - [TLS](./tls.md)
     - [Valmet DNA](./valmet_dna.md)

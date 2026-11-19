@@ -108,7 +108,7 @@ impl<'a> TryFrom<&'a [u8]> for FooPacket<'a> {
 
 ## 4. Plugging it into the dispatch table
 
-Add a variant `Foo` at the end of `ApplicationProtocol`, with its label, in `src/parse/application/protocol.rs`, and the label to the test `labels_are_frozen` of the same file. Add a `ProbeId::Foo` at the end of the enum, where it becomes `ProbeId::LAST`, and its `run_probe` arm, in `src/parse/dispatch/probes.rs`. Failures are memoized in a `u128`, one bit per probe: 66 are taken, 128 is the limit. Then add one line in `RULES`, in `src/parse/dispatch/rules.rs`, choosing the route described in the [application chapter](./application.md#three-detection-routes):
+Add a variant `Foo` at the end of `ApplicationProtocol`, with its label, in `src/parse/application/protocol.rs`, and the label to the test `labels_are_frozen` of the same file. Add a `ProbeId::Foo` at the end of the enum, where it becomes `ProbeId::LAST`, and its `run_probe` arm, in `src/parse/dispatch/probes.rs`. Failures are memoized in a `u128`, one bit per probe: 67 are taken, 128 is the limit. Then add one line in `RULES`, in `src/parse/dispatch/rules.rs`, choosing the route described in the [application chapter](./application.md#three-detection-routes):
 
 - **blind** `rule(ApplicationProtocol::Foo, Guard::Tcp, ProbeId::Foo)` only if a valid Foo payload cannot also be a valid payload of another detected protocol, or arbitrary text;
 - **port-guarded** `port_rule(..)` otherwise, with a comment explaining why;

@@ -12,9 +12,9 @@ The registry listens on TCP 1099, the IANA port `rmiregistry`. The objects it ha
 | --- | --- | --- | --- |
 | TCP 1099, on either side | port rule 35 | `ProbeId::JavaRmi` | any message that `JavaRmiPacket::try_from` accepts |
 | a port declared with `ParseConfig::decode_as(port, DecodeAsProtocol::JavaRmi)` | tried [before the table](./application.md#decode-as) | `ProbeId::JavaRmi` | the same |
-| any other TCP port | blind rule 66 | `ProbeId::JavaRmiBlind` | a stream header, a Call or a Return |
+| any other TCP port | blind rule 67 | `ProbeId::JavaRmiBlind` | a stream header, a Call or a Return |
 
-Rule 35 sits among the port rules of the [table](./application.md#reading-the-table), after IEC 104 and before PostgreSQL. Rule 66 sits in the blind cascade, after GIOP and before DHCP. Both probes read the whole payload. All three routes keep the TCP guard: the same bytes over UDP are never `"Java RMI"`.
+Rule 35 sits among the port rules of the [table](./application.md#reading-the-table), after IEC 104 and before PostgreSQL. Rule 67 sits in the blind cascade, after GIOP and before DHCP. Both probes read the whole payload. All three routes keep the TCP guard: the same bytes over UDP are never `"Java RMI"`.
 
 Why two probes: three messages carry a signature, the others do not.
 
@@ -24,7 +24,7 @@ Why two probes: three messages carry a signature, the others do not.
 - A **DgcAck** is a type byte and fourteen free bytes, a UID.
 - A **ProtocolAck** is a type byte, a length, a hostname and a port.
 
-`JavaRmiPacket::is_self_identifying()` is true for the stream header, the Call and the Return, and the blind probe asks for it. The other five messages need TCP 1099 or a declared port. `DecodeAsProtocol::JavaRmi`, new in 13.0.0 and the last of the 30 variants, resolves to the label `Java RMI`, the guard `Tcp` and the probe of rule 35.
+`JavaRmiPacket::is_self_identifying()` is true for the stream header, the Call and the Return, and the blind probe asks for it. The other five messages need TCP 1099 or a declared port. `DecodeAsProtocol::JavaRmi`, new in 13.0.0 and the 30th of the 31 variants, resolves to the label `Java RMI`, the guard `Tcp` and the probe of rule 35.
 
 A Ping on 1099 and off it, then a declared port (*tested*):
 
