@@ -547,5 +547,39 @@ TLS = {
     ]},
 }
 
+# Java RMI (13.0.0): the bytes of frame 38, taken with tshark 4.6.9. The 21
+# zero bytes after the first byte of the ObjID are summarised in one row.
+JAVA_RMI = {
+    "out": "images/application/java_rmi_call.svg",
+    "title": "Java RMI: a Call to the registry",
+    "subtitle": "frame 38 of jdk11-loopback.pcap, TCP 36568 → 1099 · 51 bytes, Registry.lookup(\"station\")",
+    "desc": "The Call of frame 38 of jdk11-loopback.pcap, 32 bits per row: the type byte 0x50, the magic AC ED and the version 5 of a Java serialization stream, a TC_BLOCKDATA block of 34 bytes that holds the call header, an ObjID of 22 zero bytes (object 0 in the null space, the registry), operation 2 and the interface hash 0x44154dc9d4e63bdf of java.rmi.registry.Registry, then the argument, still serialized, a TC_STRING of length 7, station; JavaRmiCall keeps the object, the operation, the hash and the arguments, and names the method Registry.lookup.",
+    "palette": "app",
+    "fields": [
+        {"label": "Type · Call", "hex": "50", "color": "orange", "emph": True},
+        {"label": "Stream magic", "hex": "aced", "color": "yellow"},
+        {"label": "Version 5", "hex": "0005", "color": "yellow"},
+        {"label": "Block marker", "hex": "77", "color": "yellow"},
+        {"label": "Length · 34", "hex": "22", "color": "yellow"},
+        {"label": "ObjID · 0", "hex": "00", "color": "orange"},
+        {"skip": "… 21 more zero bytes: object number 0, space UID 0"},
+        {"label": "Operation · 2", "hex": "00000002", "color": "orange", "emph": True},
+        {"label": "Interface hash · Registry", "hex": "44154dc9d4e63bdf", "color": "orange", "cont": "Interface hash, continued"},
+        {"label": "TC_STRING", "hex": "74"},
+        {"label": "Length · 7", "hex": "0007"},
+        {"label": "station", "hex": "73746174696f6e", "cont": "station, continued"},
+    ],
+    "card": {"title": "JavaRmiCall", "width": 260, "fields": [
+        {"name": "message_type()", "value": "0x50 · Call", "color": "orange", "arrow": 0},
+        {"name": "object.object_number", "value": "0", "color": "orange", "arrow": 5},
+        {"name": "object.space.is_zero()", "value": "true · the null space", "arrow": 6, "arrow_color": "gray"},
+        {"name": "object.well_known()", "value": "Some(Registry)", "color": "orange"},
+        {"name": "operation", "value": "2 · a 1.1 stub", "color": "orange", "arrow": 7},
+        {"name": "hash", "value": "0x44154dc9d4e63bdf · Registry", "color": "orange", "arrow": 8},
+        {"name": "well_known_method()", "value": "Some((Registry, \"lookup\"))", "color": "orange"},
+        {"name": "arguments", "value": "&[u8] · 10 bytes, serialized", "arrow": 11, "arrow_color": "gray"},
+    ]},
+}
+
 ALL = [IKE, RADIUS, RDP, RTPS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
-       NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS]
+       NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS, JAVA_RMI]

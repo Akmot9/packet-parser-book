@@ -41,6 +41,7 @@
     - [HTTP](./http.md)
     - [IEC 60870-5-104](./iec104.md)
     - [IKE](./ike.md)
+    - [Java RMI](./java_rmi.md)
     - [Modbus/TCP and UMAS](./modbus.md)
     - [NTP](./ntp.md)
     - [PostgreSQL](./postgresql.md)
