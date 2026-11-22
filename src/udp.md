@@ -31,7 +31,7 @@ A fragmented IP datagram never reaches this parser: `payload_protocol` is `None`
 
 The ports and the payload go to the [application stage](./application.md). Two things happen before the dispatch table:
 
-- **UDP tunnels** are looked for first, by port and shape: CAPWAP on 5247, VXLAN on 4789, Geneve on 6081, GTP-U on 2152. A match makes the tunnel's name the flow's `Application::protocol` and parses the carried packet into `inner` ([tunnels](./tunnels.md)).
+- **UDP tunnels** are looked for first, by port and shape: CAPWAP on 5247, VXLAN on 4789, Geneve on 6081, GTP-U on 2152. A match makes the tunnel's name the flow's `Application::protocol` and parses the carried packet into `inner` ([tunnels](./tunnels.md)). Since 13.3.0 a CAPWAP datagram the tunnel does not peel still gets its label, from a rule of the table.
 - **Declared ports** (`ParseConfig::decode_as`) are tried next, then the table's rules, those with `Guard::Udp` or `Guard::Any`: a rule the RFC reserves to TCP never runs on a datagram.
 
 An empty payload (a datagram of exactly 8 bytes) is not probed, and `application` stays `None`.

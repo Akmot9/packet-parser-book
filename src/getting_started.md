@@ -2,13 +2,13 @@
 
 This chapter shows how to use the crate. The rest of the book shows how it is built.
 
-> **Reference version: `packet_parser` 13.2.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-13.md`, `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
+> **Reference version: `packet_parser` 13.3.0.** Every code snippet marked *tested* below is included verbatim from the book's `examples/` crate, which compiles and runs against that exact version (`cd examples && cargo test`). Older versions differ: see `MIGRATION-13.md`, `MIGRATION-12.md` and `MIGRATION-11.md` in the crate repository.
 
 ## Installation
 
 ```toml
 [dependencies]
-packet_parser = "13.2.0"
+packet_parser = "13.3.0"
 hex = "0.4" # only for the examples below, to decode hex dumps
 ```
 

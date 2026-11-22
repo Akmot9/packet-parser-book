@@ -44,6 +44,21 @@ Nesting is bounded by `MAX_TUNNEL_DEPTH = 4`, an anti-loop guard against malform
 | Geneve (RFC 8926) | UDP/6081 | Ethernet (0x6558) or bare IP, options skipped |
 | GTP-U (3GPP TS 29.281) | UDP/2152 | bare IP, no L2 |
 
+### CAPWAP without an inner flow
+
+Only a CAPWAP data frame, an IEEE 802.11 data frame on UDP 5247, carries a conversation to peel. Until 13.3.0 everything else on the two CAPWAP ports was `"Unknown"`: the control channel on UDP 5246, in clear or under DTLS, the keep-alives of the data channel, fragments, and 802.11 management frames. Since 13.3.0 ([#355](https://github.com/Akmot9/Packet-parser/issues/355), PR [#360](https://github.com/Akmot9/Packet-parser/pull/360)) they are labelled `"CAPWAP"`, with no `inner`.
+
+The label comes from rule 74 of the [dispatch table](./application.md#reading-the-table), a port rule on UDP 5246 and 5247. Its probe accepts two shapes:
+
+- **a CAPWAP header** (RFC 5415 §4.3): version 0, a header length of at least two words that fits in the datagram, a wireless binding identifier that is not zero, reserved bits that are null, and neither the last-fragment bit nor a fragment offset without the fragment bit;
+- **the DTLS preamble**, followed by a DTLS 1.0 or 1.2 record. What the record carries is encrypted, and is not read.
+
+The rule sits in the blind cascade, after every UDP probe that has a signature. 5246 and 5247 are above 1023, and any client may draw them as its source port: a DNS answer or a QUIC packet that lands there keeps its own label. The same datagram on another port is `"Unknown"`: the header alone is too loose to run blind.
+
+The golden test `tests/capwap_golden.rs` compares the crate with tshark 4.6.9 on 341 datagrams of four captures already in the corpus (`tools/capwap_oracle.sh`, frozen in `tests/data/capwap_tshark_oracle.tsv`): 34 control messages in clear, 284 under DTLS, 12 keep-alives and 11 management frames. The crate and tshark name the same datagrams, and none of them has an `inner`.
+
+## Encrypted encapsulations
+
 The encrypted encapsulations get a label but no `inner`: OpenVPN, [WireGuard](./wireguard.md) and [ESP](./esp.md) in UDP 4500 carry ciphertext, and native ESP, IP protocol 50, is a transport layer without a payload. A [PPPoE session](./pppoe.md) is not a tunnel either: the link layer peels it like a VLAN tag, and the IP packet it carries is the flow itself.
 
 ## Two detection points
@@ -53,7 +68,7 @@ Tunnels are looked for at two places in the pipeline, because they live at two l
 - **IP-level** (`detect_inner_l3`), from `Internet::payload_protocol`, first in the L7 stage, before the transport-level detection and the application probes. Transport parsing has already run by then, but GRE and IP-in-IP have no transport layer, so their detection does not depend on the hollow `Transport` the catch-all branch of `try_from_parts` builds for them. A fragmented packet has no `payload_protocol`, so a tunnel carried in fragments is not peeled. For IP-in-IP, the outer protocol number *announces* the inner version (4 or 41), and the raw-IP decoder checks it against the inner version nibble: a mismatch is refused.
 - **Transport-level** (`detect_inner`), from a UDP port and the payload shape: CAPWAP, VXLAN, Geneve, GTP-U.
 
-Detection returns `None`, never an error: no tunnel, an encrypted payload (CAPWAP over DTLS), a truncated one, or a shape the crate does not decode all mean "this is just an ordinary flow".
+Detection returns `None`, never an error: no tunnel, an encrypted payload (CAPWAP over DTLS), a truncated one, or a shape the crate does not decode all mean "this is just an ordinary flow". The flow then goes to the dispatch table, which may still name it: that is how a CAPWAP datagram without a conversation to peel [gets its label](#capwap-without-an-inner-flow).
 
 ## Refuse, don't guess
 

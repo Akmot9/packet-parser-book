@@ -26,7 +26,7 @@
 
 ## What the book guarantees
 
-- **A pinned version.** The book describes `packet_parser` 13.2.0 ([crates.io](https://crates.io/crates/packet_parser/13.2.0), tag `v13.2.0` in the [repository](https://github.com/Akmot9/Packet-parser)). When the crate moves, the book is updated with it and this line changes.
+- **A pinned version.** The book describes `packet_parser` 13.3.0 ([crates.io](https://crates.io/crates/packet_parser/13.3.0), tag `v13.3.0` in the [repository](https://github.com/Akmot9/Packet-parser)). When the crate moves, the book is updated with it and this line changes.
 - **Tested examples.** A snippet marked *tested* is compiled and run against that version by the `examples/` crate of the book, on every change.
 - **Oracles.** The counts the book quotes come from the golden tests of the crate, many of which compare each decoded field with tshark on real captures. The [Protocols](./protocols.md) index gives the size of each oracle.
 

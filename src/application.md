@@ -34,7 +34,9 @@ Why separate the two? Because the label is the thing every consumer needs on eve
 
 The [Protocols](./protocols.md) page has one row per label: its detection route, its page, its oracle and the release it arrived in.
 
-The dispatch table gives 48 labels: [DNS](./dns.md) (plus its mDNS and LLMNR forms), [TLS](./tls.md), SNMP, [NTP](./ntp.md), DHCP, DHCPv6, [HTTP](./http.md) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](./postgresql.md), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](./modbus.md) (and, since 12.0.0, Modbus over UDP 502), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems; since 13.0.0, [Java RMI](./java_rmi.md); since 13.2.0, [SIP](./sip.md). STP gets its label from the link layer (see below).
+The dispatch table gives 52 labels: [DNS](./dns.md) (plus its mDNS and LLMNR forms), [TLS](./tls.md), SNMP, [NTP](./ntp.md), DHCP, DHCPv6, [HTTP](./http.md) (requests and, since 11.7.0, responses), MQTT, [PostgreSQL](./postgresql.md), FTP, SMTP, NNTP, SSH (identification string only), SSDP, NetBIOS (NBNS, NBSS), OpenVPN, [Modbus/TCP and UMAS](./modbus.md) (and, since 12.0.0, Modbus over UDP 502), EtherNet/IP, OPC UA, S7Comm, COTP, AMS, [GIOP](./giop.md), SRVLOC, [ASTERIX](./asterix.md) (eleven categories), QUIC, Bitcoin, [PTP](./ptp.md) (IEEE 1588, on UDP 319/320), and, since 11.6.0, [DNP3](./dnp3.md), [IEC 60870-5-104](./iec104.md), [BACnet/IP](./bacnet.md), [RADIUS](./radius.md), [RDP](./rdp.md), [WireGuard](./wireguard.md), [DIS](./dis.md), [STANAG 5066 SIS](./stanag5066.md), [RTPS](./rtps.md), [IKE](./ike.md), and [ESP](./esp.md) inside UDP 4500 with its one-byte NAT-keepalive; since 11.8.0, [Valmet DNA](./valmet_dna.md), the proprietary process network of Metso and Valmet distributed control systems; since 13.0.0, [Java RMI](./java_rmi.md); since 13.2.0, [SIP](./sip.md); since 13.3.0, [NMF](./nmf.md), [DCE/RPC](./dcerpc.md), [RTCP](./rtcp.md), and CAPWAP for the datagrams its [tunnel](./tunnels.md#capwap-without-an-inner-flow) does not peel. STP gets its label from the link layer (see below).
+
+One label has a decoder and no rule: [RTP](./rtp.md), new in 13.3.0, is given on a port declared with [Decode As](#decode-as) and nowhere else. Its header has two fixed bits, too few for a rule that would not name other traffic.
 
 Some protocols are decoded below the table and get no label: PTP straight over Ethernet (EtherType `0x88F7`), [GOOSE](./goose.md) (`0x88B8`) and [LLDP](./lldp.md) (`0x88CC`) are [internet layers](./network.md), and native ESP, IP protocol 50, is a transport layer whose SPI and sequence number are in `TransportDetails::Esp`, with no application payload, like ICMP.
 
@@ -66,7 +68,7 @@ struct Rule {
 and the invariants are:
 
 1. **A rule with a port guard labels only if port *and* content agree.** The port alone never decides. `OPC UA` on port 4840 is still checked by `OpcuaPacket::try_from`.
-2. **Every probe runs at most once per payload.** Failures are memoized by `ProbeId` in a bitmask, one bit of a `u128` for each of the 67 probes (a `u64` until 12.1.0, which had 59): a rule sharing a probe with an earlier one (port-priority then blind fallback) never re-runs it.
+2. **Every probe runs at most once per payload.** Failures are memoized by `ProbeId` in a bitmask, one bit of a `u128` for each of the 74 probes (a `u64` until 12.1.0, which had 59): a rule sharing a probe with an earlier one (port-priority then blind fallback) never re-runs it.
 3. **A probe judges the bytes its decoder will read; only the text probes stop at `PROBE_CAP`** ([Limits](./limits.md#what-the-crate-chooses-not-to-do))**.** Since 11.7.0 every other probe runs on the real payload ([#184](https://github.com/Akmot9/Packet-parser/issues/184), [#185](https://github.com/Akmot9/Packet-parser/issues/185)): most decoders want it tiled to the last byte (SNMP, Modbus/TCP, ASTERIX, DIS, RTPS...) or covered by a declared length that must fit in it (NBSS, DNS over TCP, TLS...), and a prefix proves neither. The probes of the four text protocols, FTP, SMTP, NNTP and HTTP, keep the cap, `PROBE_CAP` = 18 432 bytes (18 KiB). They validate their text over its whole length: in UTF-8 for FTP and SMTP, the first line in UTF-8 and the octets of what follows for NNTP, the head in UTF-8 for HTTP. The fuzz oracle of FTP, SMTP and NNTP off their ports, `fuzz/oracles/text_protocols.rs`, copies the cap so that it judges the same bytes as their probes. What lies beyond the cap is not seen: a text message is judged on its first 18 432 bytes alone.
 
    Before 11.7.0, 43 of the 57 probes read only that prefix, the bound that [#20](https://github.com/Akmot9/Packet-parser/issues/20) put on the cost of 64 KiB GRO segments. Beyond the prefix, a probe could label what its decoder refuses, or miss a complete message:
@@ -94,7 +96,7 @@ Each rule is three gates in a row, and a payload stops at the first rule whose t
 
 ### Reading the table
 
-In 13.2.0 the table has 74 rules in two blocks: the 45 rules of the port block, then a blind cascade of 29. 12.0.0 had 65, 40 then 25. Nine rules came in with 13.x:
+In 13.3.0 the table has 78 rules in two blocks: the 45 rules of the port block, then a blind cascade of 33. 12.0.0 had 65, 40 then 25. Thirteen rules came in with 13.x:
 
 | Release | Rules | Why |
 | --- | --- | --- |
@@ -105,8 +107,12 @@ In 13.2.0 the table has 74 rules in two blocks: the 45 rules of the port block, 
 | 13.1.0 | 57, EtherNet/IP on UDP | the blind EtherNet/IP rule split in two: on TCP, several complete messages may tile a segment ([#288](https://github.com/Akmot9/Packet-parser/issues/288)) |
 | 13.1.0 | 65, SSH after other lines | a server may send lines before its banner (RFC 4253 §4.2); this rule comes after HTTP ([#307](https://github.com/Akmot9/Packet-parser/issues/307)) |
 | 13.2.0 | 63, SIP, blind on TCP and UDP, before HTTP | the new decoder ([#342](https://github.com/Akmot9/Packet-parser/issues/342)) |
+| 13.3.0 | 74, CAPWAP on UDP 5246 and 5247 | the datagrams the tunnel does not peel were `"Unknown"` ([#355](https://github.com/Akmot9/Packet-parser/issues/355)) |
+| 13.3.0 | 75, RTCP, blind on UDP | the new decoder ([#354](https://github.com/Akmot9/Packet-parser/issues/354)) |
+| 13.3.0 | 76, NMF, blind on TCP | the new decoder ([#352](https://github.com/Akmot9/Packet-parser/issues/352)) |
+| 13.3.0 | 77, DCE/RPC, blind on TCP, before MQTT | the new decoder ([#356](https://github.com/Akmot9/Packet-parser/issues/356)) |
 
-Every rule from DHCP on is therefore lower than in an edition of the book for 12.x: compare rules by label, not by number. The port block also holds four rules without a port guard that must come early: the blind S7Comm rule, which must beat COTP even on port 102, and the three rules that recognize FTP, SMTP and NNTP off their ports. The source writes a rule with one of two constructors, or with the whole struct when a field differs from their defaults:
+Every rule from DHCP on is therefore lower than in an edition of the book for 12.x: compare rules by label, not by number. The port block also holds four rules without a port guard that must come early: the blind S7Comm rule, which must beat COTP even on port 102, and the three rules that recognize FTP, SMTP and NNTP off their ports. The reverse exists since 13.3.0: the cascade holds one rule with a port guard, CAPWAP, placed after every UDP probe that has a signature so that a datagram which merely drew 5246 or 5247 as its source port keeps its own label. The source writes a rule with one of two constructors, or with the whole struct when a field differs from their defaults:
 
 ```rust
 static RULES: &[Rule] = &[
@@ -217,9 +223,13 @@ Here is the whole table, in order. A port guard matches when either port of the 
 | 71 | [ModbusTCP](./modbus.md) | `Tcp` | none | `ModbusTcpBlind` | `ModbusTcpPacket::is_blind_tcp_match` |
 | 72 | QUIC | `Udp` | none | `QuicLongHeader` | `QuicPacket::is_blind_udp_match`: a QUIC v1 long header, whose length fits in the datagram |
 | 73 | [WireGuard](./wireguard.md) | `Udp` | none | `WireGuardBlind` | `WireGuardPacket::is_blind_udp_match` |
-| 74 | MQTT | `Tcp` | none | `Mqtt` | `MqttPacket::try_from` |
+| 74 | [CAPWAP](./tunnels.md#capwap-without-an-inner-flow) | `Udp` | 5246, 5247 | `Capwap` | `is_capwap_packet`: a CAPWAP header of RFC 5415, or the DTLS preamble and a DTLS 1.0 or 1.2 record |
+| 75 | [RTCP](./rtcp.md) | `Udp` | none | `RtcpBlind` | `RtcpCompound::is_blind_match`: packets that tile the datagram, the first a Sender or a Receiver Report, or one feedback packet alone |
+| 76 | [NMF](./nmf.md) | `Tcp` | none | `NmfBlind` | `NmfSegment::is_blind_match`: records that tile the segment, opened by a preamble or by a sized envelope in binary XML |
+| 77 | [DCE/RPC](./dcerpc.md) | `Tcp` | none | `DceRpc` | `DceRpcPdu::is_blind_match`: a PDU, followed by nothing or by a second PDU |
+| 78 | MQTT | `Tcp` | none | `Mqtt` | `MqttPacket::try_from` |
 
-Seven probes serve more than one rule. `Srvloc` serves three, its UDP and TCP ports and the blind rule (4, 5, 69), and `ModbusTcp` two, port 502 on TCP and on UDP (42, 43). Five others serve a port rule that gives them priority and a blind rule further down: `Snmp` (1, 60), `Dhcp` (3, 68), `Radius` (30, 52), `Bacnet` (31, 53) and `Umas` (41, 70). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, the three verb checks, `is_plausible_short_header`, the `is_blind_*`, `is_port_*` and `is_tcp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. In the real file most lines carry a comment that says why they are there, often with the issue, the capture frame or the RFC section behind them. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
+Seven probes serve more than one rule. `Srvloc` serves three, its UDP and TCP ports and the blind rule (4, 5, 69), and `ModbusTcp` two, port 502 on TCP and on UDP (42, 43). Five others serve a port rule that gives them priority and a blind rule further down: `Snmp` (1, 60), `Dhcp` (3, 68), `Radius` (30, 52), `Bacnet` (31, 53) and `Umas` (41, 70). A failure on the port is memoized, so the blind rule does not run it again. Some probes are crate-internal: `cotp_from_tpkt`, `is_capwap_packet`, the three verb checks, `is_plausible_short_header`, the `is_blind_*`, `is_port_*` and `is_tcp_match` functions and the two PostgreSQL predicates. A consumer reaches them through `parse`, which is where the label is decided. In the real file most lines carry a comment that says why they are there, often with the issue, the capture frame or the RFC section behind them. That is the point of a table over a cascade: the semantics of the order are written down and cannot silently move.
 
 ### Three detection routes
 
@@ -309,7 +319,7 @@ QUIC also lost a field it could not read. Header protection (RFC 9001 §5.4) mas
 
 Port guards mean a server on a non-standard port is invisible to a port-guarded rule. `ParseConfig::decode_as(port, DecodeAsProtocol::Xxx)` declares extra ports, and `parse_with` applies them. Declared ports are evaluated **before** the table, with the same three constraints: port *and* content, the protocol's transport guard, and failures memoized like the table's. Ports the table marks terminal (mDNS 5353, LLMNR 5355) cannot be overridden: the caller extends the guards, never replaces them.
 
-`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`, 11.8.0 one more, `ValmetDna`, 12.0.0 another, `ModbusUdp`, 13.0.0 `JavaRmi`, and 13.2.0 `Sip`: 31 in all. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch/tests.rs` checks that the label and the probe are those of a rule of the table (for `WireGuard`, those of its 51820 twin), so that the two lists cannot drift apart:
+`DecodeAsProtocol` is `#[non_exhaustive]`. It had twenty variants in 11.5.0, `Ptp` the last; 11.6.0 adds seven at its end, `Stanag5066`, `Dis`, `Ike`, `Esp`, `Rdp`, `Iec104` and `WireGuard`, 11.8.0 one more, `ValmetDna`, 12.0.0 another, `ModbusUdp`, 13.0.0 `JavaRmi`, 13.2.0 `Sip`, and 13.3.0 `Rtp`, `Nmf` and `Rtcp`: 34 in all. Each variant resolves to a label, a transport guard and a probe, and a unit test of `dispatch/tests.rs` checks that the label and the probe are those of a rule of the table, so that the two lists cannot drift apart. Three variants run a more lenient probe than the table does, and the test checks the stricter twin instead: `WireGuard`, `Nmf` and `Rtcp`. For `Rtp` it checks the opposite, that the table has no rule with that label:
 
 | Variant | Label | Guard | `ProbeId` |
 | --- | --- | --- | --- |
@@ -344,8 +354,11 @@ Port guards mean a server on a non-standard port is invisible to a port-guarded 
 | `ModbusUdp` | [ModbusUDP](./modbus.md#modbus-over-udp) | `Udp` | `ModbusTcp` |
 | `JavaRmi` | [Java RMI](./java_rmi.md) | `Tcp` | `JavaRmi` |
 | `Sip` | [SIP](./sip.md) | `Any` | `Sip` |
+| `Rtp` | [RTP](./rtp.md) | `Udp` | `Rtp` |
+| `Nmf` | [NMF](./nmf.md) | `Tcp` | `Nmf` |
+| `Rtcp` | [RTCP](./rtcp.md) | `Udp` | `Rtcp` |
 
-A declared port gets the probe of the protocol's standard port: the compatible shape of PostgreSQL on 5432, the lenient reading of DIS on 3000, the envelope of Modbus/TCP on 502, the AMS/TCP header of 48898 on TCP, every message family and the beacon of Valmet DNA on 2517, 4516 and 4517. `WireGuard` goes further than the 51820 rule: its probe, `WireGuardPacket::try_from`, accepts the reserved bytes whatever the message type, where the port rule wants them null in a cookie or a data message, 51820 being a port that any peer can draw at random. Because declared ports come before the table, a declared port names the protocol of everything its probe accepts: on a port declared `ModbusTcp`, a UMAS frame is `"ModbusTCP"` (see [Modbus/TCP and UMAS](./modbus.md)).
+A declared port gets the probe of the protocol's standard port: the compatible shape of PostgreSQL on 5432, the lenient reading of DIS on 3000, the envelope of Modbus/TCP on 502, the AMS/TCP header of 48898 on TCP, every message family and the beacon of Valmet DNA on 2517, 4516 and 4517. `WireGuard` goes further than the 51820 rule: its probe, `WireGuardPacket::try_from`, accepts the reserved bytes whatever the message type, where the port rule wants them null in a cookie or a data message, 51820 being a port that any peer can draw at random. `Nmf` and `Rtcp` do the same with their blind rules: on a declared port the decoder alone decides, so the one-byte records of NMF and an RTCP datagram that does not open with a report are named. `Rtp` has no rule to be more lenient than: a declared port is its only route. Because declared ports come before the table, a declared port names the protocol of everything its probe accepts: on a port declared `ModbusTcp`, a UMAS frame is `"ModbusTCP"` (see [Modbus/TCP and UMAS](./modbus.md)).
 
 Since 12.1.0, `DecodeAsProtocol::ALL` is every variant, in declaration order: the list a caller shows when it lets its user bind a protocol to a port ([#274](https://github.com/Akmot9/Packet-parser/issues/274)). The enum and `ALL` are written by one macro from one list, as `ApplicationProtocol` and its own `ALL` are, so a variant cannot be missing from it. Three lists were written by hand until then, the one of the dispatch tests and those of the fuzz targets `parse_packetflow` and `policy_dispatch`; in 11.8.0 the fuzz one lacked `ValmetDna`. All three now read `ALL` (*tested*):
 
@@ -353,7 +366,7 @@ Since 12.1.0, `DecodeAsProtocol::ALL` is every variant, in declaration order: th
 {{#include ../examples/src/lib.rs:decode_as_all}}
 ```
 
-The seventeen labels without a variant are all given by a rule without a port guard, which probes any port, except NAT-keepalive, which only UDP 4500 knows. For NTP, whose port rule is more tolerant than its blind probe, this means that off port 123 the strict probe is the only way to the label.
+The nineteen labels of the table without a variant are all given by a rule without a port guard, which probes any port, except two: NAT-keepalive, which only UDP 4500 knows, and CAPWAP, which only UDP 5246 and 5247 know. For NTP, whose port rule is more tolerant than its blind probe, this means that off port 123 the strict probe is the only way to the label.
 
 ## Parsers added by the caller
 
@@ -365,4 +378,4 @@ A Spanning Tree BPDU has no L3, so it can never reach this table. The pipeline c
 
 ## Tunnels take the label
 
-When the transport payload is a recognized encapsulation (CAPWAP, VXLAN, Geneve, GTP-U) the outer flow's `Application::protocol` is the tunnel name, and the real conversation is in `inner`. Next chapter.
+When the transport payload is a recognized encapsulation (CAPWAP, VXLAN, Geneve, GTP-U) the outer flow's `Application::protocol` is the tunnel name, and the real conversation is in `inner`. CAPWAP also keeps its name when there is nothing to peel, through rule 74. Next chapter.

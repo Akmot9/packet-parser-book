@@ -1,6 +1,6 @@
 # SIP
 
-SIP, the Session Initiation Protocol (RFC 3261), sets calls up, changes them and ends them: a phone registers with its server, invites another one, hangs up. The voice travels apart, in RTP; SIP carries the signalling only, as text, in a syntax borrowed from HTTP. The decoder was added in 13.2.0 ([#342](https://github.com/Akmot9/Packet-parser/issues/342), PR [#343](https://github.com/Akmot9/Packet-parser/pull/343)). The module is `packet_parser::parse::application::protocols::sip`, the errors are `SipError`, in `packet_parser::errors::application::sip`, and the label is `"SIP"`.
+SIP, the Session Initiation Protocol (RFC 3261), sets calls up, changes them and ends them: a phone registers with its server, invites another one, hangs up. The voice travels apart, in [RTP](./rtp.md); SIP carries the signalling only, as text, in a syntax borrowed from HTTP. The decoder was added in 13.2.0 ([#342](https://github.com/Akmot9/Packet-parser/issues/342), PR [#343](https://github.com/Akmot9/Packet-parser/pull/343)). The module is `packet_parser::parse::application::protocols::sip`, the errors are `SipError`, in `packet_parser::errors::application::sip`, and the label is `"SIP"`.
 
 ![A SIP response, a 100 Trying, 32 bits per row: the status line, version SIP/2.0, space, the three-digit code 100, space, the reason phrase Trying and CR LF; then the header lines in the order the server sends them, Call-ID first, CSeq: 6 REGISTER, From, To, Via and Content-Length: 0, and the empty line that ends the head; on the right the SipMessage struct, with the start line, the Call-ID, the CSeq split into 6 and REGISTER, the raw From, To and Via, a Content-Length of 0, six headers and an empty body](images/application/sip_response.svg)
 
@@ -50,7 +50,7 @@ A rule without a port and without a transport can only stand on a strong signatu
 
 Before any of that, `may_start_sip` looks at the first bytes alone: a status line, or one of the 14 methods followed by a space. Almost every other payload stops there, at a constant cost. The two rules on either side cannot take a SIP message: the HTTP probe wants the version `HTTP/`, and SSDP, on UDP 1900, speaks HTTP too (`NOTIFY * HTTP/1.1`).
 
-`DecodeAsProtocol::Sip`, new in 13.2.0 and the last of the 31 variants, resolves to the label `SIP`, the guard `Any` and the probe of rule 63. A declared port is tried before the table, so it wins over a port rule that would accept the payload first. Like every declared port, it does not lift a terminal port such as mDNS on UDP 5353.
+`DecodeAsProtocol::Sip`, new in 13.2.0, resolves to the label `SIP`, the guard `Any` and the probe of rule 63. A declared port is tried before the table, so it wins over a port rule that would accept the payload first. Like every declared port, it does not lift a terminal port such as mDNS on UDP 5353.
 
 A server's `100 Trying` to a REGISTER, with its headers in the order that server sends them (*tested*):
 

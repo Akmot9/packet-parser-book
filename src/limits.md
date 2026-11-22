@@ -14,6 +14,7 @@
 | A fragmented tunnel is not peeled | The outer flow has no `inner`: the conversation inside the tunnel is not seen. | `is_fragmented()` on the outer packet | The same reassembly |
 | A reply is not paired with its request | Nothing matches a response to a request, by transaction identifier or otherwise. A reply that is one byte long, like PostgreSQL's answer to an `SSLRequest`, is recognized on its port only. | The identifiers each decoder reads | Keep the pending requests of a flow |
 | A header that is opaque without the handshake | A QUIC short header is plausible on UDP 443 and undecidable elsewhere: off that port, the datagrams of an established connection are `"Unknown"`. | [Decode As](./application.md#decode-as), `QuicShortHeader` | Remember the connection IDs of the handshake |
+| A header too weak to prove anything alone | An RTP packet has two fixed bits. `parse` never names it by its content: it is `"Unknown"` off a declared port. | [Decode As](./application.md#decode-as), `Rtp`, and the SSRC and sequence number that `RtpPacket::try_from` reads ([RTP](./rtp.md#why-there-is-no-blind-rule)) | Confirm a flow by several packets with one SSRC and sequence numbers that follow each other |
 | Preempted frames | An IEEE 802.3br fragment of a preemptible frame is refused. | `Err`, with `LinkLayerError::PreemptibleFragment` | Reassemble the mPackets |
 
 ## What the crate chooses not to do
