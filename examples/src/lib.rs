@@ -7,6 +7,7 @@
 
 mod building_aaa;
 mod custom;
+mod dcerpc;
 mod dcs;
 mod defense_a;
 mod defense_b;
@@ -15,7 +16,9 @@ mod internet_layer;
 mod ipsec;
 mod java_rmi;
 mod link_layer;
+mod nmf;
 mod remote_vpn;
+mod rtp;
 mod scada;
 mod sip;
 mod shared;
@@ -68,7 +71,7 @@ mod tests {
     fn protocol_index_lists_every_label() {
         use packet_parser::ApplicationProtocol;
         let page = include_str!("../../src/protocols.md");
-        let table = page.split("## The 56 labels").nth(1).unwrap().split("\n## ").next().unwrap();
+        let table = page.split("## The 60 labels").nth(1).unwrap().split("\n## ").next().unwrap();
         let listed: Vec<&str> =
             table.lines().filter_map(|l| l.strip_prefix("| `")?.split('`').next()).collect();
         for protocol in ApplicationProtocol::ALL {
@@ -278,9 +281,9 @@ mod tests {
             .iter()
             .map(|protocol| format!("{protocol:?}"))
             .collect();
-        assert_eq!(offered.len(), 31);
+        assert_eq!(offered.len(), 34);
         assert_eq!(offered.first().map(String::as_str), Some("Ftp"));
-        assert_eq!(offered.last().map(String::as_str), Some("Sip"));
+        assert_eq!(offered.last().map(String::as_str), Some("Rtcp"));
 
         // The entry the user picks goes to `decode_as` as it is.
         let picked = DecodeAsProtocol::ALL[0];

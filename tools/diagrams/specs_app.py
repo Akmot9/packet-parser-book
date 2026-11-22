@@ -656,5 +656,129 @@ SIP = {
     ]},
 }
 
+# 13.3.0: the bytes of each frame, taken with tshark 4.6.9.
+DCERPC = {
+    "out": "images/application/dcerpc_request.svg",
+    "title": "DCE/RPC: a 16-byte common header, then the request",
+    "subtitle": "frame 40263 of The-Ultimate-PCAP.pcapng, TCP 49984 → 135 · 168 bytes, a Request to the endpoint mapper",
+    "desc": "The Request of frame 40263 of The-Ultimate-PCAP.pcapng, 32 bits per row: the 16-byte common header, version 5.0, PDU type 0, flags 0x03, the data representation label 10 00 00 00 for little-endian, ASCII and IEEE, a fragment length of 168 and an authentication length of 0, both little-endian, and call identifier 2; then the three fields of a Request, an allocation hint of 144, presentation context 1 and operation number 3, and 144 bytes of stub data; DceRpcPdu keeps the header fields, the byte order, the body as bytes, and gives the three request fields on demand.",
+    "palette": "app",
+    "fields": [
+        {"label": "Version 5", "hex": "05", "color": "orange", "emph": True},
+        {"label": "Minor 0", "hex": "00", "color": "orange"},
+        {"label": "PTYPE 0", "hex": "00", "color": "orange", "emph": True},
+        {"label": "Flags", "hex": "03", "color": "orange"},
+        {"label": "drep · little-endian, ASCII, IEEE", "hex": "10000000", "color": "yellow"},
+        {"label": "frag_length · 168", "hex": "a800", "color": "yellow"},
+        {"label": "auth_length · 0", "hex": "0000", "color": "yellow"},
+        {"label": "call_id · 2", "hex": "02000000", "color": "cream"},
+        {"label": "alloc_hint · 144", "hex": "90000000"},
+        {"label": "context · 1", "hex": "0100"},
+        {"label": "opnum · 3", "hex": "0300", "emph": True},
+        {"skip": "… 144 bytes of stub data: the arguments of ept_map, in NDR"},
+    ],
+    "card": {"title": "DceRpcPdu", "width": 260, "fields": [
+        {"name": "version_minor", "value": "0", "color": "orange", "arrow": 1},
+        {"name": "pdu_type", "value": "DceRpcPduType::Request", "color": "orange", "arrow": 2},
+        {"name": "flags", "value": "0x03 · first and last fragment", "color": "orange", "arrow": 3},
+        {"name": "little_endian", "value": "true · from the first byte", "color": "yellow", "arrow": 4, "arrow_color": "dark"},
+        {"name": "frag_length, auth_length", "value": "168, 0", "color": "yellow", "arrow": 6, "arrow_color": "dark"},
+        {"name": "call_id", "value": "2", "color": "cream", "arrow": 7, "arrow_color": "dark"},
+        {"name": "request()", "value": "Some { 144, 1, opnum 3 }", "arrow": 8, "arrow_color": "gray"},
+        {"name": "body", "value": "&[u8], 152 · not decoded", "arrow": 11, "arrow_color": "gray"},
+    ]},
+}
+
+NMF = {
+    "out": "images/application/nmf_preamble.svg",
+    "title": "NMF: a preamble of five records",
+    "subtitle": "frame 4 of terrain_nmf_censure.pcap, TCP 50000 → 50001 · 51 bytes, the URI censored",
+    "desc": "The preamble of frame 4 of terrain_nmf_censure.pcap, 32 bits per row, five records one after the other, each opened by its type byte: a Version record, type 0x00, major 1 and minor 0; a Mode record, type 0x01, mode 2 for Duplex; a Via record, type 0x02, a size of 41 on one byte and a 41-byte URI that starts with net.tcp://host/, censored; a Known Encoding record, type 0x03, encoding 8; and a Preamble End record, the single byte 0x0C; NmfSegment gives the five records in wire order, the URI as a borrowed string.",
+    "palette": "app",
+    "fields": [
+        {"label": "Type 0x00", "hex": "00", "color": "orange", "emph": True},
+        {"label": "Version · 1.0", "hex": "0100", "color": "orange"},
+        {"label": "Type 0x01", "hex": "01", "color": "yellow", "emph": True},
+        {"label": "Mode 2", "hex": "02", "color": "yellow"},
+        {"label": "Type 0x02", "hex": "02", "color": "cream", "emph": True},
+        {"label": "Size 41", "hex": "29", "color": "cream"},
+        {"label": "URI · n", "hex": "6e"},
+        {"skip": "… 40 more bytes of URI: et.tcp://host/ and 26 censored characters"},
+        {"label": "Type 0x03", "hex": "03", "color": "orange", "emph": True},
+        {"label": "Encoding 8", "hex": "08", "color": "orange"},
+        {"label": "Type 0x0C", "hex": "0c", "color": "yellow", "emph": True},
+    ],
+    "card": {"title": "NmfSegment · records()", "width": 260, "fields": [
+        {"name": "Version", "value": "{ major: 1, minor: 0 }", "color": "orange", "arrow": 0},
+        {"name": "Mode", "value": "NmfMode::Duplex", "color": "yellow", "arrow": 2, "arrow_color": "dark"},
+        {"name": "Via", "value": "&str, 41 · net.tcp://host/…", "color": "cream", "arrow": 7, "arrow_color": "dark"},
+        {"name": "KnownEncoding", "value": "8 · binary XML, session dictionary", "color": "orange"},
+        {"name": "PreambleEnd", "value": "one byte, no content", "color": "yellow", "arrow": 10, "arrow_color": "dark"},
+        {"name": "the segment", "value": "3 + 2 + 43 + 2 + 1 = 51 bytes"},
+    ]},
+}
+
+RTCP = {
+    "out": "images/application/rtcp_compound.svg",
+    "title": "RTCP: three packets in one datagram",
+    "subtitle": "frame 633 of wireshark_aaa.pcap, UDP 30001 → 40393 · 104 bytes, a Sender Report, an SDES and a BYE",
+    "desc": "The RTCP datagram of frame 633 of wireshark_aaa.pcap, 32 bits per row, three packets one after the other, each opened by a four-byte header: version 2 with a count, a packet type and a length in 32-bit words minus one. The Sender Report, type 200, length 6 for 28 bytes, carries the sender SSRC 0x3796cb71, a 64-bit NTP timestamp, the RTP timestamp 9411, 9 packets and 1548 octets sent. The Source Description, type 202, length 11 for 48 bytes, and the Goodbye, type 203, length 6 for 28 bytes, follow; RtcpCompound gives the three packets in wire order, their bodies as bytes, and the sender information of the report on demand.",
+    "palette": "app",
+    "fields": [
+        {"label": "V2 · RC 0", "hex": "80", "color": "orange"},
+        {"label": "PT 200", "hex": "c8", "color": "orange", "emph": True},
+        {"label": "Length 6 → 28 bytes", "hex": "0006", "color": "orange"},
+        {"label": "Sender SSRC", "hex": "3796cb71", "color": "cream"},
+        {"label": "NTP timestamp · 8 bytes", "hex": "42c907ca5efac603", "color": "yellow", "cont": "NTP timestamp, continued"},
+        {"label": "RTP timestamp · 9411", "hex": "000024c3", "color": "yellow"},
+        {"label": "Packet count · 9", "hex": "00000009"},
+        {"label": "Octet count · 1548", "hex": "0000060c"},
+        {"label": "V2 · SC 1", "hex": "81", "color": "orange"},
+        {"label": "PT 202", "hex": "ca", "color": "orange", "emph": True},
+        {"label": "Length 11 → 48 bytes", "hex": "000b", "color": "orange"},
+        {"skip": "… 44 bytes: one chunk, the SSRC, a CNAME and a TOOL item"},
+        {"label": "V2 · SC 1", "hex": "81", "color": "orange"},
+        {"label": "PT 203", "hex": "cb", "color": "orange", "emph": True},
+        {"label": "Length 6 → 28 bytes", "hex": "0006", "color": "orange"},
+        {"skip": "… 24 bytes: the SSRC and the reason, session shutdown"},
+    ],
+    "card": {"title": "RtcpCompound", "width": 260, "fields": [
+        {"name": "packet 1 · packet_type", "value": "SenderReport · count 0", "color": "orange", "arrow": 1},
+        {"name": "packet 1 · sender_ssrc()", "value": "Some(0x3796cb71)", "color": "cream", "arrow": 3, "arrow_color": "dark"},
+        {"name": "packet 1 · sender_info()", "value": "ntp, rtp 9411, 9, 1548", "color": "yellow", "arrow": 4, "arrow_color": "dark"},
+        {"name": "packet 2 · packet_type", "value": "SourceDescription · count 1", "color": "orange", "arrow": 9},
+        {"name": "packet 2 · body", "value": "&[u8], 44 · not decoded", "arrow": 11, "arrow_color": "gray"},
+        {"name": "packet 3 · packet_type", "value": "Goodbye · count 1", "color": "orange", "arrow": 13},
+        {"name": "the datagram", "value": "28 + 48 + 28 = 104 bytes"},
+    ]},
+}
+
+RTP = {
+    "out": "images/application/rtp_struct.svg",
+    "title": "RTP: a 12-byte header, then the payload",
+    "subtitle": "frame 624 of wireshark_aaa.pcap, UDP 30000 → 40392 · 172 bytes, 20 ms of G.711 A-law",
+    "desc": "The RTP packet of frame 624 of wireshark_aaa.pcap, 32 bits per row: a first byte 0x80 for version 2, no padding, no extension and no CSRC, a second byte 0x08 for a clear marker bit and payload type 8, sequence number 28590, timestamp 1240, the SSRC 0x3796cb71, then 160 bytes of payload; RtpPacket keeps the version, the marker, the payload type, the sequence number, the timestamp, the SSRC, an empty CSRC list, no extension, the payload as bytes and a padding length of 0.",
+    "palette": "app",
+    "fields": [
+        {"label": "V2 · CC 0", "hex": "80", "color": "orange", "emph": True},
+        {"label": "M0 · PT 8", "hex": "08", "color": "orange"},
+        {"label": "Sequence · 28590", "hex": "6fae", "color": "yellow"},
+        {"label": "Timestamp · 1240", "hex": "000004d8", "color": "yellow"},
+        {"label": "SSRC", "hex": "3796cb71", "color": "cream"},
+        {"label": "Payload · G.711 A-law", "hex": "d5d5d5d5"},
+        {"skip": "… 156 more bytes of sound: no CSRC, no extension, no padding"},
+    ],
+    "card": {"title": "RtpPacket", "width": 260, "fields": [
+        {"name": "version", "value": "2 · the only fixed bits", "color": "orange", "arrow": 0},
+        {"name": "marker, payload_type", "value": "false, 8 → \"PCMA\"", "color": "orange", "arrow": 1},
+        {"name": "sequence_number", "value": "28590", "color": "yellow", "arrow": 2, "arrow_color": "dark"},
+        {"name": "timestamp", "value": "1240 · at 8 000 Hz", "color": "yellow", "arrow": 3, "arrow_color": "dark"},
+        {"name": "ssrc", "value": "0x3796cb71", "color": "cream", "arrow": 4, "arrow_color": "dark"},
+        {"name": "csrc, extension", "value": "empty, None"},
+        {"name": "payload", "value": "&[u8], 160", "arrow": 5, "arrow_color": "gray"},
+        {"name": "padding_length", "value": "0"},
+    ]},
+}
+
 ALL = [IKE, RADIUS, RDP, RTPS, RTPS_DDS, STANAG, WIREGUARD, BACNET, DIS, DNP3, IEC104, VALMET_DNA,
-       NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS, JAVA_RMI, SIP]
+       NTP, MODBUS, POSTGRESQL, HTTP, DNS, TLS, JAVA_RMI, SIP, DCERPC, NMF, RTCP, RTP]
